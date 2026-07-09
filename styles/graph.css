@@ -1,0 +1,110 @@
+/* ─────────────────────────────────────────────────────────────────
+   graph.css — D3 force graph node, edge, label styles
+   ───────────────────────────────────────────────────────────────── */
+
+/* ── SVG base ───────────────────────────────────────────────────── */
+#graph-view {
+  background: var(--bg-0);
+}
+
+/* Subtle starfield-like dot grid */
+#graph-view::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Edges / Links ──────────────────────────────────────────────── */
+.link {
+  stroke-linecap: round;
+  transition: stroke-opacity .2s ease;
+  cursor: pointer;
+}
+
+.link:hover { stroke-opacity: .9 !important; }
+
+.link-strong  { stroke: #7c6fcc; }
+.link-medium  { stroke: #c9a84c; }
+.link-weak    { stroke: #3a3850; }
+.link-cognate { stroke: #f0d080; stroke-dasharray: 7 3; }
+.link-path    { stroke: var(--accent-bright); stroke-dasharray: none; }
+
+/* Edge label (weight) — hidden by default, shown on hover */
+.edge-label {
+  font-size: 9px;
+  fill: var(--text-3);
+  pointer-events: none;
+  text-anchor: middle;
+  opacity: 0;
+  transition: opacity .15s;
+}
+
+/* ── Nodes ──────────────────────────────────────────────────────── */
+.node { cursor: pointer; }
+
+.node-circle {
+  transition: r .2s ease;
+}
+
+/* Center node gets gold stroke */
+.node-center .node-circle {
+  stroke: var(--gold-bright) !important;
+  stroke-width: 2.5px !important;
+}
+
+.node-center .node-label {
+  font-family: var(--font-serif) !important;
+  font-size: 12px !important;
+  fill: var(--gold-bright) !important;
+}
+
+/* Pin ring — dashed gold circle that animates on pinned nodes */
+.pin-ring {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+  animation: spin-dash 5s linear infinite;
+  pointer-events: none;
+  display: none;
+}
+
+.node-pinned .pin-ring { display: block; }
+
+/* Node labels */
+.node-label {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  fill: var(--text-2);
+  pointer-events: none;
+  text-anchor: middle;
+  dominant-baseline: hanging;
+  letter-spacing: .01em;
+  transition: opacity .2s;
+}
+
+.node-label.hidden { opacity: 0; }
+
+/* Archetype view node size indicator */
+.node-archetype .node-circle {
+  stroke: rgba(255,255,255,.1);
+  stroke-width: 1;
+}
+
+/* ── Graph groups ───────────────────────────────────────────────── */
+.g-links  { }
+.g-nodes  { }
+.g-labels { }
+
+/* ── Highlight states ───────────────────────────────────────────── */
+.node-dimmed .node-circle { opacity: .2; }
+.node-dimmed .node-label  { opacity: .15; }
+.link-dimmed { stroke-opacity: .08 !important; }
+
+.node-highlighted .node-circle { opacity: 1; }
+.node-highlighted .node-label  { opacity: 1; }
+.link-highlighted { stroke-opacity: .85 !important; }

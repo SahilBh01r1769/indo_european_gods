@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Indo-European Myth Network</title>
+  <meta name="description" content="Explore how Indo-European gods relate through shared archetypal traits — an interactive mythological knowledge graph."/>
+  <meta property="og:title"       content="Indo-European Myth Network"/>
+  <meta property="og:description" content="Interactive force-directed graph of mythological trait connections across Greek, Vedic, Norse, Celtic, Roman, Slavic, and Mesopotamian pantheons."/>
+  <meta property="og:type"        content="website"/>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+  <!-- D3 (must load before ES modules) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles/base.css"/>
+  <link rel="stylesheet" href="styles/layout.css"/>
+  <link rel="stylesheet" href="styles/components.css"/>
+  <link rel="stylesheet" href="styles/graph.css"/>
+  <link rel="stylesheet" href="styles/views.css"/>
+</head>
+<body>
+
+<!-- ── Loader ──────────────────────────────────────────────────── -->
+<div id="loader">
+  <div class="loader-inner">
+    <span class="loader-rune">☽</span>
+    <div class="loader-text">Loading the pantheons…</div>
+  </div>
+</div>
+
+<!-- ── App shell ───────────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- ── Header ──────────────────────────────────────────────── -->
+  <header id="header">
+    <div class="header-logo">
+      <span class="logo-icon">✦</span>
+      <span>Mythos Network</span>
+    </div>
+
+    <div class="header-sep"></div>
+
+    <!-- Search -->
+    <div class="search-wrap" id="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input id="deity-input" type="text"
+             placeholder="Search deity, pantheon…"
+             autocomplete="off" spellcheck="false"/>
+      <div class="autocomplete" id="autocomplete" style="display:none"></div>
+    </div>
+
+    <button class="btn btn-accent" id="gen-btn">Generate ↵</button>
+    <button class="btn btn-gold"   id="surprise-btn" title="Load a random deity">✦ Surprise me</button>
+
+    <div class="header-sep"></div>
+
+    <!-- View tabs -->
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <span style="font-size:11px;color:var(--text-3)">View</span>
+      <div class="header-tabs">
+        <button class="header-tab active" data-view="graph">Graph</button>
+        <button class="header-tab"        data-view="matrix">Matrix</button>
+        <button class="header-tab"        data-view="archetypes">Archetypes</button>
+      </div>
+    </div>
+
+    <div class="header-sep"></div>
+
+    <!-- Mode tabs -->
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <span style="font-size:11px;color:var(--text-3)">Mode</span>
+      <div class="header-tabs">
+        <button class="header-tab active" data-mode="explore">Explore</button>
+        <button class="header-tab"        data-mode="compare">Compare</button>
+        <button class="header-tab"        data-mode="path">Find path</button>
+      </div>
+    </div>
+
+    <div class="header-spacer"></div>
+
+    <!-- Actions -->
+    <button class="btn btn-sm" id="cognate-btn"    title="Highlight PIE cognate pairs in gold">Cognates</button>
+    <button class="btn btn-sm" id="export-json-btn" title="Export graph as JSON">⬇ JSON</button>
+    <button class="btn btn-sm" id="export-svg-btn"  title="Export graph as SVG">⬇ SVG</button>
+    <button class="btn btn-sm" id="method-btn"      title="Methodology &amp; bibliography">? Method</button>
+  </header>
+
+  <!-- ── Main ────────────────────────────────────────────────── -->
+  <div id="main">
+
+    <!-- ── Sidebar ─────────────────────────────────────────── -->
+    <aside id="sidebar">
+      <div id="sidebar-scroll">
+
+        <!-- Deity info -->
+        <div class="panel" id="deity-info" style="display:none"></div>
+
+        <!-- Sidebar tabs: Info / Tours -->
+        <div class="panel">
+          <div class="sidebar-tabs">
+            <button class="sidebar-tab active" id="stab-info"  onclick="App.setSidebarTab('info')">Deity info</button>
+            <button class="sidebar-tab"        id="stab-tours" onclick="App.setSidebarTab('tours')">Tours</button>
+          </div>
+
+          <!-- Info content -->
+          <div id="stab-info-content">
+            <div id="radar-panel"       style="display:none"></div>
+            <div id="heatmap-panel"     style="display:none"></div>
+            <div id="surprising-panel"  style="display:none"></div>
+            <div id="connections-panel" style="display:none"></div>
+          </div>
+
+          <!-- Tours content -->
+          <div id="stab-tours-content" style="display:none">
+            <div id="tours-panel"           style="display:none"></div>
+            <div id="tour-narrative-panel"  style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Graph controls -->
+        <div class="panel">
+          <div class="panel-title"><span class="panel-icon">⚙</span> Controls</div>
+
+          <!-- Link mode -->
+          <div style="margin-bottom:10px">
+            <div style="font-size:11px;color:var(--text-2);margin-bottom:5px">Links shown</div>
+            <div class="tab-group">
+              <button class="tab-btn active" data-link="top5">Top 5</button>
+              <button class="tab-btn"        data-link="top10">Top 10</button>
+              <button class="tab-btn"        data-link="all">All</button>
+            </div>
+          </div>
+
+          <!-- Metric -->
+          <div style="margin-bottom:10px">
+            <div style="font-size:11px;color:var(--text-2);margin-bottom:5px">Similarity metric</div>
+            <div class="tab-group">
+              <button class="tab-btn active" data-metric="cosine">Cosine</button>
+              <button class="tab-btn"        data-metric="overlap">Overlap</button>
+            </div>
+          </div>
+
+          <!-- Threshold -->
+          <div class="slider-row">
+            <span class="slider-label">Threshold</span>
+            <input type="range" id="thresh-sl" min="10" max="80" value="35" step="5"/>
+            <span class="slider-val" id="thresh-val">0.35</span>
+          </div>
+
+          <!-- Era filter -->
+          <div class="slider-row" style="margin-bottom:2px">
+            <span class="slider-label">Era filter</span>
+            <input type="range" id="era-sl" min="0" max="5" value="0" step="1"/>
+            <span class="slider-val" id="era-val">All</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-4);margin-bottom:10px;padding:0 2px">
+            <span>All</span><span>500CE</span><span>200BCE</span><span>800BCE</span><span>1500</span><span>2000</span>
+          </div>
+
+          <!-- Toggles -->
+          <div class="toggle-row">
+            <span class="toggle-label">Cluster by pantheon</span>
+            <label class="toggle">
+              <input type="checkbox" id="cluster-cb"/>
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Expand on click</span>
+            <label class="toggle">
+              <input type="checkbox" id="expand-cb" checked/>
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Show labels</span>
+            <label class="toggle">
+              <input type="checkbox" id="labels-cb" checked/>
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Animate entrance</span>
+            <label class="toggle">
+              <input type="checkbox" id="anim-cb" checked/>
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Pantheon legend -->
+        <div class="panel">
+          <div class="panel-title"><span class="panel-icon">◉</span> Pantheons</div>
+          <div id="pantheon-legend"
+               style="display:flex;flex-wrap:wrap;gap:4px"></div>
+        </div>
+
+        <!-- Status bar -->
+        <div style="padding:8px 14px;font-size:11px;color:var(--text-3);min-height:24px" id="status-bar"></div>
+
+      </div><!-- /sidebar-scroll -->
+    </aside>
+
+    <!-- ── View area ────────────────────────────────────────── -->
+    <div id="view-area">
+
+      <!-- Graph view -->
+      <div class="view active" id="graph-view">
+        <svg id="graph-svg"></svg>
+
+        <!-- Empty state -->
+        <div id="empty-state" style="display:flex">
+          <div class="empty-rune">⟁</div>
+          <div class="empty-title">Mythological Trait Network</div>
+          <div class="empty-sub">
+            Enter a deity to explore how Indo-European gods connect
+            through shared archetypal traits — not genealogy.
+          </div>
+          <div class="empty-tags">
+            <span class="empty-tag" onclick="window._app.loadDeity('Apollo')">Apollo</span>
+            <span class="empty-tag" onclick="window._app.loadDeity('Indra')">Indra</span>
+            <span class="empty-tag" onclick="window._app.loadDeity('Odin')">Odin</span>
+            <span class="empty-tag" onclick="window._app.loadDeity('Lugh')">Lugh</span>
+            <span class="empty-tag" onclick="window._app.loadDeity('Shiva')">Shiva</span>
+            <span class="empty-tag" onclick="window._app.loadDeity('The Morrigan')">The Morrigan</span>
+            <span class="empty-tag" onclick="window._app.loadDeity('Veles')">Veles</span>
+            <span class="empty-tag" onclick="window._app.loadDeity('Ishtar')">Ishtar</span>
+          </div>
+        </div>
+
+        <!-- Graph controls overlay -->
+        <div id="graph-controls">
+          <button class="btn btn-sm btn-icon" id="zoom-in-btn"    title="Zoom in">+</button>
+          <button class="btn btn-sm btn-icon" id="zoom-out-btn"   title="Zoom out">−</button>
+          <button class="btn btn-sm btn-icon" id="reset-zoom-btn" title="Reset zoom">⟲</button>
+          <button class="btn btn-sm"          id="unpin-btn"      title="Unpin all nodes">Unpin all</button>
+          <button class="btn btn-sm btn-ghost" id="clear-btn"     title="Clear graph">✕ Clear</button>
+        </div>
+
+        <!-- Minimap -->
+        <div id="minimap">
+          <canvas id="minimap-canvas" width="130" height="88"></canvas>
+          <div class="minimap-label">Overview</div>
+        </div>
+
+        <!-- Path strip -->
+        <div id="path-strip">
+          <span style="font-size:11px;color:var(--text-3);flex-shrink:0">Path:</span>
+          <div id="path-content" style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;flex:1"></div>
+          <button class="btn btn-sm btn-ghost" id="path-strip-close">✕</button>
+        </div>
+
+        <!-- Tooltip -->
+        <div class="tooltip" id="tooltip" style="display:none;opacity:0"></div>
+      </div><!-- /graph-view -->
+
+      <!-- Matrix view -->
+      <div class="view" id="matrix-view"></div>
+
+      <!-- Archetype view -->
+      <div class="view" id="archetype-view"></div>
+
+    </div><!-- /view-area -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ── Methodology modal ─────────────────────────────────────── -->
+<div class="modal-backdrop" id="method-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Methodology &amp; Bibliography</div>
+        <div class="modal-subtitle">How the trait vectors, similarity metrics, and era encoding work</div>
+      </div>
+      <button class="btn btn-sm btn-ghost" id="method-close">✕</button>
+    </div>
+    <div id="method-body"></div>
+  </div>
+</div>
+
+<!-- ── Compare modal ─────────────────────────────────────────── -->
+<div class="modal-backdrop" id="compare-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Deity Comparison</div>
+        <div class="modal-subtitle">Side-by-side trait profile with similarity breakdown</div>
+      </div>
+      <button class="btn btn-sm btn-ghost" id="compare-close">✕</button>
+    </div>
+    <div id="compare-content"></div>
+  </div>
+</div>
+
+<!-- ── Toast ─────────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<!-- ── Sidebar tab switching (inline, lightweight) ───────────── -->
+<script>
+  // Sidebar tab toggle — runs before ES modules
+  window.App = window.App || {};
+  App.setSidebarTab = function(tab) {
+    ['info','tours'].forEach(t => {
+      const btn  = document.getElementById(`stab-${t}`);
+      const cont = document.getElementById(`stab-${t}-content`);
+      const active = t === tab;
+      if (btn)  btn.classList.toggle('active', active);
+      if (cont) cont.style.display = active ? 'block' : 'none';
+    });
+    // Make sure tours panel is visible when tours tab selected
+    if (tab === 'tours') {
+      const tp = document.getElementById('tours-panel');
+      if (tp) tp.style.display = 'block';
+    }
+  };
+</script>
+
+<!-- ── Bootstrap ES modules ──────────────────────────────────── -->
+<script type="module">
+  import { init } from './src/app.js';
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,511 @@
+/* ─────────────────────────────────────────────────────────────────
+   views.css — Matrix, archetype cluster, tour panel styles
+   ───────────────────────────────────────────────────────────────── */
+
+/* ── Shared view wrapper ────────────────────────────────────────── */
+.view-inner {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.view-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: var(--gold-bright);
+  margin-bottom: 6px;
+  text-align: center;
+  letter-spacing: .03em;
+}
+
+.view-subtitle {
+  font-size: 12px;
+  color: var(--text-2);
+  text-align: center;
+  max-width: 520px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+/* ── Pantheon Matrix view ───────────────────────────────────────── */
+#matrix-view {
+  background: var(--bg-0);
+}
+
+.matrix-wrap {
+  overflow: auto;
+  max-width: 100%;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border-1);
+  background: var(--bg-2);
+}
+
+.matrix-table {
+  border-collapse: collapse;
+  font-size: 11px;
+  min-width: 560px;
+}
+
+.matrix-table th,
+.matrix-table td {
+  padding: 0;
+  border: 1px solid var(--border-0);
+}
+
+/* Row/column header cells */
+.matrix-th-row,
+.matrix-th-col {
+  padding: 8px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: var(--bg-3);
+}
+
+.matrix-th-row {
+  text-align: right;
+  min-width: 110px;
+}
+
+.matrix-th-col {
+  text-align: center;
+  min-width: 88px;
+  vertical-align: bottom;
+  padding-bottom: 10px;
+}
+
+/* Corner cell */
+.matrix-corner {
+  background: var(--bg-3);
+  min-width: 110px;
+}
+
+/* Data cells */
+.matrix-cell {
+  width: 88px;
+  height: 52px;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  position: relative;
+  transition: transform .12s ease;
+}
+
+.matrix-cell:hover { z-index: 2; transform: scale(1.06); }
+
+.matrix-cell-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  gap: 2px;
+}
+
+.matrix-score {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-0);
+}
+
+.matrix-label {
+  font-size: 9px;
+  color: rgba(255,255,255,.4);
+  letter-spacing: .03em;
+}
+
+/* Diagonal self-cells */
+.matrix-cell-self {
+  background: var(--bg-4) !important;
+  cursor: default;
+}
+
+.matrix-cell-self:hover { transform: none; }
+
+/* Matrix legend bar */
+.matrix-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+.matrix-legend-bar {
+  width: 160px;
+  height: 10px;
+  border-radius: var(--r-full);
+  background: linear-gradient(to right, #1e1e28, #7c6fcc, #f0d080);
+  border: 1px solid var(--border-1);
+}
+
+/* Matrix tooltip panel */
+.matrix-detail {
+  margin-top: 20px;
+  width: 100%;
+  max-width: 580px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+  animation: fade-in .2s ease both;
+}
+
+.matrix-detail-title {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--gold-bright);
+  margin-bottom: 10px;
+}
+
+.matrix-detail-pair {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border-0);
+  font-size: 12px;
+}
+
+.matrix-detail-pair:last-child { border-bottom: none; }
+.matrix-pair-score {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-bright);
+  margin-left: auto;
+}
+
+/* ── Archetype Cluster view ─────────────────────────────────────── */
+#archetype-view {
+  background: var(--bg-0);
+}
+
+.archetype-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 900px;
+  margin-bottom: 20px;
+}
+
+.archetype-card {
+  background: var(--bg-3);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-lg);
+  padding: 12px;
+  cursor: pointer;
+  transition: border-color var(--t-base), background var(--t-base), transform var(--t-fast);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.archetype-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent-glow);
+  opacity: 0;
+  transition: opacity var(--t-base);
+  pointer-events: none;
+}
+
+.archetype-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.archetype-card:hover::before { opacity: 1; }
+
+.archetype-card.active {
+  border-color: var(--accent-bright);
+  background: var(--bg-4);
+}
+
+.archetype-card.active::before { opacity: .5; }
+
+.archetype-icon {
+  font-size: 26px;
+  margin-bottom: 6px;
+  display: block;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+.archetype-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 3px;
+  letter-spacing: .02em;
+}
+
+.archetype-count {
+  font-size: 10px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+
+/* Archetype graph area */
+#archetype-graph {
+  width: 100%;
+  max-width: 900px;
+  height: 420px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+#archetype-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Archetype empty state */
+.archetype-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* ── Tour panel ─────────────────────────────────────────────────── */
+.tour-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tour-card {
+  background: var(--bg-3);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-lg);
+  padding: 12px 13px;
+  cursor: pointer;
+  transition: border-color var(--t-base), background var(--t-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.tour-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 2px 0 0 2px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity var(--t-base);
+}
+
+.tour-card:hover {
+  border-color: var(--accent-dim);
+  background: var(--bg-4);
+}
+
+.tour-card:hover::after { opacity: 1; }
+
+.tour-card.active {
+  border-color: var(--accent);
+  background: var(--bg-4);
+}
+
+.tour-card.active::after { opacity: 1; }
+
+.tour-icon {
+  font-size: 18px;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.tour-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-0);
+  margin-bottom: 3px;
+}
+
+.tour-tagline {
+  font-size: 11px;
+  color: var(--text-2);
+  line-height: 1.45;
+}
+
+.tour-deities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.tour-deity-chip {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-1);
+  color: var(--text-2);
+  background: var(--bg-5);
+}
+
+/* Tour narrative panel — shown in sidebar when tour is active */
+.tour-narrative {
+  background: var(--bg-3);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-lg);
+  padding: 13px 14px;
+  margin-bottom: 8px;
+  animation: fade-in .25s ease both;
+}
+
+.tour-narrative-title {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--gold-bright);
+  margin-bottom: 6px;
+}
+
+.tour-narrative-text {
+  font-size: 11px;
+  color: var(--text-2);
+  line-height: 1.65;
+}
+
+.tour-narrative-text p + p { margin-top: 7px; }
+
+.tour-nav {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* ── Methodology modal sections ─────────────────────────────────── */
+.method-section {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-0);
+}
+
+.method-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.method-heading {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--text-0);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.method-heading-icon { color: var(--gold); }
+
+.method-body {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+
+.method-body p + p { margin-top: 8px; }
+
+.method-formula {
+  background: var(--bg-4);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent-bright);
+  margin: 10px 0;
+  text-align: center;
+  letter-spacing: .02em;
+}
+
+.method-trait-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.method-trait-chip {
+  background: var(--bg-4);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--text-1);
+}
+
+.method-trait-chip strong {
+  display: block;
+  font-size: 10px;
+  color: var(--accent-bright);
+  margin-bottom: 2px;
+}
+
+/* Compare modal grid */
+.compare-trait-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+
+.compare-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-5);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+
+.compare-bar {
+  height: 100%;
+  border-radius: var(--r-sm);
+  transition: width .4s ease;
+}
+
+.compare-trait-name {
+  min-width: 100px;
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+
+/* ── Responsive adjustments ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .archetype-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 7px;
+  }
+
+  .matrix-table { font-size: 10px; }
+  .matrix-th-row, .matrix-th-col { padding: 6px 8px; }
+  .matrix-cell { width: 70px; height: 44px; }
+  .matrix-score { font-size: 11px; }
+}
