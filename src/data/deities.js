@@ -45,6 +45,7 @@ export const PANTHEON_COLORS = {
   Slavic:        '#f06830',
   Mesopotamian:  '#e87bb4',
   Iranian:       '#20c5c5',
+  Egyptian:      '#d4a017',
 };
 
 export const DEITIES = [
@@ -558,5 +559,70 @@ export const DEITIES = [
       'death / underworld': .85, 'ecstasy / madness': .7,
       'disease sender': .8, 'liminal outsider': .6, trickster: .5,
     },
+  },
+
+  // ── EGYPTIAN ────────────────────────────────────────────────────
+  // Egyptian religion is not IE in origin but is included for
+  // comparative purposes — several archetypes show striking
+  // functional parallels with attested IE figures.
+  {
+    id: 'Ra', pantheon: 'Egyptian', era: 5,
+    epithet: 'King of the Gods, The Hidden One',
+    desc: 'Supreme solar deity who sails across the sky by day and through the underworld by night. Chief of the Egyptian pantheon during the Old Kingdom. Merged with Amun to become Amun-Ra.',
+    traits: { solar: .98, 'war / victory': .6, 'ascetic / wisdom': .6, 'death / underworld': .5, 'liminal outsider': .5, fire: .4 },
+  },
+  {
+    id: 'Osiris', pantheon: 'Egyptian', era: 5,
+    epithet: 'Lord of the Dead, King of the Afterlife',
+    desc: 'God of the afterlife, death, and resurrection. Murdered by Set, resurrected by Isis. His death and rebirth made him the prototype of the dying-and-rising god.',
+    traits: { 'death / underworld': .95, fertility: .8, 'ascetic / wisdom': .6, 'liminal outsider': .7, 'ecstasy / madness': .3, solar: .3 },
+  },
+  {
+    id: 'Isis', pantheon: 'Egyptian', era: 5,
+    epithet: 'Great Mother, Mistress of Magic',
+    desc: 'Goddess of magic, healing, marriage, and protection. Resurrected Osiris and conceived Horus. One of the most widely worshipped deities in the ancient world — her cult spread throughout the Roman Empire.',
+    traits: { healer: .9, 'ascetic / wisdom': .8, 'liminal outsider': .7, fertility: .7, trickster: .4, 'death / underworld': .5 },
+  },
+  {
+    id: 'Horus', pantheon: 'Egyptian', era: 5,
+    epithet: 'Lord of the Sky, Avenger of His Father',
+    desc: 'Falcon-headed sky and solar deity. Son of Osiris and Isis, who defeats Set to claim the throne of Egypt. Every living pharaoh was an incarnation of Horus.',
+    traits: { solar: .85, 'war / victory': .9, 'ascetic / wisdom': .5, archer: .5, 'liminal outsider': .4, healer: .3 },
+  },
+  {
+    id: 'Set', pantheon: 'Egyptian', era: 5,
+    epithet: 'Lord of Chaos, God of the Desert',
+    desc: "God of chaos, storms, and the desert. Murderer of Osiris and eternal opponent of Horus. Also a protector of Ra's solar barque against Apophis — an ambiguous figure like Loki.",
+    traits: { 'storm god': .85, "war / victory": .75, 'ecstasy / madness': .7, 'liminal outsider': .7, trickster: .6, 'disease sender': .4, wilderness: .6 },
+  },
+  {
+    id: 'Anubis', pantheon: 'Egyptian', era: 5,
+    epithet: 'Guardian of the Scales, Lord of Embalming',
+    desc: "Jackal-headed god of death, embalming, and the afterlife. Guides souls through the underworld and weighs their hearts against the feather of Ma'at. The quintessential liminal psychopomp.",
+    traits: { 'death / underworld': .95, 'liminal outsider': .9, healer: .4, 'ascetic / wisdom': .5, wilderness: .4 },
+  },
+  {
+    id: 'Thoth', pantheon: 'Egyptian', era: 5,
+    epithet: 'Lord of Divine Words, Scribe of the Gods',
+    desc: 'Ibis-headed god of writing, wisdom, magic, and the moon. Keeper of divine records and mediator between the gods. The Hellenistic fusion Hermes Trismegistus identified him directly with Hermes.',
+    traits: { 'ascetic / wisdom': .95, trickster: .6, 'liminal outsider': .8, healer: .5, 'death / underworld': .5, solar: .4 },
+  },
+  {
+    id: 'Sekhmet', pantheon: 'Egyptian', era: 5,
+    epithet: 'The Powerful One, Lady of Pestilence',
+    desc: 'Lioness goddess of war, fire, and plague. Sent by Ra to punish humanity — nearly destroyed all of mankind. Also invoked as a healer, mirroring the disease-sender/healer duality of Apollo and Rudra.',
+    traits: { 'war / victory': .9, 'disease sender': .88, healer: .7, fire: .6, 'ecstasy / madness': .6, wilderness: .5 },
+  },
+  {
+    id: 'Hathor', pantheon: 'Egyptian', era: 5,
+    epithet: 'Lady of the West, Mistress of Joy',
+    desc: 'Goddess of love, beauty, music, fertility, and the sky. One of the most ancient and widely worshipped Egyptian deities. In her destructive aspect she is identified with Sekhmet.',
+    traits: { fertility: .92, solar: .6, 'ecstasy / madness': .6, healer: .5, 'death / underworld': .4, 'liminal outsider': .4 },
+  },
+  {
+    id: 'Apophis', pantheon: 'Egyptian', era: 5,
+    epithet: 'Serpent of Chaos, Enemy of Ra',
+    desc: "The great chaos serpent who tries to devour Ra's solar barque every night. His nightly defeat by Ra mirrors the PIE dragon-slaying myth — the Egyptian counterpart to Vritra, Typhon, and Jörmungandr.",
+    traits: { 'death / underworld': .85, 'ecstasy / madness': .8, 'disease sender': .6, 'liminal outsider': .5, 'storm god': .4 },
   },
 ];
