@@ -227,6 +227,120 @@ export const COGNATE_PAIRS = [
     note: 'Both are omniscient sky sovereigns who uphold cosmic truth/order (Vedic Ṛta / Avestan Aša). Varuna and Ahura Mazda are cognate in function and likely reflect the same PIE sovereign deity.',
     source: 'Mallory & Adams, 2006; Dumézil, 1958',
   },
+
+
+  // ── Egyptian cross-pantheon parallels ───────────────────────────
+  // Egyptian religion is not IE in origin; these are functional
+  // parallels and structural analogues, not etymological cognates.
+  // Confidence is capped at 'probable' or 'proposed' accordingly.
+  {
+    a: 'Thoth', b: 'Hermes',
+    confidence: 'probable',
+    note: 'Both are divine scribes, wise counsellors, and liminal psychopomps who mediate between the living and dead. The Hellenistic fusion Hermes Trismegistus ("Thrice-Great Hermes") explicitly identified the two.',
+    source: 'West, 2007; Fowden, 1986',
+  },
+  {
+    a: 'Thoth', b: 'Odin',
+    confidence: 'proposed',
+    note: "Both sacrifice personal cost for cosmic wisdom (Odin's eye; Thoth's role as recorder of Ma'at). Both preside over sacred writing systems (runes; hieroglyphs) and serve as counsellors to the chief god.",
+    source: 'Lincoln, 1991',
+  },
+  {
+    a: 'Ra', b: 'Surya',
+    confidence: 'probable',
+    note: "Both are supreme solar deities who cross the sky in a solar vehicle and are all-seeing witnesses. The solar barque of Ra parallels Surya's seven-horsed chariot as mythological solar transport.",
+    source: 'West, 2007',
+  },
+  {
+    a: 'Ra', b: 'Apollo',
+    confidence: 'probable',
+    note: "Both are supreme solar deities associated with cosmic order, truth, and divine kingship. Apollo's solar aspect and Ra's identification with pharaonic authority create strong functional overlap.",
+    source: 'West, 2007',
+  },
+  {
+    a: 'Apophis', b: 'Indra',
+    confidence: 'probable',
+    note: "The Ra-Apophis cosmic combat — the solar deity defeating the chaos serpent nightly — is the Egyptian manifestation of Watkins's reconstructed PIE dragon-slaying formula *"Hero Slays Serpent."",
+    source: 'Watkins, 1995',
+  },
+  {
+    a: 'Apophis', b: 'Thor',
+    confidence: 'probable',
+    note: "Set defeats Apophis nightly to protect Ra's barque; Thor slays Jörmungandr at Ragnarok. Both are cosmic serpent-slaying myths. The structural parallel is among the strongest cross-cultural examples.",
+    source: 'Watkins, 1995',
+  },
+  {
+    a: 'Set', b: 'Loki',
+    confidence: 'proposed',
+    note: "Both are chaos-bringers within a divine family who ultimately trigger cosmic catastrophe. Both are ambiguous — sometimes protectors, ultimately destroyers. The structural role is strikingly parallel.",
+    source: 'Lincoln, 1991',
+  },
+  {
+    a: 'Set', b: 'Veles',
+    confidence: 'proposed',
+    note: "Both are adversarial storm-chaos deities opposed to a celestial order god (Ra/Perun). Set's desert domain and Veles's underworld-wilderness role share the liminal outsider-chaos function.",
+    source: 'Ivanov & Toporov, 1974',
+  },
+  {
+    a: 'Osiris', b: 'Dionysus',
+    confidence: 'probable',
+    note: "Plutarch explicitly compared the two in *De Iside et Osiride*. Both are dying-and-rising gods associated with vegetation, wine, and ecstatic mystery cults. Herodotus identified them.",
+    source: 'Plutarch, De Iside; West, 2007',
+  },
+  {
+    a: 'Osiris', b: 'Baldr',
+    confidence: 'proposed',
+    note: "Both are beloved gods who are murdered through treachery and descend to the underworld. Their deaths trigger a divine crisis. Lincoln proposes a PIE 'slain god' archetype that both reflect.",
+    source: 'Lincoln, 1991',
+  },
+  {
+    a: 'Anubis', b: 'Hermes',
+    confidence: 'strong',
+    note: "Both are jackal/herald psychopomps who guide souls of the dead. The Hellenistic syncretic deity Hermanubis directly fused the two. Their liminal guide-of-souls function is the clearest Egyptian-IE structural parallel.",
+    source: 'Fowden, 1986; West, 2007',
+  },
+  {
+    a: 'Anubis', b: 'Yama',
+    confidence: 'probable',
+    note: "Both are guardians of the dead who judge and guide souls through the afterlife. Yama weighs karma; Anubis weighs the heart against the feather of Ma'at — a strikingly parallel judgment motif.",
+    source: 'West, 2007',
+  },
+  {
+    a: 'Sekhmet', b: 'Rudra',
+    confidence: 'probable',
+    note: "Both are terrifying disease-sender deities who are also paradoxically healers. Sekhmet sends plague and cures it; Rudra shoots disease arrows and possesses healing herbs. The duality is identical.",
+    source: 'West, 2007',
+  },
+  {
+    a: 'Sekhmet', b: 'The Morrigan',
+    confidence: 'proposed',
+    note: "Both are lioness/crow war goddesses associated with battle fury, mass death, and divine wrath. Both are female embodiments of destructive force within a larger pantheon.",
+    source: 'Lincoln, 1991',
+  },
+  {
+    a: 'Hathor', b: 'Ishtar',
+    confidence: 'probable',
+    note: "Both are love-war-sky goddesses with a destructive alter ego (Hathor/Sekhmet; Ishtar's descent). Both receive devotion through music, dance, and ecstatic ritual. West notes the parallel.",
+    source: 'West, 2007',
+  },
+  {
+    a: 'Hathor', b: 'Freya',
+    confidence: 'proposed',
+    note: "Both are love-fertility goddesses associated with gold, beauty, and a dual war aspect. Both receive the dead in some traditions. The love-war goddess archetype spans IE and Egyptian religion.",
+    source: 'Lincoln, 1991',
+  },
+  {
+    a: 'Horus', b: 'Apollo',
+    confidence: 'probable',
+    note: "Both are young solar warrior-gods who avenge a slain father figure and restore divine order. Horus defeats Set to avenge Osiris; Apollo is associated with solar kingship and divine justice.",
+    source: 'West, 2007',
+  },
+  {
+    a: 'Isis', b: 'Brigid',
+    confidence: 'proposed',
+    note: "Both are triple-aspected mother goddesses of healing, craft, and magical knowledge. Isis's widespread mystery cult and Brigid's sacred flame share the archetype of the healing-crafting great goddess.",
+    source: 'MacKillop, 1998',
+  },
 ];
 
 // Build a fast lookup map: "A--B" or "B--A" → cognate data
