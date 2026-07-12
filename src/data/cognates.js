@@ -257,12 +257,13 @@ export const COGNATE_PAIRS = [
     note: "Both are supreme solar deities associated with cosmic order, truth, and divine kingship. Apollo's solar aspect and Ra's identification with pharaonic authority create strong functional overlap.",
     source: 'West, 2007',
   },
-  {
-    a: 'Apophis', b: 'Indra',
-    confidence: 'probable',
-    note: "The Ra-Apophis cosmic combat — the solar deity defeating the chaos serpent nightly — is the Egyptian manifestation of Watkins's reconstructed PIE dragon-slaying formula *"Hero Slays Serpent."",
-    source: 'Watkins, 1995',
-  },
+{
+  a: "Apophis",
+  b: "Indra",
+  confidence: "probable",
+  note: "The Ra-Apophis cosmic combat — the solar deity defeating the chaos serpent nightly — is the Egyptian manifestation of Watkins's reconstructed PIE dragon-slaying formula *\"Hero Slays Serpent.\"",
+  source: "Watkins, 1995",
+},
   {
     a: 'Apophis', b: 'Thor',
     confidence: 'probable',
