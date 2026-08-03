@@ -1,73 +1,82 @@
 /* ─────────────────────────────────────────────────────────────────
-   app.js — Application state + orchestration
-   Wires all views, components, and utilities together
+   app.js — Application state + orchestration (v2.0)
+   Integrated: Pub/Sub Store, Trie Search, Web Workers, Dark Theme
    ───────────────────────────────────────────────────────────────── */
 
-import { DEITIES, PANTHEON_COLORS, TRAITS }  from './data/deities.js';
-import { TOURS }                              from './data/tours.js';
-import { getCognate }                         from './data/cognates.js';
-import { getConnections, getDeityById,
-         sharedTraits, computeSimilarity,
-         traitVector, findPath }              from './utils/similarity.js';
-import { exportJSON, exportSVG }              from './utils/export.js';
+import { DEITIES, PANTHEON_COLORS, TRAITS } from './data/deities.js';
+import { TOURS } from './data/tours.js';
+import { getCognate } from './data/cognates.js';
+import { getDeityById, sharedTraits, traitVector } from './utils/similarity.js';
+import { exportJSON, exportSVG } from './utils/export.js';
 
-import { initGraph, renderGraph, clearGraph,
-         highlightByTrait, clearHighlight,
-         setLabelsVisible, resetZoom,
-         zoomIn, zoomOut, unpinAll,
-         updateMinimap, repositionTooltip }   from './views/graph.js';
-import { initMatrix, renderMatrix }           from './views/matrix.js';
-import { initArchetypes, renderArchetypes }   from './views/archetypes.js';
+// New architecture imports
+import { store, STATE_KEYS } from './utils/store.js';
+import { SearchBar } from './components/search.js';
+import { workerClient } from './utils/workerClient.js';
 
-import { initSidebar, renderSidebar,
-         renderDeityCard, renderHeatmap,
-         renderConnections, clearSidebar }    from './components/sidebar.js';
-import { initTours, renderTourList,
-         renderTourNarrative, clearTour }     from './components/tours.js';
-import { initSurprising, renderSurprisingCard,
-         initMethodologyModal }               from './components/surprising.js';
+import {
+  initGraph, renderGraph, clearGraph,
+  highlightByTrait, clearHighlight,
+  setLabelsVisible, resetZoom,
+  zoomIn, zoomOut, unpinAll,
+  updateMinimap, repositionTooltip
+} from './views/graph.js';
+import { initMatrix, renderMatrix } from './views/matrix.js';
+import { initArchetypes, renderArchetypes } from './views/archetypes.js';
 
-/* ── Application state ───────────────────────────────────────────── */
-const State = {
-  // Graph data
-  nodes:        [],
-  edges:        [],
-  centerDeity:  null,
+import {
+  initSidebar, renderSidebar,
+  renderDeityCard, renderHeatmap,
+  renderConnections, clearSidebar
+} from './components/sidebar.js';
+import {
+  initTours, renderTourList,
+  renderTourNarrative, clearTour
+} from './components/tours.js';
+import {
+  initSurprising, renderSurprisingCard,
+  initMethodologyModal
+} from './components/surprising.js';
 
-  // UI mode
-  view:         'graph',    // 'graph' | 'matrix' | 'archetypes'
-  appMode:      'explore',  // 'explore' | 'compare' | 'path'
-  linkMode:     'top5',     // 'top5' | 'top10' | 'all'
-  metric:       'cosine',   // 'cosine' | 'overlap'
-  threshold:    0.35,
-  eraMin:       0,
-
-  // Graph options
-  showCognates:    false,
-  showLabels:      true,
-  clusterByPan:    false,
-  expandOnClick:   true,
-  animateEntrance: true,
-
-  // Interaction state
-  activeTraitFilter: null,
-  pinnedNodes:       new Set(),
-
-  // Mode-specific
-  compareA:   null,
-  compareB:   null,
-  pathFrom:   null,
-  pathTo:     null,
+/* ── Local mutable state (rendering-only, not pub/sub) ──────────── */
+const LocalState = {
+  nodes: [],
+  edges: [],
+  searchBar: null,
 };
 
 /* ── Init ─────────────────────────────────────────────────────────── */
 export function init() {
+  // Seed the store with initial values
+  store.set({
+    [STATE_KEYS.DEITIES]: DEITIES,
+    [STATE_KEYS.TOURS]: TOURS,
+    [STATE_KEYS.CURRENT_VIEW]: 'graph',
+    [STATE_KEYS.MODE]: 'explore',
+    [STATE_KEYS.SIMILARITY_METHOD]: 'cosine',
+    [STATE_KEYS.GRAPH_THRESHOLD]: 0.35,
+    [STATE_KEYS.SHOW_COGNATES]: false,
+    [STATE_KEYS.PINNED_NODES]: new Set(),
+    [STATE_KEYS.SELECTED_DEITY]: null,
+    [STATE_KEYS.ACTIVE_TRAIT_FILTER]: null,
+    [STATE_KEYS.ERA_FILTER]: 0,
+    linkMode: 'top5',
+    showLabels: true,
+    clusterByPan: false,
+    expandOnClick: true,
+    animateEntrance: true,
+    compareA: null,
+    compareB: null,
+    pathFrom: null,
+    pathTo: null,
+  });
+
   initGraph({
-    state:        State,
-    onNodeClick:  handleNodeClick,
-    onNodeHover:  handleNodeHover,
-    onEdgeHover:  handleEdgeHover,
-    hideTooltip:  hideTooltip,
+    state: store.get(),
+    onNodeClick: handleNodeClick,
+    onNodeHover: handleNodeHover,
+    onEdgeHover: handleEdgeHover,
+    hideTooltip: hideTooltip,
   });
 
   initMatrix({ onLoadDeity: loadDeity });
@@ -77,10 +86,33 @@ export function init() {
   initSurprising({ onLoadDeity: loadDeity });
   initMethodologyModal();
 
+  // Initialize Trie-powered search bar
+  const searchContainer = document.getElementById('search-container');
+  if (searchContainer) {
+    LocalState.searchBar = new SearchBar(searchContainer);
+    LocalState.searchBar.buildIndex(DEITIES);
+  }
+
   buildLegend();
-  buildAutocomplete();
   wireControls();
   renderTourList();
+
+  // Subscribe to reactive state changes
+  store.subscribe(STATE_KEYS.SELECTED_DEITY, (deityId) => {
+    if (deityId) loadDeity(deityId);
+  });
+
+  store.subscribe(STATE_KEYS.SIMILARITY_METHOD, () => {
+    if (store.get(STATE_KEYS.SELECTED_DEITY)) generate();
+  });
+
+  store.subscribe(STATE_KEYS.GRAPH_THRESHOLD, () => {
+    if (store.get(STATE_KEYS.SELECTED_DEITY)) generate();
+  });
+
+  store.subscribe(STATE_KEYS.SHOW_COGNATES, () => {
+    if (store.get(STATE_KEYS.SELECTED_DEITY)) generate();
+  });
 
   // Hide loader
   setTimeout(() => {
@@ -92,22 +124,28 @@ export function init() {
 /* ── Core: load a deity ──────────────────────────────────────────── */
 export function loadDeity(nameOrId, options = {}) {
   const deity = getDeityById(nameOrId);
-  if (!deity) { toast(`"${nameOrId}" not found`); return; }
+  if (!deity) {
+    toast(`"${nameOrId}" not found`);
+    return;
+  }
 
   const { resetGraph = false } = options;
 
-  if (resetGraph || !State.expandOnClick) {
-    State.nodes = [];
-    State.edges = [];
+  if (resetGraph || store.get(STATE_KEYS.MODE) !== 'explore') {
+    LocalState.nodes = [];
+    LocalState.edges = [];
   }
 
-  State.centerDeity     = deity;
-  State.activeTraitFilter = null;
+  store.set(STATE_KEYS.SELECTED_DEITY, deity.id);
+  store.set(STATE_KEYS.ACTIVE_TRAIT_FILTER, null);
   clearTour();
 
-  // Close autocomplete
-  document.getElementById('autocomplete').style.display = 'none';
-  document.getElementById('deity-input').value = deity.id;
+  // Close search dropdown
+  if (LocalState.searchBar) LocalState.searchBar.close();
+
+  // Sync legacy input if it still exists
+  const input = document.getElementById('deity-input');
+  if (input) input.value = deity.id;
 
   switchView('graph');
   generate();
@@ -117,104 +155,130 @@ function loadDeityAndSwitchToGraph(id) {
   loadDeity(id, { resetGraph: true });
 }
 
-/* ── Core: generate network ──────────────────────────────────────── */
-function generate() {
-  const deity = State.centerDeity;
+/* ── Core: generate network (Web Worker) ─────────────────────────── */
+async function generate() {
+  const deityId = store.get(STATE_KEYS.SELECTED_DEITY);
+  const deity = getDeityById(deityId);
   if (!deity) return;
 
-  let connections = getConnections(deity, State.metric, State.threshold, State.eraMin);
+  const metric = store.get(STATE_KEYS.SIMILARITY_METHOD);
+  const threshold = store.get(STATE_KEYS.GRAPH_THRESHOLD);
+  const eraMin = store.get(STATE_KEYS.ERA_FILTER) || 0;
+  const linkMode = store.get('linkMode') || 'top5';
 
-  if (State.linkMode === 'top5')  connections = connections.slice(0, 5);
-  if (State.linkMode === 'top10') connections = connections.slice(0, 10);
+  showLoading(true);
 
-  // Merge nodes (expand mode)
-  const existingIds = new Set(State.nodes.map(n => n.id));
-  const W = () => document.getElementById('view-area').clientWidth  || 800;
-  const H = () => document.getElementById('view-area').clientHeight || 600;
+  try {
+    let connections = await workerClient.getConnections(
+      deity, DEITIES, metric, threshold
+    );
 
-  // Add center if not present
-  if (!existingIds.has(deity.id)) {
-    State.nodes.push({ ...deity, x: W() / 2, y: H() / 2 });
-    existingIds.add(deity.id);
+    // Era filter
+    if (eraMin > 0) {
+      connections = connections.filter(c => c.deity.era >= eraMin);
+    }
+
+    // Link mode cap
+    if (linkMode === 'top5') connections = connections.slice(0, 5);
+    if (linkMode === 'top10') connections = connections.slice(0, 10);
+
+    // Merge nodes (expand mode)
+    const existingIds = new Set(LocalState.nodes.map(n => n.id));
+    const W = () => document.getElementById('view-area')?.clientWidth || 800;
+    const H = () => document.getElementById('view-area')?.clientHeight || 600;
+
+    if (!existingIds.has(deity.id)) {
+      LocalState.nodes.push({ ...deity, x: W() / 2, y: H() / 2 });
+      existingIds.add(deity.id);
+    }
+
+    connections.forEach(c => {
+      if (!existingIds.has(c.deity.id)) {
+        LocalState.nodes.push({
+          ...c.deity,
+          x: W() / 2 + (Math.random() - 0.5) * 160,
+          y: H() / 2 + (Math.random() - 0.5) * 120,
+        });
+        existingIds.add(c.deity.id);
+      }
+    });
+
+    // Build edges (deduplicate)
+    const existingEdgeKeys = new Set(LocalState.edges.map(e => e._key));
+    connections.forEach(c => {
+      const key1 = `${deity.id}--${c.deity.id}`;
+      const key2 = `${c.deity.id}--${deity.id}`;
+      if (!existingEdgeKeys.has(key1) && !existingEdgeKeys.has(key2)) {
+        LocalState.edges.push({
+          _key: key1,
+          source: deity.id,
+          target: c.deity.id,
+          weight: c.score,
+          shared: c.shared,
+          cognate: getCognate(deity.id, c.deity.id),
+        });
+        existingEdgeKeys.add(key1);
+      }
+    });
+
+    renderGraph(LocalState.nodes, LocalState.edges, {
+      animate: store.get('animateEntrance') ?? true,
+      showLabels: store.get('showLabels') ?? true,
+      cluster: store.get('clusterByPan') ?? false,
+      activeFilter: store.get(STATE_KEYS.ACTIVE_TRAIT_FILTER),
+      showCognates: store.get(STATE_KEYS.SHOW_COGNATES),
+      centerDeityId: deity.id,
+    });
+
+    renderSidebar(deity, connections, store.get(STATE_KEYS.ACTIVE_TRAIT_FILTER));
+    renderSurprisingCard(deity, metric);
+    setStatusBar(
+      `${deity.id} · ${connections.length} connection${connections.length !== 1 ? 's' : ''} · ${metric}`
+    );
+  } catch (error) {
+    console.error('[generate]', error);
+    toast('Error generating network');
+  } finally {
+    showLoading(false);
   }
-
-  // Add connection nodes
-  connections.forEach(c => {
-    if (!existingIds.has(c.deity.id)) {
-      State.nodes.push({
-        ...c.deity,
-        x: W() / 2 + (Math.random() - 0.5) * 160,
-        y: H() / 2 + (Math.random() - 0.5) * 120,
-      });
-      existingIds.add(c.deity.id);
-    }
-  });
-
-  // Add edges (deduplicate)
-  const existingEdgeKeys = new Set(State.edges.map(e => e._key));
-  connections.forEach(c => {
-    const key1 = `${deity.id}--${c.deity.id}`;
-    const key2 = `${c.deity.id}--${deity.id}`;
-    if (!existingEdgeKeys.has(key1) && !existingEdgeKeys.has(key2)) {
-      State.edges.push({
-        _key:   key1,
-        source: deity.id,
-        target: c.deity.id,
-        weight: c.score,
-        shared: c.shared,
-        cognate: getCognate(deity.id, c.deity.id),
-      });
-      existingEdgeKeys.add(key1);
-    }
-  });
-
-  renderGraph(State.nodes, State.edges, {
-    animate:       State.animateEntrance,
-    showLabels:    State.showLabels,
-    cluster:       State.clusterByPan,
-    activeFilter:  State.activeTraitFilter,
-    showCognates:  State.showCognates,
-    centerDeityId: deity.id,
-  });
-
-  renderSidebar(deity, connections, State.activeTraitFilter);
-  renderSurprisingCard(deity, State.metric);
-  setStatusBar(`${deity.id} · ${connections.length} connection${connections.length !== 1 ? 's' : ''} · ${State.metric}`);
 }
 
 /* ── Node click handler ──────────────────────────────────────────── */
 function handleNodeClick(d, evt) {
-  if (State.appMode === 'compare') {
-    if (!State.compareA) {
-      State.compareA = d;
+  const mode = store.get(STATE_KEYS.MODE);
+
+  if (mode === 'compare') {
+    if (!store.get('compareA')) {
+      store.set('compareA', d);
       toast(`Compare: ${d.id} selected — now click another deity`);
       return;
     }
-    State.compareB = d;
-    showCompareModal(State.compareA, State.compareB);
-    State.compareA = null;
-    State.compareB = null;
+    store.set('compareB', d);
+    showCompareModal(store.get('compareA'), store.get('compareB'));
+    store.set('compareA', null);
+    store.set('compareB', null);
     return;
   }
 
-  if (State.appMode === 'path') {
-    if (!State.pathFrom) {
-      State.pathFrom = d;
+  if (mode === 'path') {
+    if (!store.get('pathFrom')) {
+      store.set('pathFrom', d);
       toast(`Path: ${d.id} → click destination deity`);
       return;
     }
-    State.pathTo = d;
-    runPathFind(State.pathFrom, State.pathTo);
-    State.pathFrom = null;
-    State.pathTo   = null;
+    store.set('pathTo', d);
+    runPathFind(store.get('pathFrom'), store.get('pathTo'));
+    store.set('pathFrom', null);
+    store.set('pathTo', null);
     return;
   }
 
   // Explore mode
   const deity = getDeityById(d.id);
   if (!deity) return;
-  State.centerDeity = deity;
-  document.getElementById('deity-input').value = deity.id;
+  store.set(STATE_KEYS.SELECTED_DEITY, deity.id);
+  const input = document.getElementById('deity-input');
+  if (input) input.value = deity.id;
   generate();
 }
 
@@ -226,8 +290,10 @@ function handleNodeHover(evt, d, edges) {
     return sid === d.id || tid === d.id;
   });
 
-  const isCenter = State.centerDeity && d.id === State.centerDeity.id;
+  const centerId = store.get(STATE_KEYS.SELECTED_DEITY);
+  const isCenter = centerId && d.id === centerId;
   const col = PANTHEON_COLORS[d.pantheon] || '#888';
+  const activeFilter = store.get(STATE_KEYS.ACTIVE_TRAIT_FILTER);
 
   let html = `
     <div class="tt-title">${d.id}</div>
@@ -242,7 +308,7 @@ function handleNodeHover(evt, d, edges) {
     if (edge.shared?.length) {
       html += `<div class="tt-traits">
         ${edge.shared.map(t =>
-          `<span class="tt-trait${State.activeTraitFilter === t ? ' active-trait' : ''}">${t}</span>`
+          `<span class="tt-trait${activeFilter === t ? ' active-trait' : ''}">${t}</span>`
         ).join('')}
       </div>`;
     }
@@ -251,12 +317,13 @@ function handleNodeHover(evt, d, edges) {
     }
   }
 
+  const mode = store.get(STATE_KEYS.MODE);
   html += `<div class="tt-hint">${
     isCenter
       ? 'Center node'
-      : State.appMode === 'explore'
+      : mode === 'explore'
         ? 'Click to expand · Double-click to pin'
-        : State.appMode === 'compare'
+        : mode === 'compare'
           ? 'Click to select for comparison'
           : 'Click to select as path endpoint'
   }</div>`;
@@ -267,16 +334,22 @@ function handleNodeHover(evt, d, edges) {
 function handleEdgeHover(evt, d) {
   const sid = typeof d.source === 'object' ? d.source.id : d.source;
   const tid = typeof d.target === 'object' ? d.target.id : d.target;
+  const activeFilter = store.get(STATE_KEYS.ACTIVE_TRAIT_FILTER);
+
   let html = `
     <div class="tt-title">${sid} ↔ ${tid}</div>
     <div class="tt-score">Similarity: <strong>${d.weight.toFixed(3)}</strong></div>
   `;
   if (d.shared?.length) {
     html += `<div class="tt-traits">
-      ${d.shared.map(t => `<span class="tt-trait${State.activeTraitFilter === t ? ' active-trait' : ''}">${t}</span>`).join('')}
+      ${d.shared.map(t =>
+        `<span class="tt-trait${activeFilter === t ? ' active-trait' : ''}">${t}</span>`
+      ).join('')}
     </div>`;
   }
-  if (d.cognate) html += `<div class="tt-cognate">⟡ PIE cognate: ${d.cognate.note}</div>`;
+  if (d.cognate) {
+    html += `<div class="tt-cognate">⟡ PIE cognate: ${d.cognate.note}</div>`;
+  }
   showTooltip(html, evt);
 }
 
@@ -293,66 +366,74 @@ function hideTooltip() {
   const tt = document.getElementById('tooltip');
   if (!tt) return;
   tt.style.opacity = '0';
-  setTimeout(() => { if (tt.style.opacity === '0') tt.style.display = 'none'; }, 120);
+  setTimeout(() => {
+    if (tt.style.opacity === '0') tt.style.display = 'none';
+  }, 120);
 }
 
 /* ── Trait filter ────────────────────────────────────────────────── */
 function handleTraitClick(trait) {
-  State.activeTraitFilter = State.activeTraitFilter === trait ? null : trait;
-  const af = State.activeTraitFilter;
+  const current = store.get(STATE_KEYS.ACTIVE_TRAIT_FILTER);
+  const next = current === trait ? null : trait;
+  store.set(STATE_KEYS.ACTIVE_TRAIT_FILTER, next);
 
-  if (af) {
-    highlightByTrait(af, State.edges);
-    toast(`Filtering edges by trait: ${af}`);
+  if (next) {
+    highlightByTrait(next, LocalState.edges);
+    toast(`Filtering edges by trait: ${next}`);
   } else {
     clearHighlight();
   }
 
-  if (State.centerDeity) renderHeatmap(State.centerDeity, af);
+  const centerId = store.get(STATE_KEYS.SELECTED_DEITY);
+  if (centerId) {
+    const deity = getDeityById(centerId);
+    if (deity) renderHeatmap(deity, next);
+  }
 }
 
 /* ── Tour load ───────────────────────────────────────────────────── */
-function handleTourLoad(tour) {
-  // Build a pre-baked network from the tour's deity list
-  State.nodes = [];
-  State.edges = [];
-  State.activeTraitFilter = null;
+async function handleTourLoad(tour) {
+  LocalState.nodes = [];
+  LocalState.edges = [];
+  store.set(STATE_KEYS.ACTIVE_TRAIT_FILTER, null);
   clearHighlight();
 
   const center = getDeityById(tour.centerDeity);
   if (!center) return;
 
-  State.centerDeity = center;
-  document.getElementById('deity-input').value = center.id;
+  store.set(STATE_KEYS.SELECTED_DEITY, center.id);
+  const input = document.getElementById('deity-input');
+  if (input) input.value = center.id;
 
-  const W = document.getElementById('view-area').clientWidth  || 800;
-  const H = document.getElementById('view-area').clientHeight || 600;
+  const W = document.getElementById('view-area')?.clientWidth || 800;
+  const H = document.getElementById('view-area')?.clientHeight || 600;
   const tourDeities = tour.deities.map(id => getDeityById(id)).filter(Boolean);
 
   // Place center
-  State.nodes.push({ ...center, x: W / 2, y: H / 2 });
+  LocalState.nodes.push({ ...center, x: W / 2, y: H / 2 });
 
-  // Place other deities in a ring
+  // Ring layout for other deities
   tourDeities.filter(d => d.id !== center.id).forEach((d, i, arr) => {
     const angle = (i / arr.length) * Math.PI * 2;
-    State.nodes.push({
+    LocalState.nodes.push({
       ...d,
       x: W / 2 + Math.cos(angle) * 160,
       y: H / 2 + Math.sin(angle) * 120,
     });
   });
 
-  // Build all edges between tour deities
-  const nodeIds = new Set(State.nodes.map(n => n.id));
-  for (let i = 0; i < State.nodes.length; i++) {
-    for (let j = i + 1; j < State.nodes.length; j++) {
-      const a = State.nodes[i];
-      const b = State.nodes[j];
-      const score = computeSimilarity(a, b, State.metric);
+  // Build all pairwise edges within the tour
+  const metric = store.get(STATE_KEYS.SIMILARITY_METHOD);
+  for (let i = 0; i < LocalState.nodes.length; i++) {
+    for (let j = i + 1; j < LocalState.nodes.length; j++) {
+      const a = LocalState.nodes[i];
+      const b = LocalState.nodes[j];
+      const score = await workerClient.computeSimilarity(a, b, metric);
       if (score >= 0.25) {
-        const key = `${a.id}--${b.id}`;
-        State.edges.push({
-          _key: key, source: a.id, target: b.id,
+        LocalState.edges.push({
+          _key: `${a.id}--${b.id}`,
+          source: a.id,
+          target: b.id,
           weight: score,
           shared: sharedTraits(a, b),
           cognate: getCognate(a.id, b.id),
@@ -363,140 +444,164 @@ function handleTourLoad(tour) {
 
   switchView('graph');
 
-  renderGraph(State.nodes, State.edges, {
-    animate: true, showLabels: State.showLabels,
-    cluster: false, showCognates: true,
+  renderGraph(LocalState.nodes, LocalState.edges, {
+    animate: true,
+    showLabels: store.get('showLabels') ?? true,
+    cluster: false,
+    showCognates: true,
     centerDeityId: center.id,
   });
 
   renderTourNarrative(tour);
-  renderSidebar(center, getConnections(center, State.metric, 0.25), null);
-  setStatusBar(`Tour: ${tour.name} · ${State.nodes.length} deities`);
+
+  const centerConns = await workerClient.getConnections(center, DEITIES, metric, 0.25);
+  renderSidebar(center, centerConns, null);
+  setStatusBar(`Tour: ${tour.name} · ${LocalState.nodes.length} deities`);
 }
 
-/* ── Path finder ─────────────────────────────────────────────────── */
-function runPathFind(from, to) {
-  const path = findPath(from.id, to.id, State.metric, Math.max(0.2, State.threshold - 0.1));
-  if (!path) { toast(`No path found between ${from.id} and ${to.id} — try lowering the threshold`); return; }
+/* ── Path finder (Web Worker) ────────────────────────────────────── */
+async function runPathFind(from, to) {
+  const metric = store.get(STATE_KEYS.SIMILARITY_METHOD);
+  const threshold = store.get(STATE_KEYS.GRAPH_THRESHOLD);
 
-  State.nodes = [];
-  State.edges = [];
+  showLoading(true);
+  toast('Finding path...');
 
-  const W = document.getElementById('view-area').clientWidth  || 800;
-  const H = document.getElementById('view-area').clientHeight || 600;
+  try {
+    const path = await workerClient.findPath(
+      from.id, to.id, DEITIES, metric, Math.max(0.2, threshold - 0.1)
+    );
 
-  path.forEach((d, i) => {
-    State.nodes.push({
-      ...d,
-      x: W * 0.1 + (i / (path.length - 1)) * W * 0.8,
-      y: H / 2 + (Math.random() - 0.5) * 80,
-    });
-    if (i > 0) {
-      const score = computeSimilarity(path[i - 1], path[i], State.metric);
-      State.edges.push({
-        _key:   `${path[i-1].id}--${path[i].id}`,
-        source: path[i-1].id,
-        target: path[i].id,
-        weight: score,
-        shared: sharedTraits(path[i-1], path[i]),
-        cognate: getCognate(path[i-1].id, path[i].id),
-      });
+    if (!path) {
+      toast(`No path found between ${from.id} and ${to.id} — try lowering the threshold`);
+      return;
     }
-  });
 
-  State.centerDeity = path[0];
+    LocalState.nodes = [];
+    LocalState.edges = [];
 
-  // Show path strip
-  const strip = document.getElementById('path-strip');
-  if (strip) {
-    strip.style.display = 'flex';
-    document.getElementById('path-content').innerHTML = path.map((d, i) =>
-      `${i > 0 ? '<span class="path-arrow">→</span>' : ''}
-       <span class="path-node" onclick="window._app.loadDeity('${d.id}')"
-             style="border-color:${PANTHEON_COLORS[d.pantheon]}">${d.id}</span>`
-    ).join('');
+    const W = document.getElementById('view-area')?.clientWidth || 800;
+    const H = document.getElementById('view-area')?.clientHeight || 600;
+
+    for (let i = 0; i < path.length; i++) {
+      const d = path[i];
+      LocalState.nodes.push({
+        ...d,
+        x: W * 0.1 + (i / (path.length - 1)) * W * 0.8,
+        y: H / 2 + (Math.random() - 0.5) * 80,
+      });
+      if (i > 0) {
+        const score = await workerClient.computeSimilarity(path[i - 1], path[i], metric);
+        LocalState.edges.push({
+          _key: `${path[i - 1].id}--${path[i].id}`,
+          source: path[i - 1].id,
+          target: path[i].id,
+          weight: score,
+          shared: sharedTraits(path[i - 1], path[i]),
+          cognate: getCognate(path[i - 1].id, path[i].id),
+        });
+      }
+    }
+
+    store.set(STATE_KEYS.SELECTED_DEITY, path[0].id);
+
+    // Render path strip
+    const strip = document.getElementById('path-strip');
+    if (strip) {
+      strip.style.display = 'flex';
+      document.getElementById('path-content').innerHTML = path.map((d, i) =>
+        `${i > 0 ? '<span class="path-arrow">→</span>' : ''}
+         <span class="path-node" onclick="window._app.loadDeity('${d.id}')"
+               style="border-color:${PANTHEON_COLORS[d.pantheon]}">${d.id}</span>`
+      ).join('');
+    }
+
+    renderGraph(LocalState.nodes, LocalState.edges, {
+      animate: true,
+      showLabels: true,
+      showCognates: store.get(STATE_KEYS.SHOW_COGNATES),
+      centerDeityId: from.id,
+    });
+
+    toast(`Path: ${path.map(d => d.id).join(' → ')}`);
+  } catch (error) {
+    console.error('[runPathFind]', error);
+    toast('Error finding path');
+  } finally {
+    showLoading(false);
   }
-
-  renderGraph(State.nodes, State.edges, {
-    animate: true, showLabels: true,
-    showCognates: State.showCognates,
-    centerDeityId: from.id,
-  });
-
-  toast(`Path: ${path.map(d => d.id).join(' → ')}`);
 }
 
-/* ── Compare modal ───────────────────────────────────────────────── */
-function showCompareModal(a, b) {
+/* ── Compare modal (Web Worker) ──────────────────────────────────── */
+async function showCompareModal(a, b) {
   const modal = document.getElementById('compare-modal');
   if (!modal) return;
 
-  const score  = computeSimilarity(a, b, State.metric);
+  const metric = store.get(STATE_KEYS.SIMILARITY_METHOD);
+  const score = await workerClient.computeSimilarity(a, b, metric);
   const shared = sharedTraits(a, b);
-  const cog    = getCognate(a.id, b.id);
-  const colA   = PANTHEON_COLORS[a.pantheon] || '#888';
-  const colB   = PANTHEON_COLORS[b.pantheon] || '#888';
+  const cog = getCognate(a.id, b.id);
+  const colA = PANTHEON_COLORS[a.pantheon] || '#888';
+  const colB = PANTHEON_COLORS[b.pantheon] || '#888';
 
-  // TRAITS and traitVector are available via static top-level imports
-  (() => {
-    const va = traitVector(a);
-    const vb = traitVector(b);
+  const va = traitVector(a);
+  const vb = traitVector(b);
 
-    document.getElementById('compare-content').innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;margin-bottom:16px;align-items:start">
-        <div>
-          <div style="font-family:var(--font-serif);font-size:16px;color:${colA}">${a.id}</div>
-          <div style="font-size:11px;color:var(--text-2)">${a.pantheon} · ${a.epithet}</div>
-        </div>
-        <div style="text-align:center;padding-top:6px">
-          <div style="font-size:22px;color:var(--text-3);font-family:var(--font-serif)">vs</div>
-          <div style="font-size:18px;font-weight:700;color:var(--accent-bright);margin-top:3px">${score.toFixed(3)}</div>
-          <div style="font-size:10px;color:var(--text-3)">${State.metric} similarity</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:var(--font-serif);font-size:16px;color:${colB}">${b.id}</div>
-          <div style="font-size:11px;color:var(--text-2)">${b.pantheon} · ${b.epithet}</div>
-        </div>
+  document.getElementById('compare-content').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;margin-bottom:16px;align-items:start">
+      <div>
+        <div style="font-family:var(--font-display);font-size:16px;color:${colA}">${a.id}</div>
+        <div style="font-size:11px;color:var(--text-secondary)">${a.pantheon} · ${a.epithet}</div>
       </div>
+      <div style="text-align:center;padding-top:6px">
+        <div style="font-size:22px;color:var(--text-muted);font-family:var(--font-display)">vs</div>
+        <div style="font-size:18px;font-weight:700;color:var(--gold-bright);margin-top:3px">${score.toFixed(3)}</div>
+        <div style="font-size:10px;color:var(--text-muted)">${metric} similarity</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:var(--font-display);font-size:16px;color:${colB}">${b.id}</div>
+        <div style="font-size:11px;color:var(--text-secondary)">${b.pantheon} · ${b.epithet}</div>
+      </div>
+    </div>
 
-      ${cog ? `
-        <div style="background:var(--gold-glow);border:1px solid rgba(201,168,76,.3);border-radius:var(--r-md);padding:9px 12px;font-size:11px;color:var(--gold);margin-bottom:12px">
-          ⟡ Known PIE cognate: ${cog.note} <span style="color:var(--text-3)">(${cog.confidence} · ${cog.source})</span>
-        </div>` : ''}
+    ${cog ? `
+      <div class="card" style="border-color:rgba(212,165,116,.3);padding:9px 12px;font-size:11px;color:var(--gold);margin-bottom:12px">
+        ⟡ Known PIE cognate: ${cog.note}
+        <span style="color:var(--text-muted)">(${cog.confidence} · ${cog.source})</span>
+      </div>` : ''}
 
-      ${shared.length ? `
-        <div style="margin-bottom:12px">
-          <div style="font-size:10px;color:var(--text-3);margin-bottom:6px">Shared traits (${shared.length})</div>
-          <div style="display:flex;flex-wrap:wrap;gap:4px">
-            ${shared.map(t => `<span class="trait-pill trait-pill-accent">${t}</span>`).join('')}
+    ${shared.length ? `
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px">Shared traits (${shared.length})</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px">
+          ${shared.map(t => `<span class="badge">${t}</span>`).join('')}
+        </div>
+      </div>` : ''}
+
+    <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px">
+      ← ${a.id} intensity · trait · ${b.id} intensity →
+    </div>
+    ${TRAITS.map((t, i) => {
+      if (va[i] === 0 && vb[i] === 0) return '';
+      return `
+        <div class="compare-trait-row">
+          <div class="compare-bar-wrap">
+            <div class="compare-bar" style="width:${(va[i] * 100).toFixed(0)}%;background:${colA};float:right"></div>
           </div>
-        </div>` : ''}
+          <div class="compare-trait-name">${t}</div>
+          <div class="compare-bar-wrap">
+            <div class="compare-bar" style="width:${(vb[i] * 100).toFixed(0)}%;background:${colB}"></div>
+          </div>
+        </div>`;
+    }).join('')}
+  `;
 
-      <div style="font-size:10px;color:var(--text-3);margin-bottom:8px">
-        ← ${a.id} intensity · trait · ${b.id} intensity →
-      </div>
-      ${TRAITS.map((t, i) => {
-        if (va[i] === 0 && vb[i] === 0) return '';
-        return `
-          <div class="compare-trait-row">
-            <div class="compare-bar-wrap">
-              <div class="compare-bar" style="width:${(va[i]*100).toFixed(0)}%;background:${colA};float:right"></div>
-            </div>
-            <div class="compare-trait-name">${t}</div>
-            <div class="compare-bar-wrap">
-              <div class="compare-bar" style="width:${(vb[i]*100).toFixed(0)}%;background:${colB}"></div>
-            </div>
-          </div>`;
-      }).join('')}
-    `;
-
-    modal.classList.add('open');
-  })();
+  modal.classList.add('open');
 }
 
 /* ── View switching ──────────────────────────────────────────────── */
 export function switchView(view) {
-  State.view = view;
+  store.set(STATE_KEYS.CURRENT_VIEW, view);
 
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.header-tab[data-view]').forEach(el =>
@@ -507,89 +612,19 @@ export function switchView(view) {
   if (viewEl) viewEl.classList.add('active');
 
   if (view === 'matrix') {
-    renderMatrix(State.metric);
+    renderMatrix(store.get(STATE_KEYS.SIMILARITY_METHOD));
   } else if (view === 'archetypes') {
     renderArchetypes();
   }
 }
 
-/* ── Autocomplete ────────────────────────────────────────────────── */
-function buildAutocomplete() {
-  const inp = document.getElementById('deity-input');
-  const ac  = document.getElementById('autocomplete');
-  let acIdx = -1;
-
-  inp.addEventListener('input', () => {
-    const q = inp.value.toLowerCase().trim();
-    acIdx = -1;
-    if (!q) { ac.style.display = 'none'; return; }
-
-    const matches = DEITIES.filter(d =>
-      d.id.toLowerCase().includes(q) ||
-      d.pantheon.toLowerCase().includes(q) ||
-      d.epithet.toLowerCase().includes(q)
-    ).slice(0, 9);
-
-    if (!matches.length) { ac.style.display = 'none'; return; }
-
-    ac.innerHTML = matches.map((d, i) => {
-      const col = PANTHEON_COLORS[d.pantheon] || '#888';
-      return `
-        <div class="ac-item" data-idx="${i}" data-id="${d.id}">
-          <span class="ac-name">${highlight(d.id, q)}</span>
-          <span class="ac-pan" style="background:${col}22;color:${col}">${d.pantheon}</span>
-        </div>`;
-    }).join('');
-    ac.style.display = 'block';
-
-    ac.querySelectorAll('.ac-item').forEach(el => {
-      el.addEventListener('click', () => {
-        loadDeity(el.dataset.id, { resetGraph: true });
-        ac.style.display = 'none';
-      });
-    });
-  });
-
-  inp.addEventListener('keydown', e => {
-    const items = ac.querySelectorAll('.ac-item');
-    if (e.key === 'ArrowDown') { acIdx = Math.min(acIdx + 1, items.length - 1); highlightAC(items, acIdx); e.preventDefault(); }
-    else if (e.key === 'ArrowUp') { acIdx = Math.max(acIdx - 1, -1); highlightAC(items, acIdx); e.preventDefault(); }
-    else if (e.key === 'Enter') {
-      if (acIdx >= 0 && items[acIdx]) { items[acIdx].click(); }
-      else { triggerGenerate(); }
-      ac.style.display = 'none';
-    }
-    else if (e.key === 'Escape') ac.style.display = 'none';
-  });
-
-  document.addEventListener('click', e => {
-    if (!inp.contains(e.target) && !ac.contains(e.target)) ac.style.display = 'none';
-  });
-}
-
-function highlight(text, q) {
-  const idx = text.toLowerCase().indexOf(q);
-  if (idx < 0) return text;
-  return `${text.slice(0, idx)}<strong>${text.slice(idx, idx + q.length)}</strong>${text.slice(idx + q.length)}`;
-}
-
-function highlightAC(items, idx) {
-  items.forEach((el, i) => el.classList.toggle('focused', i === idx));
-  if (idx >= 0) items[idx].scrollIntoView({ block: 'nearest' });
-}
-
-function triggerGenerate() {
-  const name = document.getElementById('deity-input').value.trim();
-  if (!name) return;
-  loadDeity(name, { resetGraph: true });
-}
-
 /* ── Wire all UI controls ────────────────────────────────────────── */
 function wireControls() {
-  // Generate button
-  document.getElementById('gen-btn')?.addEventListener('click', () =>
-    triggerGenerate()
-  );
+  // Generate button (legacy input fallback)
+  document.getElementById('gen-btn')?.addEventListener('click', () => {
+    const name = document.getElementById('deity-input')?.value.trim();
+    if (name) loadDeity(name, { resetGraph: true });
+  });
 
   // Surprise me
   document.getElementById('surprise-btn')?.addEventListener('click', () => {
@@ -606,135 +641,154 @@ function wireControls() {
   // App mode tabs
   document.querySelectorAll('.header-tab[data-mode]').forEach(btn => {
     btn.addEventListener('click', () => {
-      State.appMode = btn.dataset.mode;
+      store.set(STATE_KEYS.MODE, btn.dataset.mode);
       document.querySelectorAll('.header-tab[data-mode]').forEach(b =>
-        b.classList.toggle('active', b.dataset.mode === State.appMode)
+        b.classList.toggle('active', b.dataset.mode === store.get(STATE_KEYS.MODE))
       );
-      if (State.appMode === 'compare') toast('Compare: click two nodes');
-      if (State.appMode === 'path')    toast('Path: click start → then destination');
+      const mode = store.get(STATE_KEYS.MODE);
+      if (mode === 'compare') toast('Compare: click two nodes');
+      if (mode === 'path') toast('Path: click start → then destination');
     });
   });
 
   // Link mode
   document.querySelectorAll('.tab-btn[data-link]').forEach(btn => {
     btn.addEventListener('click', () => {
-      State.linkMode = btn.dataset.link;
+      store.set('linkMode', btn.dataset.link);
       document.querySelectorAll('.tab-btn[data-link]').forEach(b =>
-        b.classList.toggle('active', b.dataset.link === State.linkMode)
+        b.classList.toggle('active', b.dataset.link === store.get('linkMode'))
       );
-      if (State.centerDeity) { State.nodes = []; State.edges = []; generate(); }
+      if (store.get(STATE_KEYS.SELECTED_DEITY)) {
+        LocalState.nodes = [];
+        LocalState.edges = [];
+        generate();
+      }
     });
   });
 
   // Metric
   document.querySelectorAll('.tab-btn[data-metric]').forEach(btn => {
     btn.addEventListener('click', () => {
-      State.metric = btn.dataset.metric;
+      store.set(STATE_KEYS.SIMILARITY_METHOD, btn.dataset.metric);
       document.querySelectorAll('.tab-btn[data-metric]').forEach(b =>
-        b.classList.toggle('active', b.dataset.metric === State.metric)
+        b.classList.toggle('active', b.dataset.metric === store.get(STATE_KEYS.SIMILARITY_METHOD))
       );
-      if (State.centerDeity) { State.nodes = []; State.edges = []; generate(); }
     });
   });
 
   // Threshold slider
   const thSlider = document.getElementById('thresh-sl');
-  const thVal    = document.getElementById('thresh-val');
+  const thVal = document.getElementById('thresh-val');
   thSlider?.addEventListener('input', () => {
-    State.threshold = parseFloat(thSlider.value) / 100;
-    if (thVal) thVal.textContent = State.threshold.toFixed(2);
-    if (State.centerDeity) { State.nodes = []; State.edges = []; generate(); }
+    const value = parseFloat(thSlider.value) / 100;
+    store.set(STATE_KEYS.GRAPH_THRESHOLD, value);
+    if (thVal) thVal.textContent = value.toFixed(2);
   });
 
   // Era slider
   const eraSlider = document.getElementById('era-sl');
-  const eraVal    = document.getElementById('era-val');
+  const eraVal = document.getElementById('era-val');
   const eraLabels = ['All', '500 CE', '200 BCE', '800 BCE', '1500 BCE', '2000 BCE'];
   eraSlider?.addEventListener('input', () => {
-    State.eraMin = parseInt(eraSlider.value);
-    if (eraVal) eraVal.textContent = eraLabels[State.eraMin];
-    if (State.centerDeity) { State.nodes = []; State.edges = []; generate(); }
+    const value = parseInt(eraSlider.value);
+    store.set(STATE_KEYS.ERA_FILTER, value);
+    if (eraVal) eraVal.textContent = eraLabels[value];
   });
 
   // Toggle: cluster
   document.getElementById('cluster-cb')?.addEventListener('change', e => {
-    State.clusterByPan = e.target.checked;
-    if (State.centerDeity) generate();
+    store.set('clusterByPan', e.target.checked);
+    if (store.get(STATE_KEYS.SELECTED_DEITY)) generate();
   });
 
   // Toggle: expand on click
   document.getElementById('expand-cb')?.addEventListener('change', e => {
-    State.expandOnClick = e.target.checked;
+    store.set('expandOnClick', e.target.checked);
   });
 
   // Toggle: labels
   document.getElementById('labels-cb')?.addEventListener('change', e => {
-    State.showLabels = e.target.checked;
-    setLabelsVisible(State.showLabels);
+    store.set('showLabels', e.target.checked);
+    setLabelsVisible(e.target.checked);
   });
 
   // Toggle: animate
   document.getElementById('anim-cb')?.addEventListener('change', e => {
-    State.animateEntrance = e.target.checked;
+    store.set('animateEntrance', e.target.checked);
   });
 
   // Cognates button
   document.getElementById('cognate-btn')?.addEventListener('click', () => {
-    State.showCognates = !State.showCognates;
-    const btn = document.getElementById('cognate-btn');
-    btn?.classList.toggle('btn-active', State.showCognates);
-    if (State.centerDeity) generate();
-    toast(State.showCognates ? 'Cognate pairs highlighted in gold' : 'Cognate highlighting off');
+    const next = !store.get(STATE_KEYS.SHOW_COGNATES);
+    store.set(STATE_KEYS.SHOW_COGNATES, next);
+    document.getElementById('cognate-btn')?.classList.toggle('btn-active', next);
+    toast(next ? 'Cognate pairs highlighted in gold' : 'Cognate highlighting off');
   });
 
   // Graph controls
-  document.getElementById('zoom-in-btn')?.addEventListener('click',    zoomIn);
-  document.getElementById('zoom-out-btn')?.addEventListener('click',   zoomOut);
+  document.getElementById('zoom-in-btn')?.addEventListener('click', zoomIn);
+  document.getElementById('zoom-out-btn')?.addEventListener('click', zoomOut);
   document.getElementById('reset-zoom-btn')?.addEventListener('click', resetZoom);
+
   document.getElementById('clear-btn')?.addEventListener('click', () => {
-    State.nodes = []; State.edges = [];
-    State.centerDeity = null;
-    State.pinnedNodes.clear();
+    LocalState.nodes = [];
+    LocalState.edges = [];
+    store.set(STATE_KEYS.SELECTED_DEITY, null);
+    store.set(STATE_KEYS.PINNED_NODES, new Set());
     clearGraph();
     clearSidebar();
     clearTour();
-    document.getElementById('deity-input').value = '';
-    document.getElementById('path-strip').style.display = 'none';
-    document.getElementById('surprising-panel').style.display = 'none';
+    const input = document.getElementById('deity-input');
+    if (input) input.value = '';
+    const pathStrip = document.getElementById('path-strip');
+    if (pathStrip) pathStrip.style.display = 'none';
+    const surprisingPanel = document.getElementById('surprising-panel');
+    if (surprisingPanel) surprisingPanel.style.display = 'none';
     setStatusBar('');
   });
+
   document.getElementById('unpin-btn')?.addEventListener('click', () => {
-    unpinAll(State.nodes);
+    unpinAll(LocalState.nodes);
+    store.set(STATE_KEYS.PINNED_NODES, new Set());
     toast('All nodes unpinned');
   });
 
   // Path strip close
   document.getElementById('path-strip-close')?.addEventListener('click', () => {
-    document.getElementById('path-strip').style.display = 'none';
+    const strip = document.getElementById('path-strip');
+    if (strip) strip.style.display = 'none';
   });
 
   // Compare modal close
   document.getElementById('compare-close')?.addEventListener('click', () => {
-    document.getElementById('compare-modal').classList.remove('open');
+    document.getElementById('compare-modal')?.classList.remove('open');
   });
   document.getElementById('compare-modal')?.addEventListener('click', e => {
-    if (e.target.id === 'compare-modal')
-      document.getElementById('compare-modal').classList.remove('open');
+    if (e.target.id === 'compare-modal') {
+      document.getElementById('compare-modal')?.classList.remove('open');
+    }
   });
 
   // Export
   document.getElementById('export-json-btn')?.addEventListener('click', () => {
-    const filename = exportJSON(State);
+    const filename = exportJSON({
+      nodes: LocalState.nodes,
+      edges: LocalState.edges,
+      centerDeity: store.get(STATE_KEYS.SELECTED_DEITY),
+      metric: store.get(STATE_KEYS.SIMILARITY_METHOD),
+      threshold: store.get(STATE_KEYS.GRAPH_THRESHOLD),
+    });
     if (filename) toast(`Exported: ${filename}`);
     else toast('Generate a network first');
   });
+
   document.getElementById('export-svg-btn')?.addEventListener('click', () => {
     const filename = exportSVG();
     if (filename) toast(`Exported: ${filename}`);
   });
 }
 
-/* ── Legend ──────────────────────────────────────────────────────── */
+/* ── Legend ───────────────────────────────────────────────────────── */
 function buildLegend() {
   const el = document.getElementById('pantheon-legend');
   if (!el) return;
@@ -762,12 +816,20 @@ function toast(msg) {
   _toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
 }
 
+/* ── Loading indicator ───────────────────────────────────────────── */
+function showLoading(visible) {
+  const el = document.getElementById('loading-indicator');
+  if (el) el.style.display = visible ? 'block' : 'none';
+}
+
 /* ── Public API (exposed to window for inline handlers) ──────────── */
 window._app = {
   loadDeity: (id) => loadDeity(id),
   loadDeityFromPantheon: (pantheon) => {
     const matches = DEITIES.filter(d => d.pantheon === pantheon);
-    if (matches.length) loadDeity(matches[Math.floor(Math.random() * matches.length)].id, { resetGraph: true });
+    if (matches.length) {
+      loadDeity(matches[Math.floor(Math.random() * matches.length)].id, { resetGraph: true });
+    }
   },
   switchView,
   toast,
