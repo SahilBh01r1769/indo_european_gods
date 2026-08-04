@@ -160,10 +160,12 @@ export function sharedTraits(deityA, deityB, threshold = 0.3) {
   return shared;
 }
 
-export function edgeColor(weight) {
-  if (weight > 0.75) return '#9b8fe8'; // violet (>0.75)
-  if (weight > 0.55) return '#d4a017'; // gold (>0.55)
-  return '#4b5563'; // dark grey
+/* ── Utility: edge color from weight ───────────────────────────── */
+export function edgeColor(weight, isCognate = false) {
+  if (isCognate) return '#f0d080';       // Gold for cognates
+  if (weight >= 0.75) return '#a396ff';  // Brighter purple for strong links
+  if (weight >= 0.55) return '#e0c060';  // Brighter gold/orange for medium
+  return '#8a88a0';                      // Much lighter gray-purple for weak links (was #3a3850)
 }
 
 export function traitFillColor(v) {
