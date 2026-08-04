@@ -87,7 +87,7 @@ export function init() {
   initMethodologyModal();
 
   // Initialize Trie-powered search bar
-  const searchContainer = document.getElementById('search-container');
+  const searchContainer = document.getElementById('search-wrap');
   if (searchContainer) {
     LocalState.searchBar = new SearchBar(searchContainer);
     LocalState.searchBar.buildIndex(DEITIES);
@@ -143,8 +143,8 @@ export function loadDeity(nameOrId, options = {}) {
   // Close search dropdown
   if (LocalState.searchBar) LocalState.searchBar.close();
 
-  // Sync legacy input if it still exists
-  const input = document.getElementById('deity-input');
+  // Sync input (supports new SearchBar component or legacy)
+  const input = LocalState.searchBar?.input || document.querySelector('.search-input') || document.getElementById('deity-input');
   if (input) input.value = deity.id;
 
   switchView('graph');
@@ -277,7 +277,7 @@ function handleNodeClick(d, evt) {
   const deity = getDeityById(d.id);
   if (!deity) return;
   store.set(STATE_KEYS.SELECTED_DEITY, deity.id);
-  const input = document.getElementById('deity-input');
+  const input = LocalState.searchBar?.input || document.querySelector('.search-input') || document.getElementById('deity-input');
   if (input) input.value = deity.id;
   generate();
 }
@@ -402,7 +402,7 @@ async function handleTourLoad(tour) {
   if (!center) return;
 
   store.set(STATE_KEYS.SELECTED_DEITY, center.id);
-  const input = document.getElementById('deity-input');
+  const input = LocalState.searchBar?.input || document.querySelector('.search-input') || document.getElementById('deity-input');
   if (input) input.value = center.id;
 
   const W = document.getElementById('view-area')?.clientWidth || 800;
@@ -620,10 +620,24 @@ export function switchView(view) {
 
 /* ── Wire all UI controls ────────────────────────────────────────── */
 function wireControls() {
-  // Generate button (legacy input fallback)
+  // Generate button (supports new SearchBar component or legacy)
   document.getElementById('gen-btn')?.addEventListener('click', () => {
-    const name = document.getElementById('deity-input')?.value.trim();
+    const input = LocalState.searchBar?.input || document.querySelector('.search-input') || document.getElementById('deity-input');
+    const name = input?.value.trim();
     if (name) loadDeity(name, { resetGraph: true });
+  });
+
+  // Enter key listener for the search wrap
+  document.getElementById('search-wrap')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const input = LocalState.searchBar?.input || document.querySelector('.search-input') || document.getElementById('deity-input');
+      const name = input?.value.trim();
+      // Only trigger if the dropdown isn't already handling the Enter key
+      if (name && LocalState.searchBar && !LocalState.searchBar.isOpen) {
+        loadDeity(name, { resetGraph: true });
+        LocalState.searchBar.close();
+      }
+    }
   });
 
   // Surprise me
@@ -738,7 +752,7 @@ function wireControls() {
     clearGraph();
     clearSidebar();
     clearTour();
-    const input = document.getElementById('deity-input');
+    const input = LocalState.searchBar?.input || document.querySelector('.search-input') || document.getElementById('deity-input');
     if (input) input.value = '';
     const pathStrip = document.getElementById('path-strip');
     if (pathStrip) pathStrip.style.display = 'none';
