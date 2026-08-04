@@ -72,15 +72,13 @@ function getSharedTraits(deityA, deityB, threshold = 0.3) {
   const shared = [];
   const traitsA = deityA.traits || {};
   const traitsB = deityB.traits || {};
-  
   for (const [trait, valA] of Object.entries(traitsA)) {
     const valB = traitsB[trait] || 0;
     if (valA > threshold && valB > threshold) {
-      shared.push({ trait, score: Math.min(valA, valB) });
+      shared.push(trait); // Just return the string!
     }
   }
-  
-  return shared.sort((a, b) => b.score - a.score);
+  return shared;
 }
 
 /**
