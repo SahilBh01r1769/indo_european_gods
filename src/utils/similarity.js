@@ -233,3 +233,38 @@ export function traitFillColor(value) {
   if (value >= 0.5)  return '#c9a84c';
   return '#4a4870';
 }
+
+// Required by app.js and graph.js to look up deity data
+export function getDeityById(nameOrId) {
+  if (!nameOrId) return null;
+  return DEITIES.find(d => d.id === nameOrId || d.id.toLowerCase() === nameOrId.toLowerCase());
+}
+
+// Required by graph.js and app.js for tooltip rendering
+export function sharedTraits(deityA, deityB, threshold = 0.3) {
+  const shared = [];
+  const traitsA = deityA.traits || {};
+  const traitsB = deityB.traits || {};
+  for (const [trait, valA] of Object.entries(traitsA)) {
+    const valB = traitsB[trait] || 0;
+    if (valA > threshold && valB > threshold) {
+      shared.push(trait);
+    }
+  }
+  return shared;
+}
+
+// Required by graph.js for edge styling (based on README.md thresholds)
+export function edgeColor(weight) {
+  if (weight > 0.75) return '#9b8fe8'; // violet (>0.75)
+  if (weight > 0.55) return '#d4a017'; // gold (>0.55)
+  return '#4b5563'; // dark grey
+}
+
+// Required by sidebar.js for the trait heatmap fill
+export function traitFillColor(v) {
+  if (v > 0.8) return '#e85555';
+  if (v > 0.6) return '#f5a623';
+  if (v > 0.4) return '#4a9eff';
+  return '#6b7280';
+}
