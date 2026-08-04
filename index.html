@@ -314,4 +314,29 @@
     App.setSidebarTab = function (tab) {
       ['info', 'tours'].forEach(t => {
         const btn  = document.getElementById(`stab-${t}`);
-        const cont = document.getElementById(`stab-${t}-content
+        const cont = document.getElementById(`stab-${t}-content`);
+        if (btn)  btn.classList.toggle('active', t === tab);
+        if (cont) cont.style.display = (t === tab) ? '' : 'none';
+      });
+    };
+  </script>
+
+  <!-- ── Application entry point (ES module) ─────────────────────── -->
+  <script type="module">
+    import { init } from './src/app.js';
+
+    function boot() {
+      init();
+      const loader = document.getElementById('loader');
+      if (loader) loader.style.display = 'none';
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else {
+      boot();
+    }
+  </script>
+
+</body>
+</html>
