@@ -1,7 +1,9 @@
 class SimilarityWorkerClient {
   constructor() {
     // Fixed path resolution
-    this.worker = new Worker(new URL('../workers/similarityWorker.js', import.meta.url), { type: 'module' });
+    // Robust path resolution for Web Workers in ES Modules
+    const workerUrl = new URL('../workers/similarityWorker.js', import.meta.url).href;
+    this.worker = new Worker(workerUrl, { type: 'module' });
     this.requestId = 0;
     this.pendingRequests = new Map();
 
