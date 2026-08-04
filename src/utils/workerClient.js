@@ -5,7 +5,7 @@
 
 class SimilarityWorkerClient {
   constructor() {
-    this.worker = new Worker('./src/workers/similarityWorker.js', { type: 'module' });
+    this.worker = new Worker('./src/workers/similarityWorker.js',import.meta.url, { type: 'module' });
     this.requestId = 0;
     this.pendingRequests = new Map();
     
