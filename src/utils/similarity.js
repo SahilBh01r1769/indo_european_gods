@@ -200,16 +200,16 @@ export function getDeityById(nameOrId) {
 
 /* ── Utility: edge color from weight ───────────────────────────── */
 export function edgeColor(weight, isCognate = false) {
-  if (isCognate) return '#d97706';
-  if (weight >= 0.75) return '#4f46e5';
-  if (weight >= 0.55) return '#0ea5e9';
-  return '#475569';          // darker slate – readable on light backgrounds
+  if (isCognate) return '#f0d080';       // Warm Gold for cognates
+  if (weight >= 0.75) return '#d2a8ff';  // Vibrant Purple for strong links
+  if (weight >= 0.55) return '#79c0ff';  // Vibrant Blue for medium links
+  return '#8b949e';                      // Clear, visible gray for weak links (FIXED)
 }
 
 /* ── Utility: trait fill color from value ──────────────────────── */
 export function traitFillColor(value) {
-  if (value > 0.8) return '#e85555';
-  if (value > 0.6) return '#f5a623';
-  if (value > 0.4) return '#4a9eff';
-  return '#6b7280';
+  if (value > 0.8) return '#f85149'; // Vibrant Red
+  if (value > 0.6) return '#f0883e'; // Vibrant Orange
+  if (value > 0.4) return '#58a6ff'; // Vibrant Blue
+  return '#8b949e';                  // Muted Gray
 }
