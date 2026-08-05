@@ -287,9 +287,10 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(9, 9, 13, .92);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
   border-top: 1px solid var(--border-1);
+  color: var(--text-1);
   padding: 9px 14px;
   display: none;
   align-items: center;
@@ -305,8 +306,8 @@
   position: absolute;
   bottom: 14px;
   right: 14px;
-  background: rgba(13, 13, 18, .85);
-  backdrop-filter: blur(6px);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--border-1);
   border-radius: var(--r-md);
   overflow: hidden;
