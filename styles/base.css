@@ -1,69 +1,90 @@
 /* ============================================
-   INDO-EUROPEAN MYTH NETWORK — DARK ACADEMIA THEME
+   INDO-EUROPEAN MYTH NETWORK — BRIGHT VIBRANT THEME
    ============================================ */
 
 :root {
-  /* Base palette */
-  --bg-primary: #0d1117;
-  --bg-secondary: #161b22;
-  --bg-tertiary: #21262d;
-  --bg-card: #1c2128;
-  --bg-elevated: #252c35;
-  
-  /* Text */
-  --text-primary: #e6edf3;
-  --text-secondary: #8b949e;
-  --text-muted: #6e7681;
-  --text-accent: #d4a574;
-  
-  /* Accents */
-  --gold: #d4a574;
-  --gold-bright: #f0c896;
-  --violet: #a78bfa;
-  --violet-bright: #c4b5fd;
-  --ember: #ef6c4a;
-  --teal: #2dd4bf;
-  
-  /* Pantheon colors */
-  --greek: #60a5fa;
-  --vedic: #f59e0b;
-  --norse: #6ee7b7;
-  --celtic: #34d399;
-  --roman: #f87171;
-  --slavic: #a78bfa;
-  --mesopotamian: #fbbf24;
-  --iranian: #fb923c;
-  
+  /* Bright, Vibrant Backgrounds */
+  --bg-0: #f8fafc;       /* Main canvas background (very light slate) */
+  --bg-1: #ffffff;       /* Cards and panels */
+  --bg-2: #f1f5f9;       /* Header and sidebar */
+  --bg-3: #e2e8f0;       /* Subtle backgrounds */
+  --bg-4: #cbd5e1;       /* Inputs and hover states */
+  --bg-card: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-primary: #f8fafc; /* Legacy alias */
+  --bg-secondary: #f1f5f9; /* Legacy alias */
+  --bg-tertiary: #e2e8f0; /* Legacy alias */
+
+  /* High-Contrast Text */
+  --text-0: #0f172a;     /* Headings, primary labels */
+  --text-1: #334155;     /* Body text */
+  --text-2: #64748b;     /* Secondary text */
+  --text-3: #94a3b8;     /* Muted text */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-accent: #d97706;
+
+  /* Vibrant Accents */
+  --gold: #d97706;       /* Amber gold */
+  --gold-bright: #f59e0b;
+  --violet: #8b5cf6;
+  --violet-bright: #a78bfa;
+  --accent: #6366f1;     /* Vibrant Indigo */
+  --accent-bright: #818cf8;
+  --accent-glow: rgba(99, 102, 241, 0.3);
+  --ember: #ef4444;
+  --teal: #14b8a6;
+
+  /* Vibrant Pantheon Colors (adjusted for light background) */
+  --greek: #2563eb;        /* Brighter blue */
+  --vedic: #d97706;        /* Rich amber */
+  --norse: #059669;        /* Deep emerald */
+  --celtic: #10b981;       /* Vibrant green */
+  --roman: #dc2626;        /* Bold red */
+  --slavic: #7c3aed;       /* Deep violet */
+  --mesopotamian: #b45309; /* Bronze */
+  --iranian: #ea580c;      /* Orange */
+
   /* Typography */
   --font-display: 'Cinzel', 'Georgia', serif;
   --font-body: 'Inter', -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  
-  /* Spacing */
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --font-serif: 'Cinzel', 'Georgia', serif;
+
+  /* Spacing & Borders */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 24px;
   --space-xl: 32px;
-  
-  /* Borders & shadows */
-  --border-subtle: 1px solid rgba(255, 255, 255, 0.06);
-  --border-accent: 1px solid rgba(212, 165, 116, 0.3);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(212, 165, 116, 0.15);
-  
-  /* Transitions */
+  --border-0: #f1f5f9;
+  --border-1: #cbd5e1;
+  --border-2: #94a3b8;
+  --border-subtle: 1px solid #e2e8f0;
+  --border-accent: 1px solid rgba(99, 102, 241, 0.3);
+
+  /* Shadows (softer for light theme) */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.2);
+
+  /* Transitions & Radius */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
-  
-  /* Border radius */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-full: 9999px;
+  
+  /* Z-index */
+  --z-overlay: 10;
+  --z-dropdown: 20;
+  --z-loader: 100;
+  --z-toast: 200;
 }
 
 /* ============================================
@@ -83,17 +104,15 @@ html {
 
 body {
   font-family: var(--font-body);
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: var(--bg-0);
+  color: var(--text-1);
   line-height: 1.6;
   overflow: hidden;
   min-height: 100vh;
-  
-  /* Subtle texture overlay */
+  /* Subtle vibrant gradient overlay */
   background-image: 
-    radial-gradient(ellipse at 20% 50%, rgba(212, 165, 116, 0.03) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(167, 139, 250, 0.03) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 80%, rgba(45, 212, 191, 0.02) 0%, transparent 50%);
+    radial-gradient(ellipse at 10% 20%, rgba(99, 102, 241, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 80%, rgba(245, 158, 11, 0.04) 0%, transparent 50%);
 }
 
 /* Custom scrollbar */
@@ -107,18 +126,18 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.15);
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(15, 23, 42, 0.25);
 }
 
 /* Selection */
 ::selection {
-  background: rgba(212, 165, 116, 0.3);
-  color: var(--text-primary);
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--text-0);
 }
 
 /* ============================================
@@ -129,7 +148,7 @@ h1, h2, h3, h4 {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--text-primary);
+  color: var(--text-0);
 }
 
 h1 { font-size: 1.75rem; }
@@ -198,7 +217,7 @@ h4 { font-size: 0.95rem; }
    ============================================ */
 
 .glass {
-  background: rgba(22, 27, 34, 0.8);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: var(--border-subtle);
@@ -214,7 +233,7 @@ h4 { font-size: 0.95rem; }
 }
 
 .card:hover {
-  border-color: rgba(212, 165, 116, 0.2);
+  border-color: rgba(99, 102, 241, 0.2);
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
@@ -229,12 +248,12 @@ h4 { font-size: 0.95rem; }
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(15, 23, 42, 0.05);
   border: var(--border-subtle);
 }
 
 .divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  background: linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.1), transparent);
   margin: var(--space-md) 0;
 }
