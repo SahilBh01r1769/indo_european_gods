@@ -21,11 +21,15 @@
 /* ── Edges / Links ──────────────────────────────────────────────── */
 .link {
   stroke-linecap: round;
-  transition: stroke-opacity .2s ease;
+  transition: stroke-opacity .2s ease, stroke-width .2s ease;
   cursor: pointer;
+  stroke-opacity: 0.7; /* Increased base opacity for better visibility */
 }
 
-.link:hover { stroke-opacity: .9 !important; }
+.link:hover { 
+  stroke-opacity: 1 !important; 
+  stroke-width: 3px !important; /* Make hovered links pop */
+}
 
 .link-strong  { stroke: #7c6fcc; }
 .link-medium  { stroke: #c9a84c; }
@@ -50,10 +54,14 @@
   transition: r .2s ease;
 }
 
-/* Center node gets gold stroke */
-.node-center .node-circle {
-  stroke: var(--gold-bright) !important;
-  stroke-width: 2.5px !important;
+/* Center node gets gold stroke & enhanced label */
+.node-center .node-label {
+  font-family: var(--font-serif) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  fill: #ffd700 !important; /* Bright gold */
+  stroke: #000000 !important;
+  stroke-width: 4px !important;
 }
 
 .node-center .node-label {
@@ -78,13 +86,19 @@
 /* Node labels */
 .node-label {
   font-family: var(--font-sans);
-  font-size: 10px;
-  fill: var(--text-2);
+  font-size: 11px; /* Slightly larger */
+  font-weight: 600; /* Bolder for readability */
+  fill: #ffffff; /* Bright white for max contrast */
+  paint-order: stroke; /* Renders stroke behind fill */
+  stroke: #000000; /* Black outline */
+  stroke-width: 3px; /* Thick outline for readability */
+  stroke-opacity: 0.85;
   pointer-events: none;
   text-anchor: middle;
   dominant-baseline: hanging;
-  letter-spacing: .01em;
+  letter-spacing: .02em;
   transition: opacity .2s;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9); /* Fallback/enhancement */
 }
 
 .node-label.hidden { opacity: 0; }
