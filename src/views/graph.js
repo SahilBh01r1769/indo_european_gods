@@ -82,9 +82,17 @@ export function renderGraph(nodes, edges, options = {}) {
     })
     .attr('stroke-width', d => {
       if (showCognates && d.cognate) return 3;
-      return Math.max(1.5, d.weight * 6); // Slightly thicker base width
+      return Math.max(2.2, d.weight * 7.5);
     })
-    .attr('stroke-dasharray', d => showCognates && d.cognate ? '7 3' : null)
+    .attr('stroke-dasharray', d => (showCognates && d.cognate) ? '6 4' : null)
+    .attr('class', d => {
+    let cls = 'link';
+    if (showCognates && d.cognate) cls += ' link-cognate';
+    else if (d.weight >= 0.75) cls += ' link-strong';
+    else if (d.weight >= 0.55) cls += ' link-medium';
+    else cls += ' link-weak';
+    return cls;
+  })
     .on('mouseover', (evt, d) => _onEdgeHover && _onEdgeHover(evt, d))
     .on('mouseout',  ()        => _hideTooltip && _hideTooltip());
 
