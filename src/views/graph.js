@@ -30,8 +30,6 @@ export function initGraph({ state, onNodeClick, onNodeHover, onEdgeHover, hideTo
     });
 
   svg.call(zoom).on('dblclick.zoom', null);
-
-  // Click on background clears highlight
   svg.on('click', () => clearHighlight());
 
   gLinks = svg.append('g').attr('class', 'g-links');
@@ -54,7 +52,6 @@ export function renderGraph(nodes, edges, options = {}) {
   } = options;
 
   if (simulation) simulation.stop();
-
   document.getElementById('empty-state').style.display = 'none';
 
   // ── Links ────────────────────────────────────────────────────────
@@ -63,13 +60,9 @@ export function renderGraph(nodes, edges, options = {}) {
     : edges;
 
   const resolveId = v => (typeof v === 'object' ? v.id : v);
-
   const link = gLinks.selectAll('line.link').data(visEdges, e => e._key);
 
-  link.exit()
-    .transition().duration(250)
-    .style('opacity', 0)
-    .remove();
+  link.exit().transition().duration(250).style('opacity', 0).remove();
 
   const linkEnter = link.enter()
     .append('line')
@@ -84,26 +77,23 @@ export function renderGraph(nodes, edges, options = {}) {
 
   linkAll
     .attr('stroke', d => {
-      if (showCognates && d.cognate) return '#f0d080';
+      if (showCognates && d.cognate) return '#d97706';
       return edgeColor(d.weight);
     })
     .attr('stroke-width', d => {
       if (showCognates && d.cognate) return 3;
-      return Math.max(1, d.weight * 6);
+      return Math.max(1.5, d.weight * 6); // Slightly thicker base width
     })
     .attr('stroke-dasharray', d => showCognates && d.cognate ? '7 3' : null)
     .on('mouseover', (evt, d) => _onEdgeHover && _onEdgeHover(evt, d))
     .on('mouseout',  ()        => _hideTooltip && _hideTooltip());
 
-  linkAll.transition().duration(350).style('opacity', activeFilter ? 0.7 : 0.55);
+  linkAll.transition().duration(350).style('opacity', activeFilter ? 0.8 : 0.7);
 
   // ── Nodes ────────────────────────────────────────────────────────
   const node = gNodes.selectAll('g.node').data(nodes, d => d.id);
 
-  node.exit()
-    .transition().duration(250)
-    .style('opacity', 0)
-    .remove();
+  node.exit().transition().duration(250).style('opacity', 0).remove();
 
   const nodeEnter = node.enter()
     .append('g')
@@ -112,7 +102,6 @@ export function renderGraph(nodes, edges, options = {}) {
     .style('opacity', animate ? 0 : 1)
     .style('cursor', 'pointer');
 
-  // Drag
   nodeEnter.call(
     d3.drag()
       .on('start', (e, d) => {
@@ -126,48 +115,37 @@ export function renderGraph(nodes, edges, options = {}) {
       })
   );
 
-  // Pin ring
-  nodeEnter.append('circle')
-    .attr('class', 'pin-ring')
-    .attr('r', d => d.id === centerDeityId ? 26 : 18);
+  nodeEnter.append('circle').attr('class', 'pin-ring').attr('r', d => d.id === centerDeityId ? 26 : 18);
 
-  // Main circle
   nodeEnter.append('circle')
     .attr('class', 'node-circle')
     .attr('r', d => d.id === centerDeityId ? 20 : 13)
     .attr('fill', d => PANTHEON_COLORS[d.pantheon] || '#888')
-    .attr('fill-opacity', 0.85)
-    .attr('stroke', d => d.id === centerDeityId ? '#f0d080' : 'rgba(255,255,255,0.12)')
-    .attr('stroke-width', d => d.id === centerDeityId ? 2.5 : 1);
+    .attr('fill-opacity', 0.9)
+    .attr('stroke', d => d.id === centerDeityId ? '#d97706' : '#ffffff')
+    .attr('stroke-width', d => d.id === centerDeityId ? 2.5 : 1.5);
 
-  // Label
   nodeEnter.append('text')
     .attr('class', d => `node-label${d.id === centerDeityId ? ' center' : ''}`)
     .attr('dy', d => (d.id === centerDeityId ? 24 : 16))
     .text(d => d.id)
     .style('display', showLabels ? 'block' : 'none');
 
-  // Merge update
   const nodeAll = nodeEnter.merge(node);
 
   nodeAll.select('.node-circle')
     .attr('r', d => d.id === centerDeityId ? 20 : 13)
     .attr('fill', d => PANTHEON_COLORS[d.pantheon] || '#888')
-    .attr('stroke', d => d.id === centerDeityId ? '#f0d080' : 'rgba(255,255,255,0.12)');
+    .attr('stroke', d => d.id === centerDeityId ? '#d97706' : '#ffffff');
 
   nodeAll.select('.node-label')
     .text(d => d.id)
     .style('display', showLabels ? 'block' : 'none');
 
-  // Animate entrance
   if (animate) {
-    nodeEnter.transition()
-      .delay((_, i) => i * 35)
-      .duration(380)
-      .style('opacity', 1);
+    nodeEnter.transition().delay((_, i) => i * 35).duration(380).style('opacity', 1);
   }
 
-  // Events
   nodeAll
     .on('mouseover', (evt, d) => {
       applyGlow(evt.currentTarget, d, centerDeityId);
@@ -202,6 +180,8 @@ export function renderGraph(nodes, edges, options = {}) {
   const pantheonKeys = Object.keys(PANTHEON_COLORS);
 
   simulation = d3.forceSimulation(nodes)
+    .alphaDecay(0.08)        // <-- ADDED: Stops simulation 3x faster, eliminating lag
+    .velocityDecay(0.45)     // <-- ADDED: Stabilizes nodes quicker, reducing jitter
     .force('link',
       d3.forceLink(simEdges)
         .id(d => d.id)
@@ -220,25 +200,24 @@ export function renderGraph(nodes, edges, options = {}) {
     )
     .force('y', d3.forceY(H() / 2).strength(0.03))
     .force('collision', d3.forceCollide(28))
-    .on('tick', () => tick(nodes, edges))
+    .on('tick', tick)               // <-- UPDATED: Uses optimized tick function
     .on('end', updateMinimap);
 
-  // Re-apply pins
   nodes.forEach(d => {
     if (_state.pinnedNodes.has(d.id)) { d.fx = d.x; d.fy = d.y; }
   });
 }
 
 /* ── Tick ─────────────────────────────────────────────────────────── */
-function tick(nodes, edges) {
-  const resolveId = v => (typeof v === 'object' ? v.id : v);
+// OPTIMIZED: D3 automatically resolves d.source and d.target to node objects with x/y
+function tick() {
   const w = W(), h = H();
 
   gLinks.selectAll('line.link')
-    .attr('x1', d => nodeById(nodes, resolveId(d.source))?.x ?? 0)
-    .attr('y1', d => nodeById(nodes, resolveId(d.source))?.y ?? 0)
-    .attr('x2', d => nodeById(nodes, resolveId(d.target))?.x ?? 0)
-    .attr('y2', d => nodeById(nodes, resolveId(d.target))?.y ?? 0);
+    .attr('x1', d => d.source.x ?? 0)
+    .attr('y1', d => d.source.y ?? 0)
+    .attr('x2', d => d.target.x ?? 0)
+    .attr('y2', d => d.target.y ?? 0);
 
   gNodes.selectAll('g.node')
     .attr('transform', d =>
@@ -272,8 +251,8 @@ export function highlightByTrait(trait, edges) {
 
 export function clearHighlight() {
   gLinks.selectAll('line.link')
-    .style('opacity', 0.55)
-    .attr('stroke-width', d => Math.max(1, d.weight * 6));
+    .style('opacity', 0.7)
+    .attr('stroke-width', d => Math.max(1.5, d.weight * 6));
   gNodes.selectAll('g.node').style('opacity', 1);
 }
 
@@ -328,20 +307,17 @@ export function setLabelsVisible(visible) {
 /* ── Zoom controls ───────────────────────────────────────────────── */
 export function resetZoom() {
   const svgEl = document.getElementById('graph-svg');
-  d3.select(svgEl).transition().duration(500)
-    .call(zoom.transform, d3.zoomIdentity);
+  d3.select(svgEl).transition().duration(500).call(zoom.transform, d3.zoomIdentity);
 }
 
 export function zoomIn() {
   const svgEl = document.getElementById('graph-svg');
-  d3.select(svgEl).transition().duration(300)
-    .call(zoom.scaleBy, 1.4);
+  d3.select(svgEl).transition().duration(300).call(zoom.scaleBy, 1.4);
 }
 
 export function zoomOut() {
   const svgEl = document.getElementById('graph-svg');
-  d3.select(svgEl).transition().duration(300)
-    .call(zoom.scaleBy, 0.7);
+  d3.select(svgEl).transition().duration(300).call(zoom.scaleBy, 0.7);
 }
 
 /* ── Clear ───────────────────────────────────────────────────────── */
@@ -380,7 +356,6 @@ export function updateMinimap(nodes = [], edges = []) {
   const tx = n => 5 + (n.x - minX) * sc;
   const ty = n => 5 + (n.y - minY) * sc;
 
-  // Draw edges
   gLinks.selectAll('line.link').each(function(e) {
     const src = typeof e.source === 'object' ? e.source : liveNodes.find(n => n.id === e.source);
     const tgt = typeof e.target === 'object' ? e.target : liveNodes.find(n => n.id === e.target);
@@ -388,12 +363,11 @@ export function updateMinimap(nodes = [], edges = []) {
     ctx.beginPath();
     ctx.moveTo(tx(src), ty(src));
     ctx.lineTo(tx(tgt), ty(tgt));
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.15)'; // Darker line for light minimap
     ctx.lineWidth = 1;
     ctx.stroke();
   });
 
-  // Draw nodes
   liveNodes.forEach(n => {
     ctx.beginPath();
     ctx.arc(tx(n), ty(n), 3, 0, Math.PI * 2);
