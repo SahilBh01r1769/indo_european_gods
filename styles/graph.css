@@ -7,12 +7,12 @@
   background: var(--bg-0);
 }
 
-/* Subtle dot grid (dark dots for light background) */
+/* Subtle dot grid for depth */
 #graph-view::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(15, 23, 42, 0.08) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
   background-size: 32px 32px;
   pointer-events: none;
   z-index: 0;
@@ -20,33 +20,25 @@
 
 /* ── Edges / Links ──────────────────────────────────────────────── */
 .link {
-  fill: none;
   stroke-linecap: round;
-  stroke-linejoin: round;
-  cursor: pointer;
-  /* strong base visibility */
-  stroke-opacity: 0.85;
   transition: stroke-opacity 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
+  cursor: pointer;
+  stroke-opacity: 0.6; /* High base opacity so they are always visible */
 }
 
-.link:hover {
-  stroke-opacity: 1 !important;
-  stroke-width: 4px !important;
+.link:hover { 
+  stroke-opacity: 1 !important; 
+  stroke-width: 3px !important;
   filter: drop-shadow(0 0 4px currentColor);
 }
 
-/* Explicit fallback colors (JS also sets them) */
-.link-strong  { stroke: #4f46e5; }   /* indigo */
-.link-medium  { stroke: #0ea5e9; }   /* sky */
-.link-weak    { stroke: #475569; }   /* darker slate – much better on light bg */
-.link-cognate { stroke: #d97706; stroke-dasharray: 6 4; stroke-width: 3px; }
-.link-path    { stroke: #6366f1; stroke-dasharray: none; stroke-width: 3.5px; }
+/* Vibrant, high-contrast edge colors */
+.link-strong  { stroke: #d2a8ff; } /* Bright Purple */
+.link-medium  { stroke: #79c0ff; } /* Vibrant Blue */
+.link-weak    { stroke: #8b949e; } /* Clear, visible gray (was invisible #3a3850) */
+.link-cognate { stroke: #f0d080; stroke-dasharray: 6 4; } /* Warm Gold */
+.link-path    { stroke: var(--accent-bright); stroke-dasharray: none; }
 
-/* Dimmed state */
-.link-dimmed { stroke-opacity: 0.12 !important; }
-.link-highlighted { stroke-opacity: 0.95 !important; }
-
-/* Edge label (weight) — hidden by default, shown on hover */
 .edge-label {
   font-size: 9px;
   fill: var(--text-2);
@@ -121,6 +113,7 @@
 .node-dimmed .node-label  { opacity: 0.15; }
 .link-dimmed { stroke-opacity: 0.08 !important; }
 
-.node-highlighted .node-circle { opacity: 1; }
+
+.node-highlighted .node-circle { opacity: 1; filter: drop-shadow(0 0 6px currentColor); }
 .node-highlighted .node-label  { opacity: 1; }
-.link-highlighted { stroke-opacity: 0.85 !important; }
+.link-highlighted { stroke-opacity: 0.9 !important; stroke-width: 2.5px !important; }
