@@ -75,7 +75,7 @@ export function renderGraph(nodes, edges, options = {}) {
 
   linkAll
     .attr('stroke', d => {
-      if (showCognates && d.cognate) return '#f0d080';
+      if (showCognates && d.cognate) return '#fbbf24';
       return edgeColor(d.weight);
     })
     .attr('stroke-width', d => {
@@ -86,7 +86,7 @@ export function renderGraph(nodes, edges, options = {}) {
     .on('mouseover', (evt, d) => _onEdgeHover && _onEdgeHover(evt, d))
     .on('mouseout',  ()        => _hideTooltip && _hideTooltip());
 
-  linkAll.transition().duration(350).style('opacity', activeFilter ? 0.8 : 0.6);
+  linkAll.transition().duration(350).style('opacity', activeFilter ? 0.8 : 0.65);
 
   // ── Nodes ────────────────────────────────────────────────────────
   const node = gNodes.selectAll('g.node').data(nodes, d => d.id);
@@ -216,7 +216,7 @@ export function highlightByTrait(trait, edges) {
 }
 
 export function clearHighlight() {
-  gLinks.selectAll('line.link').style('opacity', 0.6).attr('stroke-width', d => Math.max(1.5, d.weight * 6));
+  gLinks.selectAll('line.link').style('opacity', 0.65).attr('stroke-width', d => Math.max(1.5, d.weight * 6));
   gNodes.selectAll('g.node').style('opacity', 1);
 }
 
