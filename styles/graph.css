@@ -20,22 +20,31 @@
 
 /* ── Edges / Links ──────────────────────────────────────────────── */
 .link {
+  fill: none;
   stroke-linecap: round;
-  transition: stroke-opacity 0.2s ease, stroke-width 0.2s ease;
+  stroke-linejoin: round;
   cursor: pointer;
-  stroke-opacity: 0.7; /* High base opacity for visibility */
+  /* strong base visibility */
+  stroke-opacity: 0.85;
+  transition: stroke-opacity 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
 }
 
-.link:hover { 
-  stroke-opacity: 1 !important; 
-  stroke-width: 3px !important; /* Make hovered links pop */
+.link:hover {
+  stroke-opacity: 1 !important;
+  stroke-width: 4px !important;
+  filter: drop-shadow(0 0 4px currentColor);
 }
 
-.link-strong  { stroke: #4f46e5; }
-.link-medium  { stroke: #0891b2; }
-.link-weak    { stroke: #64748b; }
-.link-cognate { stroke: #d97706; stroke-dasharray: 7 3; }
-.link-path    { stroke: var(--accent-bright); stroke-dasharray: none; }
+/* Explicit fallback colors (JS also sets them) */
+.link-strong  { stroke: #4f46e5; }   /* indigo */
+.link-medium  { stroke: #0ea5e9; }   /* sky */
+.link-weak    { stroke: #475569; }   /* darker slate – much better on light bg */
+.link-cognate { stroke: #d97706; stroke-dasharray: 6 4; stroke-width: 3px; }
+.link-path    { stroke: #6366f1; stroke-dasharray: none; stroke-width: 3.5px; }
+
+/* Dimmed state */
+.link-dimmed { stroke-opacity: 0.12 !important; }
+.link-highlighted { stroke-opacity: 0.95 !important; }
 
 /* Edge label (weight) — hidden by default, shown on hover */
 .edge-label {
