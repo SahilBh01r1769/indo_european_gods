@@ -46,6 +46,9 @@
   stroke-linecap: round;
   transition: stroke-opacity 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
   cursor: pointer;
+  stroke: #c084fc;           /* force a bright default color */
+  stroke-opacity: 0.85;      /* force high opacity */
+  stroke-width: 2.5px;       /* force thickness so we can see them */
 }
 
 .link:hover { 
