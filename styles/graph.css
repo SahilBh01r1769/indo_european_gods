@@ -46,7 +46,9 @@
   stroke-linecap: round;
   transition: stroke-opacity 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
   cursor: pointer;
-  stroke-opacity: 0.65; /* High base opacity so they are always visible */
+  stroke-opacity: 0.75 !important;
+  stroke-width: 2px;
+  /* High base opacity so they are always visible */
 }
 
 .link:hover { 
@@ -56,9 +58,9 @@
 }
 
 /* Vibrant, high-contrast edge colors */
-.link-strong  { stroke: #a78bfa; } /* Bright Purple */
+.link-strong  { stroke: #6e185e; } /* Bright Purple */
 .link-medium  { stroke: #22d3ee; } /* Vibrant Cyan */
-.link-weak    { stroke: #94a3b8; } /* Clear, visible slate gray (FIXED) */
+.link-weak    { stroke: #92608d; } /* Clear, visible slate gray (FIXED) */
 .link-cognate { stroke: #fbbf24; stroke-dasharray: 6 4; } /* Warm Gold */
 .link-path    { stroke: var(--accent-bright); stroke-dasharray: none; }
 
