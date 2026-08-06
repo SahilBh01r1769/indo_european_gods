@@ -58,21 +58,23 @@ export function renderGraph(nodes, edges, options = {}) {
   if (simulation) simulation.stop();
   document.getElementById('empty-state').style.display = 'none';
 
-  currentNodes = nodes;
-  
-const resolveId = v => (typeof v === 'object' ? v.id : v);
+   currentNodes = nodes;
 
-// Only keep edges whose both ends exist in the current nodes
-const simEdges = (activeFilter
-  ? edges.filter(e => (e.shared || []).includes(activeFilter))
-  : edges
-).filter(e => {
-  const sid = resolveId(e.source);
-  const tid = resolveId(e.target);
-  return nodes.some(n => n.id === sid) && nodes.some(n => n.id === tid);
-});
+  const resolveId = v => (typeof v === 'object' ? v.id : v);
 
-const link = gLinks.selectAll('line.link').data(simEdges, e => e._key);
+  // Only apply trait filter when activeFilter is a real string
+  const filteredEdges = (typeof activeFilter === 'string' && activeFilter)
+    ? edges.filter(e => (e.shared || []).includes(activeFilter))
+    : edges;
+
+  const simEdges = filteredEdges.filter(e => {
+    const sid = resolveId(e.source);
+    const tid = resolveId(e.target);
+    return nodes.some(n => n.id === sid) && nodes.some(n => n.id === tid);
+  });
+
+  const link = gLinks.selectAll('line.link').data(simEdges, e => e._key || `${resolveId(e.source)}--${resolveId(e.target)}`);
+
 console.log('simEdges length:', simEdges.length);
 console.log('First edge:', simEdges[0]);
 console.log('visEdges / simEdges sample keys:', simEdges.slice(0,3).map(e => e._key));
