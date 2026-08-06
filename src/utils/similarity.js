@@ -63,12 +63,12 @@ export function sharedTraits(deityA, deityB, threshold = 0.4) {
 }
 
 /* ── Get all connections for a deity ───────────────────────────── */
-export function getConnections(deity, metric = 'cosine', threshold = 0.35, eraMin = 0) {
+export function getConnections(deity, metric = 'cosine', threshold = 0.20, eraMin = 0) {
   return DEITIES
     .filter(d => d.id !== deity.id && d.era >= eraMin)
     .map(d => ({
       deity: d,
-      score: computeSimilarity(deity, d, metric),
+      weight: computeSimilarity(deity, d, metric),
       shared: sharedTraits(deity, d),
       cognate: getCognate(deity.id, d.id),
     }))
