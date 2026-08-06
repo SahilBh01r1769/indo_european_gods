@@ -14,7 +14,10 @@
   --bg-primary: #09090b;   /* Legacy alias */
   --bg-secondary: #18181b; /* Legacy alias */
   --bg-tertiary: #27272a;  /* Legacy alias */
-
+  --bg-5: #52525b;          /* used by some toggles / bars */
+  --gold-dim: #b45309;
+  --danger: #ef4444;
+  --border-3: #71717a;
   /* High-Contrast Text */
   --text-0: #fafafa;     /* Primary text, bright white */
   --text-1: #e4e4e7;     /* Secondary text */
