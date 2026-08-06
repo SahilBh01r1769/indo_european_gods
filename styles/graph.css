@@ -2,19 +2,42 @@
    graph.css — D3 force graph node, edge, label styles
    ───────────────────────────────────────────────────────────────── */
 
-/* ── SVG base ───────────────────────────────────────────────────── */
 #graph-view {
-  background: var(--bg-0);
+  background: #05050a;          /* deep near-black */
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
-/* Subtle dot grid for depth */
 #graph-view::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 32px 32px;
   pointer-events: none;
+  z-index: 0;
+  /* multiple layers of different sizes = more realistic star field */
+  background-image:
+    radial-gradient(1px 1px at 20px 30px,   #fff, transparent),
+    radial-gradient(1px 1px at 40px 70px,   rgba(255,255,255,.8), transparent),
+    radial-gradient(1.5px 1.5px at 90px 40px, #fff, transparent),
+    radial-gradient(1px 1px at 130px 80px,  rgba(255,255,255,.6), transparent),
+    radial-gradient(1px 1px at 160px 120px, #fff, transparent),
+    radial-gradient(2px 2px at 200px 50px,  rgba(200,220,255,.9), transparent),
+    radial-gradient(1px 1px at 250px 160px, #fff, transparent);
+  background-size: 280px 200px;   /* tile size – tweak to taste */
+  background-repeat: repeat;
+  opacity: 0.55;
+}
+
+/* optional very faint nebula glow */
+#graph-view::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(80,60,180,0.08), transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(40,80,160,0.06), transparent 50%);
   z-index: 0;
 }
 
@@ -23,7 +46,7 @@
   stroke-linecap: round;
   transition: stroke-opacity 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
   cursor: pointer;
-  stroke-opacity: 0.6; /* High base opacity so they are always visible */
+  stroke-opacity: 0.65; /* High base opacity so they are always visible */
 }
 
 .link:hover { 
@@ -33,10 +56,10 @@
 }
 
 /* Vibrant, high-contrast edge colors */
-.link-strong  { stroke: #d2a8ff; } /* Bright Purple */
-.link-medium  { stroke: #79c0ff; } /* Vibrant Blue */
-.link-weak    { stroke: #8b949e; } /* Clear, visible gray (was invisible #3a3850) */
-.link-cognate { stroke: #f0d080; stroke-dasharray: 6 4; } /* Warm Gold */
+.link-strong  { stroke: #a78bfa; } /* Bright Purple */
+.link-medium  { stroke: #22d3ee; } /* Vibrant Cyan */
+.link-weak    { stroke: #94a3b8; } /* Clear, visible slate gray (FIXED) */
+.link-cognate { stroke: #fbbf24; stroke-dasharray: 6 4; } /* Warm Gold */
 .link-path    { stroke: var(--accent-bright); stroke-dasharray: none; }
 
 .edge-label {
@@ -52,10 +75,43 @@
 .node { cursor: pointer; }
 
 .node-circle {
-  transition: r 0.2s ease;
+  transition: r 0.2s ease, filter 0.2s ease;
+  stroke: rgba(255, 255, 255, 0.15); /* Subtle white ring for all nodes */
+  stroke-width: 1.5px;
 }
 
-/* Pin ring — dashed gold circle that animates on pinned nodes */
+.node-center .node-circle {
+  stroke: var(--gold-bright) !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.4));
+}
+
+/* Node labels with dark stroke for perfect readability */
+.node-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  fill: #fafafa;           /* Bright white text */
+  paint-order: stroke;     /* Renders stroke behind the text */
+  stroke: #09090b;         /* Dark background color for outline */
+  stroke-width: 3.5px;     /* Thick outline ensures readability over any node */
+  stroke-opacity: 0.9;
+  pointer-events: none;
+  text-anchor: middle;
+  dominant-baseline: hanging;
+  letter-spacing: 0.02em;
+  transition: opacity 0.2s;
+}
+
+.node-center .node-label {
+  font-family: var(--font-serif) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  fill: #fbbf24 !important; /* Bright gold */
+  stroke: #09090b !important;
+  stroke-width: 4px !important;
+}
+
 .pin-ring {
   fill: none;
   stroke: var(--gold);
@@ -68,51 +124,10 @@
 
 .node-pinned .pin-ring { display: block; }
 
-/* Node labels */
-.node-label {
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 700;
-  fill: #0f172a;       /* Dark slate for max contrast on light bg */
-  paint-order: stroke; /* Renders stroke behind the text */
-  stroke: #ffffff;     /* White outline */
-  stroke-width: 3px;
-  stroke-opacity: 0.9;
-  pointer-events: none;
-  text-anchor: middle;
-  dominant-baseline: hanging;
-  letter-spacing: 0.02em;
-  transition: opacity 0.2s;
-}
-
-.node-label.hidden { opacity: 0; }
-
-/* Center node gets vibrant gold label */
-.node-center .node-label {
-  font-family: var(--font-serif) !important;
-  font-size: 13px !important;
-  font-weight: 800 !important;
-  fill: #b45309 !important; /* Darker gold for light background readability */
-  stroke: #ffffff !important;
-  stroke-width: 4px !important;
-}
-
-/* Archetype view node size indicator */
-.node-archetype .node-circle {
-  stroke: rgba(15, 23, 42, 0.15);
-  stroke-width: 1;
-}
-
-/* ── Graph groups ───────────────────────────────────────────────── */
-.g-links  { }
-.g-nodes  { }
-.g-labels { }
-
 /* ── Highlight states ───────────────────────────────────────────── */
-.node-dimmed .node-circle { opacity: 0.2; }
-.node-dimmed .node-label  { opacity: 0.15; }
-.link-dimmed { stroke-opacity: 0.08 !important; }
-
+.node-dimmed .node-circle { opacity: 0.15; }
+.node-dimmed .node-label  { opacity: 0.1; }
+.link-dimmed { stroke-opacity: 0.05 !important; }
 
 .node-highlighted .node-circle { opacity: 1; filter: drop-shadow(0 0 6px currentColor); }
 .node-highlighted .node-label  { opacity: 1; }
