@@ -8,6 +8,7 @@ import { getCognate } from '../data/cognates.js';
 
 let svg, zoom, gLinks, gNodes, simulation;
 let _state, _onNodeClick, _onEdgeHover, _onNodeHover, _hideTooltip;
+let currentNodes = [];
 
 /* ── Init ─────────────────────────────────────────────────────────── */
 export function initGraph({ state, onNodeClick, onNodeHover, onEdgeHover, hideTooltip }) {
@@ -50,22 +51,31 @@ export function renderGraph(nodes, edges, options = {}) {
     centerDeityId = null,
   } = options;
 
+
   if (simulation) simulation.stop();
   document.getElementById('empty-state').style.display = 'none';
 
-  const visEdges = activeFilter
-    ? edges.filter(e => (e.shared || []).includes(activeFilter))
-    : edges;
+  currentNodes = nodes;
+  
+const resolveId = v => (typeof v === 'object' ? v.id : v);
 
-  const resolveId = v => (typeof v === 'object' ? v.id : v);
-  const link = gLinks.selectAll('line.link').data(visEdges, e => e._key);
+// Only keep edges whose both ends exist in the current nodes
+const simEdges = (activeFilter
+  ? edges.filter(e => (e.shared || []).includes(activeFilter))
+  : edges
+).filter(e => {
+  const sid = resolveId(e.source);
+  const tid = resolveId(e.target);
+  return nodes.some(n => n.id === sid) && nodes.some(n => n.id === tid);
+});
 
-  link.exit().transition().duration(250).style('opacity', 0).remove();
+const link = gLinks.selectAll('line.link').data(simEdges, e => e._key);
+  link.exit().transition().duration(250).attr('stroke-opacity', 0).remove();
 
   const linkEnter = link.enter()
     .append('line')
     .attr('class', 'link')
-    .style('opacity', 0)
+    .attr('stroke-opacity', 0)
     .attr('x1', d => nodeById(nodes, resolveId(d.source))?.x ?? W() / 2)
     .attr('y1', d => nodeById(nodes, resolveId(d.source))?.y ?? H() / 2)
     .attr('x2', d => nodeById(nodes, resolveId(d.target))?.x ?? W() / 2)
@@ -86,7 +96,8 @@ export function renderGraph(nodes, edges, options = {}) {
     .on('mouseover', (evt, d) => _onEdgeHover && _onEdgeHover(evt, d))
     .on('mouseout',  ()        => _hideTooltip && _hideTooltip());
 
-  linkAll.transition().duration(350).style('opacity', activeFilter ? 0.8 : 0.65);
+  linkAll.transition().duration(350).attr('stroke-opacity', activeFilter ? 0.85 : 0.75);
+  linkAll.attr('stroke-opacity', activeFilter ? 0.85 : 0.75);
 
   // ── Nodes ────────────────────────────────────────────────────────
   const node = gNodes.selectAll('g.node').data(nodes, d => d.id);
@@ -150,17 +161,17 @@ export function renderGraph(nodes, edges, options = {}) {
   updatePinRings();
 
   // ── Simulation ───────────────────────────────────────────────────
-  const simEdges = edges.filter(e => {
+ /**    const simEdges = visEdges.filter(e => {
     const sid = resolveId(e.source);
     const tid = resolveId(e.target);
     return nodes.some(n => n.id === sid) && nodes.some(n => n.id === tid);
-  });
+  });*/
 
   const pantheonKeys = Object.keys(PANTHEON_COLORS);
 
   simulation = d3.forceSimulation(nodes)
-    .alphaDecay(0.08)        // CRITICAL: Stops simulation 3x faster, eliminating lag
-    .velocityDecay(0.45)     // CRITICAL: Stabilizes nodes quicker, reducing jitter
+    .alphaDecay(0.04)        // CRITICAL: Stops simulation 3x faster, eliminating lag
+    .velocityDecay(0.4)     // CRITICAL: Stabilizes nodes quicker, reducing jitter
     .force('link', d3.forceLink(simEdges).id(d => d.id).distance(d => 140 - d.weight * 60).strength(0.65))
     .force('charge', d3.forceManyBody().strength(-320))
     .force('center', d3.forceCenter(W() / 2, H() / 2).strength(0.05))
@@ -179,15 +190,26 @@ export function renderGraph(nodes, edges, options = {}) {
   nodes.forEach(d => { if (_state.pinnedNodes.has(d.id)) { d.fx = d.x; d.fy = d.y; } });
 }
 
-/* ── Tick (OPTIMIZED) ───────────────────────────────────────────── */
 function tick() {
   const w = W(), h = H();
-  // D3 automatically resolves d.source and d.target to node objects with x/y
+
   gLinks.selectAll('line.link')
-    .attr('x1', d => d.source.x ?? 0)
-    .attr('y1', d => d.source.y ?? 0)
-    .attr('x2', d => d.target.x ?? 0)
-    .attr('y2', d => d.target.y ?? 0);
+    .attr('x1', d => {
+      const s = typeof d.source === 'object' ? d.source : nodeById(currentNodes, d.source);
+      return s?.x ?? 0;
+    })
+    .attr('y1', d => {
+      const s = typeof d.source === 'object' ? d.source : nodeById(currentNodes, d.source);
+      return s?.y ?? 0;
+    })
+    .attr('x2', d => {
+      const t = typeof d.target === 'object' ? d.target : nodeById(currentNodes, d.target);
+      return t?.x ?? 0;
+    })
+    .attr('y2', d => {
+      const t = typeof d.target === 'object' ? d.target : nodeById(currentNodes, d.target);
+      return t?.y ?? 0;
+    });
 
   gNodes.selectAll('g.node')
     .attr('transform', d =>
@@ -210,13 +232,15 @@ export function highlightByTrait(trait, edges) {
   });
 
   gLinks.selectAll('line.link')
-    .style('opacity', d => activeEdges.has(d._key) ? 0.9 : 0.05)
-    .attr('stroke-width', d => activeEdges.has(d._key) ? Math.max(2, d.weight * 7) : 1);
-  gNodes.selectAll('g.node').style('opacity', d => activeNodes.has(d.id) ? 1 : 0.15);
+  .attr('stroke-opacity', d => activeEdges.has(d._key) ? 0.9 : 0.08)
+  .attr('stroke-width', d => activeEdges.has(d._key) ? Math.max(2, d.weight * 7) : 1);
+ gNodes.selectAll('g.node').style('opacity', d => activeNodes.has(d.id) ? 1 : 0.15);
 }
 
 export function clearHighlight() {
-  gLinks.selectAll('line.link').style('opacity', 0.65).attr('stroke-width', d => Math.max(1.5, d.weight * 6));
+  gLinks.selectAll('line.link')
+  .attr('stroke-opacity', 0.75)
+  .attr('stroke-width', d => Math.max(1.5, d.weight * 6));
   gNodes.selectAll('g.node').style('opacity', 1);
 }
 
