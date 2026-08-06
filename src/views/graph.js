@@ -34,6 +34,8 @@ export function initGraph({ state, onNodeClick, onNodeHover, onEdgeHover, hideTo
 
   gLinks = svg.append('g').attr('class', 'g-links');
   gNodes = svg.append('g').attr('class', 'g-nodes');
+  gLinks.style('opacity', 1).style('visibility', 'visible');
+  gNodes.style('opacity', 1).style('visibility', 'visible');
 }
 
 /* ── Dimensions ──────────────────────────────────────────────────── */
@@ -42,6 +44,7 @@ function H() { return document.getElementById('graph-view').clientHeight || 600;
 
 /* ── Main render ─────────────────────────────────────────────────── */
 export function renderGraph(nodes, edges, options = {}) {
+  
   const {
     animate       = true,
     showLabels    = true,
@@ -70,6 +73,9 @@ const simEdges = (activeFilter
 });
 
 const link = gLinks.selectAll('line.link').data(simEdges, e => e._key);
+console.log('simEdges length:', simEdges.length);
+console.log('First edge:', simEdges[0]);
+console.log('visEdges / simEdges sample keys:', simEdges.slice(0,3).map(e => e._key));
   link.exit().transition().duration(250).attr('stroke-opacity', 0).remove();
 
   const linkEnter = link.enter()
@@ -82,6 +88,10 @@ const link = gLinks.selectAll('line.link').data(simEdges, e => e._key);
     .attr('y2', d => nodeById(nodes, resolveId(d.target))?.y ?? H() / 2);
 
   const linkAll = linkEnter.merge(link);
+  linkAll
+  .attr('stroke', d => (showCognates && d.cognate) ? '#fbbf24' : edgeColor(d.weight))
+  .attr('stroke-width', d => (showCognates && d.cognate) ? 3.5 : Math.max(2, d.weight * 7))
+  .attr('stroke-opacity', 0.9);   // ← force high opacity immediately
 
   linkAll
     .attr('stroke', d => {
@@ -89,15 +99,16 @@ const link = gLinks.selectAll('line.link').data(simEdges, e => e._key);
       return edgeColor(d.weight);
     })
     .attr('stroke-width', d => {
+      const w = d.weight ?? d.score ?? 0.5; // Fallback prevents NaN
       if (showCognates && d.cognate) return 3;
-      return Math.max(1.5, d.weight * 6); // Thicker base width for visibility
+      return Math.max(1.5, w * 6); 
     })
     .attr('stroke-dasharray', d => showCognates && d.cognate ? '6 4' : null)
     .on('mouseover', (evt, d) => _onEdgeHover && _onEdgeHover(evt, d))
     .on('mouseout',  ()        => _hideTooltip && _hideTooltip());
 
   linkAll.transition().duration(350).attr('stroke-opacity', activeFilter ? 0.85 : 0.75);
-  linkAll.attr('stroke-opacity', activeFilter ? 0.85 : 0.75);
+  
 
   // ── Nodes ────────────────────────────────────────────────────────
   const node = gNodes.selectAll('g.node').data(nodes, d => d.id);
@@ -159,13 +170,6 @@ const link = gLinks.selectAll('line.link').data(simEdges, e => e._key);
     .on('dblclick', (evt, d) => { evt.stopPropagation(); togglePin(d); });
 
   updatePinRings();
-
-  // ── Simulation ───────────────────────────────────────────────────
- /**    const simEdges = visEdges.filter(e => {
-    const sid = resolveId(e.source);
-    const tid = resolveId(e.target);
-    return nodes.some(n => n.id === sid) && nodes.some(n => n.id === tid);
-  });*/
 
   const pantheonKeys = Object.keys(PANTHEON_COLORS);
 
