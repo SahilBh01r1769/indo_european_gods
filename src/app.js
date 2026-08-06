@@ -98,9 +98,9 @@ export function init() {
   renderTourList();
 
   // Subscribe to reactive state changes
-  store.subscribe(STATE_KEYS.SELECTED_DEITY, (deityId) => {
+ /**  store.subscribe(STATE_KEYS.SELECTED_DEITY, (deityId) => {
     if (deityId) loadDeity(deityId);
-  });
+  });*/
 
   store.subscribe(STATE_KEYS.SIMILARITY_METHOD, () => {
     if (store.get(STATE_KEYS.SELECTED_DEITY)) generate();
