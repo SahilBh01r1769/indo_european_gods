@@ -225,7 +225,7 @@ async function generate() {
       animate: store.get('animateEntrance') ?? true,
       showLabels: store.get('showLabels') ?? true,
       cluster: store.get('clusterByPan') ?? false,
-      activeFilter: store.get(STATE_KEYS.ACTIVE_TRAIT_FILTER),
+      activeFilter: store.get(STATE_KEYS.ACTIVE_TRAIT_FILTER) || null,
       showCognates: store.get(STATE_KEYS.SHOW_COGNATES),
       centerDeityId: deity.id,
     });
