@@ -15,11 +15,42 @@ function weightedOverlap(a, b) {
   return maxSum === 0 ? 0 : minSum / maxSum;
 }
 
+// Same order as TRAITS in deities.js
+const TRAITS = [
+  'archer',
+  'healer',
+  'disease sender',
+  'storm god',
+  'wilderness',
+  'liminal outsider',
+  'ecstasy / madness',
+  'ascetic / wisdom',
+  'solar',
+  'war / victory',
+  'trickster',
+  'smith / craft',
+  'sea / water',
+  'death / underworld',
+  'fertility',
+  'fire',
+];
+
+function traitVector(deity) {
+  return TRAITS.map(t => {
+    const key = Object.keys(deity.traits || {}).find(k =>
+      k === t ||
+      k.replace(/\s*\/\s*/g, ' / ') === t ||
+      k.replace(/\s*\/\s*/g, '/') === t.replace(/\s*\/\s*/g, '/')
+    );
+    return key !== undefined ? deity.traits[key] : 0;
+  });
+}
+
 function computeSimilarity(deityA, deityB, method = 'cosine') {
-  const traitsA = Object.values(deityA.traits || {});
-  const traitsB = Object.values(deityB.traits || {});
-  if (method === 'cosine') return cosineSimilarity(traitsA, traitsB);
-  else if (method === 'overlap') return weightedOverlap(traitsA, traitsB);
+  const va = traitVector(deityA);
+  const vb = traitVector(deityB);
+  if (method === 'cosine') return cosineSimilarity(va, vb);
+  if (method === 'overlap') return weightedOverlap(va, vb);
   return 0;
 }
 
