@@ -12,8 +12,11 @@
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Greek:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/search.css">
+  <!-- Add inside <head> -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- D3 (must load before ES modules) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
@@ -64,11 +67,12 @@
       <!-- View tabs -->
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
         <span style="font-size:11px;color:var(--text-3)">View</span>
-        <div class="header-tabs">
-          <button class="header-tab active" data-view="graph">Graph</button>
-          <button class="header-tab" data-view="matrix">Matrix</button>
-          <button class="header-tab" data-view="archetypes">Archetypes</button>
-        </div>
+      <div class="header-tabs">
+        <button class="header-tab active" data-view="graph">Graph</button>
+        <button class="header-tab" data-view="matrix">Matrix</button>
+        <button class="header-tab" data-view="archetypes">Archetypes</button>
+        <button class="header-tab" data-view="map">Map</button>   <!-- NEW -->
+      </div>
       </div>
 
       <div class="header-sep"></div>
@@ -264,6 +268,10 @@
 
         <!-- Archetype view -->
         <div class="view" id="archetype-view"></div>
+
+        <!-- Map view -->
+        
+        <div class="view" id="map-view" style="width:100%;height:100%;"></div>
       </div><!-- /view-area -->
     </div><!-- /main -->
   </div><!-- /app -->
