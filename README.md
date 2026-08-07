@@ -4,7 +4,6 @@ An interactive, computational tool for exploring the archetypal, linguistic, and
 
 Built with **zero build step and zero framework** — plain ES modules, no npm install, no bundler. Open `index.html` behind any static server and it runs.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![D3.js](https://img.shields.io/badge/D3.js-v7-orange)
 ![Leaflet](https://img.shields.io/badge/Leaflet-1.9-199900)
 ![Vanilla JS](https://img.shields.io/badge/JS-ES6_Modules-yellow)
@@ -122,9 +121,3 @@ Then open `http://localhost:8000`.
 ## 📚 Sources
 
 Trait scoring and cognate relationships are drawn from standard comparative mythology references, including Georges Dumézil's trifunctional hypothesis, Mallory & Adams' *Encyclopedia of Indo-European Culture*, and M.L. West's *Indo-European Poetry and Myth*. See `src/data/citations.js` for per-deity sourcing.
-
----
-
-## License
-
-MIT
