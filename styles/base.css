@@ -45,7 +45,7 @@
   --greek: #3b82f6;        /* Bright Blue */
   --vedic: #f97316;        /* Vibrant Orange */
   --norse: #10b981;        /* Emerald Green */
-  --celtic: #22c55e;       /* Light Green */
+  --celtic: #14b8a6;       /* Light Green */
   --roman: #ef4444;        /* Bold Red */
   --slavic: #8b5cf6;       /* Deep Purple */
   --mesopotamian: #eab308; /* Rich Gold */
@@ -142,6 +142,18 @@ body {
 ::selection {
   background: rgba(245, 158, 11, 0.3);
   color: var(--text-0);
+}
+
+/* Add this around line 115, after ::selection */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* Remove default focus outline for mouse users, keep for keyboard */
+:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* ============================================
