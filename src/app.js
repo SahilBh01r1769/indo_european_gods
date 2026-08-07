@@ -8,6 +8,7 @@ import { TOURS } from './data/tours.js';
 import { getCognate } from './data/cognates.js';
 import { getDeityById, sharedTraits, traitVector } from './utils/similarity.js';
 import { exportJSON, exportSVG } from './utils/export.js';
+import { initMap, renderMap, clearMap } from './views/map.js';
 
 // New architecture imports
 import { store, STATE_KEYS } from './utils/store.js';
@@ -97,10 +98,6 @@ export function init() {
   wireControls();
   renderTourList();
 
-  // Subscribe to reactive state changes
- /**  store.subscribe(STATE_KEYS.SELECTED_DEITY, (deityId) => {
-    if (deityId) loadDeity(deityId);
-  });*/
 
   store.subscribe(STATE_KEYS.SIMILARITY_METHOD, () => {
     if (store.get(STATE_KEYS.SELECTED_DEITY)) generate();
@@ -297,6 +294,7 @@ function handleNodeHover(evt, d, edges) {
 
   let html = `
     <div class="tt-title">${d.id}</div>
+    ${d.originalScript ? `<div style="font-family: var(--font-serif); font-size: 13px; color: var(--text-1); margin-bottom: 4px; text-align: center;">${d.originalScript}</div>` : ''}
     <div class="tt-sub" style="color:${col}">
       ${d.pantheon} pantheon · ${d.epithet}
     </div>
@@ -615,6 +613,23 @@ export function switchView(view) {
     renderMatrix(store.get(STATE_KEYS.SIMILARITY_METHOD));
   } else if (view === 'archetypes') {
     renderArchetypes();
+  } else if (view === 'map') {
+    // Use current graph nodes if any, otherwise all deities
+    const nodes = LocalState.nodes.length ? LocalState.nodes : DEITIES;
+    renderMap(nodes, {
+      activeFilter: store.get(STATE_KEYS.ACTIVE_TRAIT_FILTER),
+      eraMin: store.get(STATE_KEYS.ERA_FILTER) || 0,
+    });
+    // Leaflet needs a size refresh after the container becomes visible
+    setTimeout(() => {
+      if (window.mapInstance || true) {
+        // call invalidateSize if you expose mapInstance
+        const mapEl = document.getElementById('map-view');
+        if (mapEl && mapEl._leaflet_id) {
+          // optional: mapInstance.invalidateSize()
+        }
+      }
+    }, 100);
   }
 }
 
