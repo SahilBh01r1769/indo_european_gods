@@ -256,6 +256,36 @@
   line-height: 1.6;
 }
 
+.original-script {
+  font-family: 'Noto Sans Greek', 'Noto Sans Devanagari', var(--font-serif), serif;
+  font-size: 22px;
+  color: var(--gold-bright);
+  margin: 8px 0;
+  text-align: center;
+  opacity: 0.95;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.2);
+}
+
+.era-badge, .geo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  background: var(--bg-4);
+  color: var(--text-1);
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border-1);
+}
+
+.geo-badge {
+  color: var(--cyan);
+  border-color: rgba(6, 182, 212, 0.3);
+  background: rgba(6, 182, 212, 0.1);
+}
+
 /* Pantheon badge */
 .pantheon-badge {
   display: inline-flex;
@@ -680,5 +710,37 @@
 
 .legend-name {
   font-size: 11px;
+  color: var(--text-2);
+}
+
+.deity-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 8px 0 4px;
+  font-size: 12px;
+}
+.meta-label {
+  color: var(--text-3);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.meta-value {
+  color: var(--text-1);
+  line-height: 1.4;
+}
+.deity-domains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 8px 0 6px;
+}
+.domain-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  background: var(--bg-3);
+  border: 1px solid var(--border-1);
   color: var(--text-2);
 }
