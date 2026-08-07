@@ -103,6 +103,15 @@ export function findPath(fromId, toId, metric = 'cosine', threshold = 0.3) {
   const to   = DEITIES.find(d => d.id === toId);
   if (!from || !to || fromId === toId) return null;
 
+  const simCache = new Map();
+     const getSim = (a, b) => {
+       const key = a.id < b.id ? `${a.id}-${b.id}` : `${b.id}-${a.id}`;
+       if (simCache.has(key)) return simCache.get(key);
+       const sim = computeSimilarity(a, b, metric);
+       simCache.set(key, sim);
+       return sim;
+     };
+  
   const queue   = [[from]];
   const visited = new Set([fromId]);
 
@@ -113,7 +122,7 @@ export function findPath(fromId, toId, metric = 'cosine', threshold = 0.3) {
     const current = path[path.length - 1];
     const neighbors = DEITIES.filter(d => {
       if (visited.has(d.id)) return false;
-      return computeSimilarity(current, d, metric) >= threshold;
+      return getSim(current, d, metric) >= threshold;
     });
 
     for (const neighbor of neighbors) {
