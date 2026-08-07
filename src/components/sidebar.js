@@ -34,38 +34,74 @@ export function renderDeityCard(deity) {
 
   panel.style.display = 'block';
   panel.innerHTML = `
-    <div class="panel-title"><span class="panel-icon">⟁</span> Selected deity</div>
-    <div class="card">
-      <div class="pantheon-badge" style="background:${col}20;color:${col};border:1px solid ${col}44">
-        <span class="pantheon-dot" style="background:${col}"></span>
+  <div class="panel-title"><span class="panel-icon">⟁</span> Selected deity</div>
+  <div class="card">
+  <div class="pantheon-badge" style="background:${col}20;color:${col};border:1px solid ${col}44">
+    <span class="pantheon-dot" style="background:${col}"></span>
         ${deity.pantheon}
       </div>
       <div class="deity-card-name">${deity.id}</div>
+      ${deity.originalScript ? `<div class="original-script">${deity.originalScript}</div>` : ''}
       <div class="deity-card-epithet">${deity.epithet}</div>
+      <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+        <span class="era-badge">📅 ${deity.era === 5 ? '~2000–1500 BCE' : deity.era === 4 ? '~1500–800 BCE' : deity.era === 3 ? '~800–200 BCE' : deity.era === 2 ? '~200 BCE–500 CE' : '~500–1200 CE'}</span>
+        ${deity.lat && deity.lng ? `<span class="geo-badge">📍 Mappable</span>` : ''}
+      </div>
       <div class="deity-card-desc">${deity.desc}</div>
 
-      ${refs.length ? `
-        <div class="collapsible-trigger" id="refs-trigger" style="margin-top:10px">
-          <span class="collapsible-label">Academic references (${refs.length})</span>
-          <span class="collapsible-arrow">▾</span>
+    ${deity.aliases?.length ? `
+      <div class="deity-meta">
+        <span class="meta-label">Also known as</span>
+        <span class="meta-value">${deity.aliases.join(', ')}</span>
+      </div>` : ''}
+
+    ${deity.domains?.length ? `
+      <div class="deity-domains">
+        ${deity.domains.map(d => `<span class="domain-tag">${d}</span>`).join('')}
+      </div>` : ''}
+
+    ${deity.attestation ? `
+      <div class="deity-meta">
+        <span class="meta-label">Attestation</span>
+        <span class="meta-value">${deity.attestation}</span>
+      </div>` : ''}
+
+    ${deity.consorts?.length ? `
+      <div class="deity-meta">
+        <span class="meta-label">Consorts</span>
+        <span class="meta-value">${deity.consorts.join(', ')}</span>
+      </div>` : ''}
+
+    ${deity.iconography ? `
+      <div class="deity-meta">
+        <span class="meta-label">Iconography</span>
+        <span class="meta-value">${deity.iconography}</span>
+      </div>` : ''}
+
+    <div class="deity-card-desc">${deity.desc}</div>
+
+    ${refs.length ? `
+      <div class="collapsible-trigger" id="refs-trigger" style="margin-top:10px">
+        <span class="collapsible-label">Academic references (${refs.length})</span>
+        <span class="collapsible-arrow">▾</span>
+      </div>
+      <div class="collapsible-body" id="refs-body">
+        <div style="padding-top:6px">
+          ${refs.map(r => `
+            <div class="ref-item">
+              <span class="ref-author">${r.bib.author}</span>
+              <span class="ref-year"> (${r.bib.year})</span>
+              ${r.pages ? `<span style="color:var(--text-3)"> · ${r.pages}</span>` : ''}
+              <br/>
+              <span class="ref-title">${r.bib.title}</span>
+              <br/>
+              <span style="font-size:10px;color:var(--text-2)">${r.note}</span>
+            </div>`).join('')}
         </div>
-        <div class="collapsible-body" id="refs-body">
-          <div style="padding-top:6px">
-            ${refs.map(r => `
-              <div class="ref-item">
-                <span class="ref-author">${r.bib.author}</span>
-                <span class="ref-year"> (${r.bib.year})</span>
-                ${r.pages ? `<span style="color:var(--text-3)"> · ${r.pages}</span>` : ''}
-                <br/>
-                <span class="ref-title">${r.bib.title}</span>
-                <br/>
-                <span style="font-size:10px;color:var(--text-2)">${r.note}</span>
-              </div>`).join('')}
-          </div>
-        </div>
-      ` : ''}
-    </div>
-  `;
+      </div>
+    ` : ''}
+  </div>
+`;
 
   // Collapsible toggle
   const trigger = document.getElementById('refs-trigger');
