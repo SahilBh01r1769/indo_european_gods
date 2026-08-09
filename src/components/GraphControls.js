@@ -141,39 +141,19 @@ export class GraphControls {
     });
 
     // Compare mode
-    $('compare-btn')?.addEventListener('click', () => {
-      const mode = this.store.get(STATE_KEYS.MODE);
-      if (mode === 'compare') {
-        this.store.set(STATE_KEYS.MODE, 'explore');
-        $('compare-btn').classList.remove('btn-active');
-        this.store.set(STATE_KEYS.UI_TOAST, 'Compare mode off');
-      } else {
-        this.store.set(STATE_KEYS.MODE, 'compare');
-        $('compare-btn').classList.add('btn-active');
-        this.store.set(STATE_KEYS.COMPARE_A, null);
-        this.store.set(STATE_KEYS.COMPARE_B, null);
-        this.store.set(STATE_KEYS.UI_TOAST, 'Compare mode: click two deities');
-      }
-
-    $('path-btn')?.addEventListener('click', () => {
-      const mode = this.store.get(STATE_KEYS.MODE);
-      if (mode === 'path') {
-        this.store.set(STATE_KEYS.MODE, 'explore');
-        $('path-btn').classList.remove('btn-active');
-        this.store.set(STATE_KEYS.PATH_FROM, null);
-        this.store.set(STATE_KEYS.PATH_TO, null);
-        this.store.set(STATE_KEYS.UI_TOAST, 'Path mode off');
-      } else {
-        this.store.set(STATE_KEYS.MODE, 'path');
-        $('path-btn').classList.add('btn-active');
-        $('compare-btn')?.classList.remove('btn-active');
-        this.store.set(STATE_KEYS.PATH_FROM, null);
-        this.store.set(STATE_KEYS.PATH_TO, null);
-        this.store.set(STATE_KEYS.COMPARE_A, null);
-        this.store.set(STATE_KEYS.COMPARE_B, null);
-        this.store.set(STATE_KEYS.UI_TOAST, 'Path mode: click two deities');
-      }
-    });
+$('compare-btn')?.addEventListener('click', () => {
+  const mode = this.store.get(STATE_KEYS.MODE);
+  if (mode === 'compare') {
+    this.store.set(STATE_KEYS.MODE, 'explore');
+    $('compare-btn').classList.remove('btn-active');
+    this.store.set(STATE_KEYS.UI_TOAST, 'Compare mode off');
+  } else {
+    this.store.set(STATE_KEYS.MODE, 'compare');
+    $('compare-btn').classList.add('btn-active');
+    this.store.set(STATE_KEYS.COMPARE_A, null);
+    this.store.set(STATE_KEYS.COMPARE_B, null);
+    this.store.set(STATE_KEYS.UI_TOAST, 'Compare mode: click two deities');
+  }
     });
 
     $('cognate-btn')?.addEventListener('click', () => {
