@@ -22,8 +22,10 @@ export class GraphControls {
 
         <div class="control-group">
           <div class="tab-group" id="link-mode-tabs">
+            <button class="tab-btn" data-link="kin" id="link-kin" disabled title="Requires a loaded deity">Kin</button>
             <button class="tab-btn active" data-link="top5">Top 5</button>
             <button class="tab-btn" data-link="top10">Top 10</button>
+            <button class="tab-btn" data-link="all">All</button>
           </div>
         </div>
 
@@ -72,16 +74,32 @@ export class GraphControls {
       </div>`;
 
     this.bindEvents();
+      this._updateKinButton();
   }
 
-  setupSubscriptions() {}
+  setupSubscriptions() {
+  this.store.subscribe(STATE_KEYS.GRAPH_DATA, () => this._updateKinButton());
+  }
 
   _autoRegenerate() {
-  if (this.store.get(STATE_KEYS.SELECTED_DEITY)) {
-    this.store.set(STATE_KEYS.GRAPH_DATA, { nodes: [], edges: [] });
-    this.generator.generate();
+    if (this.store.get(STATE_KEYS.SELECTED_DEITY)) {
+      this.store.set(STATE_KEYS.GRAPH_DATA, { nodes: [], edges: [] });
+      this.generator.generate();
+    }
   }
-}
+
+  _updateKinButton() {
+    const btn = this.container?.querySelector('#link-kin');
+    if (!btn) return;
+    const hasNodes = (this.store.get(STATE_KEYS.GRAPH_DATA)?.nodes?.length || 0) > 0;
+    btn.disabled = !hasNodes;
+    if (!hasNodes && this.store.get(STATE_KEYS.LINK_MODE) === 'kin') {
+      this.store.set(STATE_KEYS.LINK_MODE, 'top5');
+      this.container.querySelectorAll('#link-mode-tabs .tab-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.link === 'top5')
+      );
+    }
+  }
 
   bindEvents() {
     const $ = id => this.container.querySelector(`#${id}`);
