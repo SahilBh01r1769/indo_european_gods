@@ -336,24 +336,22 @@ export class GraphView {
       .style('top',  (event.pageY - 10) + 'px');
   }
 
-  onEdgeHover(event, d) {
-    const srcId = d.source.id || d.source;
-    const tgtId = d.target.id || d.target;
-    const sim   = d.similarity ?? d.weight ?? 0;
-    const shared = d.shared || d._shared || [];
+    onEdgeHover(event, d) {
+      const srcId = d.source.id || d.source;
+      const tgtId = d.target.id || d.target;
+      const sim   = d.similarity ?? d.weight ?? 0;
+      const shared = d.shared || d._shared || [];
 
-    this.tooltip
-      .style('opacity', 1)
-      .html(`
-        <div class="tt-name">${srcId} ↔ ${tgtId}</div>
-        <div class="tt-sim" style="font-size:14px;font-weight:600;color:var(--gold);margin:4px 0">
-          ${(sim * 100).toFixed(1)}% similarity
-        </div>
-        <div class="tt-traits">Shared: ${shared.length ? shared.join(', ') : '—'}</div>
-      `)
-      .style('left', (event.pageX + 14) + 'px')
-      .style('top',  (event.pageY - 10) + 'px');
-  }
+      this.tooltip
+        .style('opacity', 1)
+        .html(`
+          <div class="tt-name">${srcId} ↔ ${tgtId}</div>
+          <div class="tt-sim">${(sim * 100).toFixed(1)}% similarity</div>
+          <div class="tt-traits">Shared: ${shared.length ? shared.join(', ') : '—'}</div>
+        `)
+        .style('left', (event.pageX + 14) + 'px')
+        .style('top',  (event.pageY - 10) + 'px');
+    }
 
   hideTooltip() {
     this.tooltip.style('opacity', 0);
