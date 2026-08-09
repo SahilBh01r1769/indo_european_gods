@@ -46,7 +46,7 @@ export function exportJSON(state) {
     edges: edges.map(e => ({
       source:       resolveId(e.source),
       target:       resolveId(e.target),
-      weight:       +e.weight.toFixed(4),
+      weight: +(e.similarity ?? e.weight ?? 0).toFixed(4),
       shared_traits: e.shared || [],
       is_cognate:   !!e.cognate,
       cognate_note: e.cognate?.note || null,
