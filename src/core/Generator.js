@@ -94,68 +94,80 @@ export class Generator {
         this.store.set(STATE_KEYS.GRAPH_DATA, { nodes, edges });
         this.store.set(STATE_KEYS.UI_STATUS, `${nodes.length} deities · ${edges.length} connections (Archetype: ${activeTrait})`);
 
-      } else {
-        // ── NORMAL MODE ──
-        const deity = getDeityById(deityId);
-        
-        const connections = await workerClient.getConnections(
-          deity, candidateDeities, metric, threshold
-        );
+      } 
+      
+      else {
+      // ── NORMAL MODE ──
+      const deity = getDeityById(deityId);
 
-        // Abort if a newer request was made
-        if (genId !== this.currentGenerationId) return;
+      const connections = await workerClient.getConnections(
+        deity, candidateDeities, metric, threshold
+      );
 
-        let limited;
-        if (linkMode === 'top5')       limited = connections.slice(0, 5);
-        else if (linkMode === 'top10') limited = connections.slice(0, 10);
-        else                           limited = connections;
+      if (genId !== this.currentGenerationId) return;
 
-        // ── EXPAND instead of replace ──
-        const existing = this.store.get(STATE_KEYS.GRAPH_DATA) || { nodes: [], edges: [] };
-        const existingNodeIds = new Set(existing.nodes.map(n => n.id));
-        const existingEdgeKeys = new Set(
-          existing.edges.map(e => {
-            const s = e.source.id || e.source;
-            const t = e.target.id || e.target;
-            return s < t ? `${s}|${t}` : `${t}|${s}`;
-          })
-        );
+      let limited;
+      if (linkMode === 'kin')        limited = connections.slice(0, 1);
+      else if (linkMode === 'top5')  limited = connections.slice(0, 5);
+      else if (linkMode === 'top10') limited = connections.slice(0, 10);
+      else                           limited = connections; // "all"
 
-        // Start with existing nodes
-        const nodes = [...existing.nodes];
-        // Add the center deity if missing
-        if (!existingNodeIds.has(deity.id)) {
-          nodes.push(deity);
-          existingNodeIds.add(deity.id);
-        }
-        // Add new connected deities
-        for (const c of limited) {
-          if (!existingNodeIds.has(c.deity.id)) {
-            nodes.push(c.deity);
-            existingNodeIds.add(c.deity.id);
-          }
-        }
-
-        // Start with existing edges
-        const edges = [...existing.edges];
-        // Add new edges (avoid duplicates)
-        for (const c of limited) {
-          const key = deity.id < c.deity.id
-            ? `${deity.id}|${c.deity.id}`
-            : `${c.deity.id}|${deity.id}`;
-          if (!existingEdgeKeys.has(key)) {
-            edges.push({
-              source: deity.id,
-              target: c.deity.id,
-              similarity: c.score,
-              shared: c.shared,
-            });
-            existingEdgeKeys.add(key);
-          }
-        }
+      // Kin mode = always a clean 2-node graph (selected + closest)
+      if (linkMode === 'kin') {
+        const nodes = [deity, ...limited.map(c => c.deity)];
+        const edges = limited.map(c => ({
+          source: deity.id,
+          target: c.deity.id,
+          similarity: c.score,
+          shared: c.shared,
+        }));
 
         this.store.set(STATE_KEYS.GRAPH_DATA, { nodes, edges });
-        this.store.set(STATE_KEYS.UI_STATUS, `${nodes.length} deities · ${edges.length} connections`);
+        this.store.set(STATE_KEYS.UI_STATUS, `${nodes.length} deities · ${edges.length} connections (Kin)`);
+        return;
+      }
+
+      // ── Expand / merge for Top 5, Top 10, All ──
+      const existing = this.store.get(STATE_KEYS.GRAPH_DATA) || { nodes: [], edges: [] };
+      const existingNodeIds = new Set(existing.nodes.map(n => n.id));
+      const existingEdgeKeys = new Set(
+        existing.edges.map(e => {
+          const s = e.source.id || e.source;
+          const t = e.target.id || e.target;
+          return s < t ? `${s}|${t}` : `${t}|${s}`;
+        })
+      );
+
+      const nodes = [...existing.nodes];
+      if (!existingNodeIds.has(deity.id)) {
+        nodes.push(deity);
+        existingNodeIds.add(deity.id);
+      }
+      for (const c of limited) {
+        if (!existingNodeIds.has(c.deity.id)) {
+          nodes.push(c.deity);
+          existingNodeIds.add(c.deity.id);
+        }
+      }
+
+      const edges = [...existing.edges];
+      for (const c of limited) {
+        const key = deity.id < c.deity.id
+          ? `${deity.id}|${c.deity.id}`
+          : `${c.deity.id}|${deity.id}`;
+        if (!existingEdgeKeys.has(key)) {
+          edges.push({
+            source: deity.id,
+            target: c.deity.id,
+            similarity: c.score,
+            shared: c.shared,
+          });
+          existingEdgeKeys.add(key);
+        }
+      }
+
+      this.store.set(STATE_KEYS.GRAPH_DATA, { nodes, edges });
+      this.store.set(STATE_KEYS.UI_STATUS, `${nodes.length} deities · ${edges.length} connections`);
       }
 
     } catch (err) {
