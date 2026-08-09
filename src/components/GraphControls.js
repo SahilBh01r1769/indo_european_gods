@@ -22,7 +22,7 @@ export class GraphControls {
 
         <div class="control-group">
           <div class="tab-group" id="link-mode-tabs">
-            <button class="tab-btn" data-link="kin" id="link-kin" disabled title="Requires a loaded deity">Kin</button>
+            <button class="tab-btn" data-link="kin" id="link-kin" title="Show only the single closest deity">Kin</button>
             <button class="tab-btn active" data-link="top5">Top 5</button>
             <button class="tab-btn" data-link="top10">Top 10</button>
             <button class="tab-btn" data-link="all">All</button>
@@ -78,12 +78,11 @@ export class GraphControls {
   }
 
   setupSubscriptions() {
-  this.store.subscribe(STATE_KEYS.GRAPH_DATA, () => this._updateKinButton());
+    this.store.subscribe(STATE_KEYS.GRAPH_DATA, () => this._updateKinButton());
   }
 
   _autoRegenerate() {
     if (this.store.get(STATE_KEYS.SELECTED_DEITY)) {
-      this.store.set(STATE_KEYS.GRAPH_DATA, { nodes: [], edges: [] });
       this.generator.generate();
     }
   }
@@ -93,12 +92,6 @@ export class GraphControls {
     if (!btn) return;
     const hasNodes = (this.store.get(STATE_KEYS.GRAPH_DATA)?.nodes?.length || 0) > 0;
     btn.disabled = !hasNodes;
-    if (!hasNodes && this.store.get(STATE_KEYS.LINK_MODE) === 'kin') {
-      this.store.set(STATE_KEYS.LINK_MODE, 'top5');
-      this.container.querySelectorAll('#link-mode-tabs .tab-btn').forEach(b =>
-        b.classList.toggle('active', b.dataset.link === 'top5')
-      );
-    }
   }
 
   bindEvents() {
@@ -115,10 +108,9 @@ export class GraphControls {
       document.getElementById('surprising-panel').style.display = 'none';
     });
 
-    // Link mode tabs (removed "all")
     $('link-mode-tabs')?.addEventListener('click', e => {
       const btn = e.target.closest('.tab-btn');
-      if (!btn) return;
+      if (!btn || btn.disabled) return;   // ignore if Kin is disabled
       this.store.set(STATE_KEYS.LINK_MODE, btn.dataset.link);
       this.container.querySelectorAll('#link-mode-tabs .tab-btn').forEach(b =>
         b.classList.toggle('active', b.dataset.link === btn.dataset.link)
