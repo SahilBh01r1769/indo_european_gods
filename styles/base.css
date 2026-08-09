@@ -1,0 +1,205 @@
+/* ============================================
+   INDO-EUROPEAN MYTH NETWORK — PREMIUM OBSIDIAN THEME
+   ============================================ */
+
+:root {
+  /* Premium Dark Backgrounds (Zinc/Obsidian palette) */
+  --bg-0: #09090b;       /* Deep canvas background */
+  --bg-1: #18181b;       /* Cards and panels */
+  --bg-2: #18181b;       /* Header and sidebar */
+  --bg-3: #27272a;       /* Subtle backgrounds / hover */
+  --bg-4: #3f3f46;       /* Inputs and active states */
+  --bg-card: #18181b;
+  --bg-elevated: #27272a;
+  --bg-primary: #09090b;   /* Legacy alias */
+  --bg-secondary: #18181b; /* Legacy alias */
+  --bg-tertiary: #27272a;  /* Legacy alias */
+  --bg-5: #52525b;          /* used by some toggles / bars */
+  --gold-dim: #b45309;
+  --danger: #ef4444;
+  --border-3: #71717a;
+  /* High-Contrast Text */
+  --text-0: #fafafa;     /* Primary text, bright white */
+  --text-1: #e4e4e7;     /* Secondary text */
+  --text-2: #a1a1aa;     /* Muted text */
+  --text-3: #71717a;     /* Disabled / placeholder */
+  --text-4: #52525b;     /* Very muted */
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --text-accent: #f59e0b;
+
+  /* Vibrant Accents */
+  --accent: #f59e0b;           /* Amber Gold (Primary accent) */
+  --accent-bright: #fbbf24;
+  --accent-glow: rgba(245, 158, 11, 0.25);
+  --violet: #8b5cf6;           /* Vibrant Purple */
+  --violet-bright: #a78bfa;
+  --cyan: #06b6d4;             /* Vibrant Cyan */
+  --ember: #ef4444;            /* Vibrant Red */
+  --teal: #10b981;             /* Vibrant Green */
+  --gold: #f59e0b;
+  --gold-bright: #fbbf24;
+
+  /* Vibrant Pantheon Colors (Optimized for dark backgrounds) */
+  --greek: #3b82f6;        /* Bright Blue */
+  --vedic: #f97316;        /* Vibrant Orange */
+  --norse: #10b981;        /* Emerald Green */
+  --celtic: #14b8a6;       /* Light Green */
+  --roman: #ef4444;        /* Bold Red */
+  --slavic: #8b5cf6;       /* Deep Purple */
+  --mesopotamian: #eab308; /* Rich Gold */
+  --iranian: #ec4899;      /* Vibrant Pink */
+
+  /* Typography */
+  --font-display: 'Cinzel', 'Georgia', serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --font-serif: 'Cinzel', 'Georgia', serif;
+
+  /* Spacing & Borders */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --border-0: #27272a;
+  --border-1: #3f3f46;
+  --border-2: #52525b;
+  --border-subtle: 1px solid #27272a;
+  --border-accent: 1px solid rgba(245, 158, 11, 0.3);
+
+  /* Modern Shadows & Glows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.15);
+
+  /* Transitions & Radius */
+  --t-fast: 150ms ease;
+  --t-base: 200ms ease;
+  --t-slow: 300ms ease;
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-full: 9999px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+  
+  /* Z-index */
+  --z-overlay: 10;
+  --z-dropdown: 20;
+  --z-loader: 100;
+  --z-toast: 200;
+  --z-modal: 300;
+}
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  height: 100dvh;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-0);
+  color: var(--text-1);
+  line-height: 1.6;
+  overflow: hidden;
+  height: 100dvh;             
+  height: 100%;
+  margin: 0;
+  background-image: 
+    radial-gradient(ellipse at 15% 15%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 85%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--bg-4);
+  border-radius: var(--r-full);
+  border: 2px solid var(--bg-0);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+::selection {
+  background: rgba(245, 158, 11, 0.3);
+  color: var(--text-0);
+}
+
+/* Add this around line 115, after ::selection */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* Remove default focus outline for mouse users, keep for keyboard */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ============================================
+   TYPOGRAPHY & UTILITIES
+   ============================================ */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-0);
+}
+
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.375rem; }
+h3 { font-size: 1.125rem; }
+h4 { font-size: 0.95rem; }
+
+.text-accent { color: var(--accent); }
+.text-muted { color: var(--text-2); }
+.text-violet { color: var(--violet); }
+
+.glass {
+  background: rgba(24, 24, 27, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: var(--border-subtle);
+}
+
+.card {
+  background: var(--bg-card);
+  border: var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--t-base);
+}
+
+.card:hover {
+  border-color: var(--border-1);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-1), transparent);
+  margin: var(--space-md) 0;
+}
