@@ -191,7 +191,7 @@ export class Generator {
         this.store.set(STATE_KEYS.UI_TOAST, `Selected ${nodeId}. Pick a second deity.`);
       } else {
         this.store.set(STATE_KEYS.COMPARE_B, nodeId);
-        this.store.set(STATE_KEYS.MODE, 'explore');
+        // Do NOT leave compare mode — let the user click the Compare button again to exit
         document.getElementById('compare-modal')?.classList.add('open');
       }
       return;
