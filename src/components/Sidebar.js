@@ -430,7 +430,7 @@ export class Sidebar {
 
     panel.querySelectorAll('.conn-item').forEach(item => {
       item.addEventListener('click', () => {
-        this.generator.loadDeity(item.dataset.deity);
+        this.generator.loadDeity(item.dataset.deity, { resetGraph: false });
       });
     });
   }
