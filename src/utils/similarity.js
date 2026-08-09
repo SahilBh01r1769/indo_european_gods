@@ -8,13 +8,14 @@ import { getCognate } from '../data/cognates.js';
 
 /* ── Trait vector ───────────────────────────────────────────────── */
 export function traitVector(deity) {
+  const traits = deity.traits || {};
   return TRAITS.map(t => {
-    const key = Object.keys(deity.traits).find(k =>
-      k === t ||
-      k.replace(/\s*\/\s*/g, ' / ') === t ||
-      k.replace(/\s*\/\s*/g, '/') === t.replace(/\s*\/\s*/g, '/')
-    );
-    return key !== undefined ? deity.traits[key] : 0;
+    const tNorm = t.toLowerCase().replace(/\s*\/\s*/g, ' / ').trim();
+    const key = Object.keys(traits).find(k => {
+      const kNorm = k.toLowerCase().replace(/\s*\/\s*/g, ' / ').trim();
+      return kNorm === tNorm;
+    });
+    return key !== undefined ? traits[key] : 0;
   });
 }
 
@@ -67,11 +68,11 @@ export function getConnections(deity, metric = 'cosine', threshold = 0.20, eraMi
   return DEITIES
     .filter(d => d.id !== deity.id && d.era >= eraMin)
     .map(d => ({
-      deity: d,
-      weight: computeSimilarity(deity, d, metric),
-      shared: sharedTraits(deity, d),
-      cognate: getCognate(deity.id, d.id),
-    }))
+    deity: d,
+    score: computeSimilarity(deity, d, metric),   // was weight
+    shared: sharedTraits(deity, d),
+    cognate: getCognate(deity.id, d.id),
+  }))
     .filter(x => x.score >= threshold)
     .sort((a, b) => b.score - a.score);
 }
