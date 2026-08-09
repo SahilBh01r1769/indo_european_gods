@@ -253,6 +253,21 @@ export class GraphView {
 
       this.updateMinimap();
     });
+
+    // Idle breathing animation once the graph settles
+    this.simulation.on('end', () => {
+      if (!this._idleTimer) {
+        this._idleTimer = setInterval(() => {
+          this.gNodes.selectAll('g.node:not(.node-center) circle.node-circle')
+            .transition()
+            .duration(1800)
+            .attr('r', d => 8 + Math.sin(Date.now() / 900 + (d.x || 0)) * 0.8)
+            .transition()
+            .duration(1800)
+            .attr('r', 8);
+        }, 3600);
+      }
+    });
   }
 
   dragstarted(event, d) {
@@ -301,10 +316,12 @@ export class GraphView {
   }
 
   onNodeHover(event, d) {
-    const traits = Object.entries(d.traits || {})
-      .filter(([, v]) => v > 0)
-      .map(([k]) => k)
-      .join(', ');
+    const topTraits = Object.entries(d.traits || {})
+      .filter(([, v]) => v > 0.4)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([k, v]) => `${k} (${Math.round(v * 100)}%)`)
+      .join(' · ');
 
     this.tooltip
       .style('opacity', 1)
@@ -312,26 +329,30 @@ export class GraphView {
         <div class="tt-name">${d.id}</div>
         <div class="tt-pantheon" style="color:${PANTHEON_COLORS[d.pantheon]}">${d.pantheon}</div>
         <div class="tt-epithet">${d.epithet || ''}</div>
-        <div class="tt-traits">${traits}</div>
+        ${d.originalScript ? `<div style="font-size:12px;opacity:.7;margin:2px 0">${d.originalScript}</div>` : ''}
+        <div class="tt-traits" style="margin-top:6px">${topTraits || 'No strong traits'}</div>
       `)
-      .style('left', (event.pageX + 12) + 'px')
-      .style('top', (event.pageY - 10) + 'px');
+      .style('left', (event.pageX + 14) + 'px')
+      .style('top',  (event.pageY - 10) + 'px');
   }
 
   onEdgeHover(event, d) {
     const srcId = d.source.id || d.source;
     const tgtId = d.target.id || d.target;
-    const shared = d._shared || d.shared || [];
+    const sim   = d.similarity ?? d.weight ?? 0;
+    const shared = d.shared || d._shared || [];
 
     this.tooltip
       .style('opacity', 1)
       .html(`
         <div class="tt-name">${srcId} ↔ ${tgtId}</div>
-        <div class="tt-sim">Similarity: ${(d.similarity * 100).toFixed(1)}%</div>
-        <div class="tt-traits">Shared: ${shared.join(', ')}</div>
+        <div class="tt-sim" style="font-size:14px;font-weight:600;color:var(--gold);margin:4px 0">
+          ${(sim * 100).toFixed(1)}% similarity
+        </div>
+        <div class="tt-traits">Shared: ${shared.length ? shared.join(', ') : '—'}</div>
       `)
-      .style('left', (event.pageX + 12) + 'px')
-      .style('top', (event.pageY - 10) + 'px');
+      .style('left', (event.pageX + 14) + 'px')
+      .style('top',  (event.pageY - 10) + 'px');
   }
 
   hideTooltip() {
@@ -395,6 +416,10 @@ export class GraphView {
   }
 
   clearGraph() {
+  if (this._idleTimer) {
+    clearInterval(this._idleTimer);
+    this._idleTimer = null;
+  }
     if (this.simulation) this.simulation.stop();
     this.gLinks.selectAll('*').remove();
     this.gNodes.selectAll('*').remove();
