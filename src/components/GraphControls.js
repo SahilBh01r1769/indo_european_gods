@@ -155,7 +155,7 @@ export class GraphControls {
         this.store.set(STATE_KEYS.UI_TOAST, 'Compare mode: click two deities');
       }
 
-        $('path-btn')?.addEventListener('click', () => {
+    $('path-btn')?.addEventListener('click', () => {
       const mode = this.store.get(STATE_KEYS.MODE);
       if (mode === 'path') {
         this.store.set(STATE_KEYS.MODE, 'explore');
