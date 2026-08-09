@@ -78,26 +78,27 @@ export class GraphControls {
   }
 
   setupSubscriptions() {
+    this.store.subscribe(STATE_KEYS.SELECTED_DEITY, () => this._updateKinButton());
     this.store.subscribe(STATE_KEYS.GRAPH_DATA, () => this._updateKinButton());
   }
 
   _autoRegenerate() {
-    if (this.store.get(STATE_KEYS.SELECTED_DEITY)) {
-      this.generator.generate();
-    }
+    if (!this.store.get(STATE_KEYS.SELECTED_DEITY)) return;
+    this.store.set(STATE_KEYS.GRAPH_DATA, { nodes: [], edges: [] });
+    this.generator.generate();
   }
 
   _updateKinButton() {
     const btn = this.container?.querySelector('#link-kin');
     if (!btn) return;
-    const hasNodes = (this.store.get(STATE_KEYS.GRAPH_DATA)?.nodes?.length || 0) > 0;
-    btn.disabled = !hasNodes;
+    const hasDeity = !!this.store.get(STATE_KEYS.SELECTED_DEITY);
+    btn.disabled = !hasDeity;
   }
 
   bindEvents() {
     const $ = id => this.container.querySelector(`#${id}`);
 
-    $('gen-btn')?.addEventListener('click', () => this.generator.generate());
+    $('gen-btn')?.addEventListener('click', () => this._autoRegenerate());
     $('surprise-btn')?.addEventListener('click', () => this.generator.surprise());
 
     $('clear-btn')?.addEventListener('click', () => {
@@ -110,7 +111,7 @@ export class GraphControls {
 
     $('link-mode-tabs')?.addEventListener('click', e => {
       const btn = e.target.closest('.tab-btn');
-      if (!btn || btn.disabled) return;   // ignore if Kin is disabled
+      if (!btn || btn.disabled) return;
       this.store.set(STATE_KEYS.LINK_MODE, btn.dataset.link);
       this.container.querySelectorAll('#link-mode-tabs .tab-btn').forEach(b =>
         b.classList.toggle('active', b.dataset.link === btn.dataset.link)
