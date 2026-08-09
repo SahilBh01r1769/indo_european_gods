@@ -1,0 +1,853 @@
+/* ─────────────────────────────────────────────────────────────────
+   data/deities.js — Complete deity dataset
+   16 trait dimensions + originalScript + domains + symbols + numeric era
+   ───────────────────────────────────────────────────────────────── */
+
+export const TRAITS = [
+  'Archer',
+  'Healer',
+  'Disease sender',
+  'Storm god',
+  'Wilderness',
+  'Liminal outsider',
+  'Ecstasy / madness',
+  'Ascetic / wisdom',
+  'Solar',
+  'War / victory',
+  'Trickster',
+  'Smith / craft',
+  'Sea / water',
+  'Death / underworld',
+  'Fertility',
+  'Fire',
+];
+
+export const PANTHEON_COLORS = {
+  Greek:         '#5BA7FF', // vivid sky blue
+  Vedic:         '#FF4F81', // hot pink
+  Norse:         '#3e2589', // electric violet
+  Celtic:        '#35D07F', // emerald green
+  Roman:         '#FFB52E', // golden amber
+  Slavic:        '#FF6B35', // bright orange
+  Mesopotamian:  '#D66BFF', // magenta purple
+  Iranian:       '#20D9D2', // turquoise
+  Egyptian:      '#00BFA6', // deep teal
+};
+
+
+export const DEITIES = [
+  // ── GREEK ──────────────────────────────────────────────────────
+  {
+    id: 'Apollo', pantheon: 'Greek', era: -800,
+    originalScript: 'Ἀπόλλων',
+    epithet: 'Far-Shooter, God of Light',
+    desc: 'God of the sun, music, poetry, prophecy, and medicine. Famous as both healer and bringer of plague (the Far-Shooter). One of the most widely worshipped Olympians; associated with reason, order, and the Delphic oracle. Closely paralleled with Vedic Rudra as the archer-healer-disease-sender archetype.',
+    traits: {
+      archer: .95, healer: .9, 'Disease sender': .85, solar: .85,
+      'Liminal outsider': .7, 'Ascetic / wisdom': .5,
+      wilderness: .4, 'Ecstasy / madness': .4,
+    },
+    domains: ["Archery", "Prophecy", "Music", "Medicine", "Plague", "Sun/light"],
+    symbols: ["Lyre", "Bow", "Laurel", "Tripod", "Raven"],
+  },
+  {
+    id: 'Artemis', pantheon: 'Greek', era: -800,
+    originalScript: 'Ἄρτεμις',
+    epithet: 'Mistress of Animals, Lady of the Hunt',
+    desc: 'Twin of Apollo. Goddess of the hunt, wild animals, wilderness, and the moon. Guardian of young women and of childbirth. Demanded absolute chastity of her followers. Roman equivalent: Diana.',
+    traits: {
+      archer: .95, wilderness: .95, healer: .4,
+      'Disease sender': .6, 'Liminal outsider': .7, solar: .3,
+    },
+    domains: ["Hunt", "Wilderness", "Childbirth", "Moon", "Chastity"],
+    symbols: ["Bow", "Deer", "Crescent moon", "Torch"],
+  },
+  {
+    id: 'Zeus', pantheon: 'Greek', era: -800,
+    originalScript: 'Ζεύς',
+    epithet: 'Father of Gods and Men, Cloud-Gatherer',
+    desc: 'King of Olympus, ruler of sky and thunder. Upholder of cosmic order (themis). Cognate with Latin Jupiter and Vedic Dyaus Pitṛ — the clearest survival of PIE *Dyḗus ph₂tḗr, the daylight-sky father.',
+    traits: {
+      'Storm god': .9, 'War / victory': .7,
+      solar: .4, 'Ascetic / wisdom': .5, fertility: .4,
+    },
+    domains: ["Sky", "Thunder", "Kingship", "Oaths", "Cosmic order"],
+    symbols: ["Thunderbolt", "Eagle", "Oak", "Sceptre"],
+  },
+  {
+    id: 'Ares', pantheon: 'Greek', era: -800,
+    originalScript: 'Ἄρης',
+    epithet: 'God of War, Slaughter',
+    desc: 'Personification of violent, chaotic warfare — contrasted with Athena\'s strategic warfare. One of the least popular Olympians in Greek cult. Roman equivalent: Mars (who had a more positive, agrarian aspect).',
+    traits: {
+      'War / victory': .95, 'Ecstasy / madness': .6,
+      wilderness: .4, 'Disease sender': .3,
+    },
+    domains: ["War", "Violence", "Battle frenzy"],
+    symbols: ["Spear", "Helmet", "Shield", "Vulture"],
+  },
+  {
+    id: 'Hermes', pantheon: 'Greek', era: -800,
+    originalScript: 'Ἑρμῆς',
+    epithet: 'Messenger of the Gods, Guide of Souls',
+    desc: 'Trickster, psychopomp, and patron of travelers, thieves, and merchants. The great boundary-crosser — moves freely between mortal and divine worlds and between life and death. Roman Mercury; strong functional parallels with Norse Loki and Slavic Veles.',
+    traits: {
+      trickster: .9, 'Liminal outsider': .95, 'Ascetic / wisdom': .5,
+      'Smith / craft': .4, 'Death / underworld': .6, healer: .3,
+    },
+    domains: ["Travel", "Trade", "Thieves", "Messages", "Psychopomp"],
+    symbols: ["Caduceus", "Winged sandals", "Petasos", "Tortoise lyre"],
+  },
+  {
+    id: 'Hephaestus', pantheon: 'Greek', era: -800,
+    originalScript: 'Ἥφαιστος',
+    epithet: 'Divine Smith, Lord of Fire',
+    desc: 'Lame god of the forge, fire, and craftsmanship. Outsider among Olympians — thrown from Olympus at birth. Created automata and divine weapons. Roman Vulcan; Celtic parallel in Lugh’s craft aspect and Brigid’s smithcraft.',
+    traits: {
+      'Smith / craft': .95, fire: .7,
+      'Ecstasy / madness': .3, 'Liminal outsider': .4,
+    },
+    domains: ["Forge", "Fire", "Craftsmanship", "Technology"],
+    symbols: ["Hammer", "Anvil", "Tongs", "Volcano"],
+  },
+  {
+    id: 'Dionysus', pantheon: 'Greek', era: -800,
+    originalScript: 'Διόνυσος',
+    epithet: 'Twice-Born, God of Ecstasy',
+    desc: 'God of wine, theatre, and ecstatic religious ritual. Died and was reborn — a fundamentally liminal deity who dissolves boundaries between civilization and wilderness. Closely linked to the mysteries and to the cult of the dying-and-rising god.',
+    traits: {
+      'Ecstasy / madness': .95, wilderness: .75,
+      'Liminal outsider': .8, fertility: .7, 'Disease sender': .3,
+    },
+    domains: ["Wine", "Ecstasy", "Theatre", "Vegetation", "Liberation"],
+    symbols: ["Thyrsus", "Grapevine", "Ivy", "Mask", "Leopard"],
+  },
+  {
+    id: 'Athena', pantheon: 'Greek', era: -800,
+    originalScript: 'Ἀθηνᾶ',
+    epithet: 'Grey-Eyed Goddess, Defender of Cities',
+    desc: 'Goddess of strategic warfare, wisdom, weaving, and craft. Born fully armoured from the head of Zeus. Patron of Athens and protector of heroes. Embodies ordered intelligence in contrast to Ares’ chaos.',
+    traits: {
+      'Ascetic / wisdom': .9, 'War / victory': .8,
+      'Smith / craft': .5, solar: .3,
+    },
+    domains: ["Wisdom", "Strategy", "Weaving", "Cities", "Heroes"],
+    symbols: ["Owl", "Aegis", "Olive", "Spear", "Helmet"],
+  },
+  {
+    id: 'Poseidon', pantheon: 'Greek', era: -800,
+    originalScript: 'Ποσειδῶν',
+    epithet: 'Earth-Shaker, Tamer of Horses',
+    desc: 'God of the sea, earthquakes, and horses. Brother of Zeus. Possibly pre-Olympian in origin — some scholars see an earlier sky or earth deity whose domain was later reassigned to the sea.',
+    traits: {
+      'Sea / water': .95, 'Storm god': .7,
+      'War / victory': .5, fertility: .3,
+    },
+    domains: ["Sea", "Earthquakes", "Horses", "Storms"],
+    symbols: ["Trident", "Horse", "Dolphin", "Bull"],
+  },
+  {
+    id: 'Hades', pantheon: 'Greek', era: -800,
+    originalScript: 'ᾍδης',
+    epithet: 'Rich One, Receiver of Many',
+    desc: 'Ruler of the underworld and keeper of the dead. Not a death-bringer — he rules those who have died but does not cause death. Rarely left his realm. Parallel with Vedic Yama as ‘first of the dead’ / lord of the departed.',
+    traits: {
+      'Death / underworld': .95, 'Liminal outsider': .7,
+      'Ascetic / wisdom': .4, fertility: .3,
+    },
+    domains: ["Underworld", "The dead", "Wealth", "Earth\u2019s riches"],
+    symbols: ["Bident", "Cerberus", "Cypress", "Narcissus", "Helm of darkness"],
+  },
+  {
+    id: 'Helios', pantheon: 'Greek', era: -800,
+    originalScript: 'Ἥλιος',
+    epithet: 'The All-Seeing, Driver of the Sun Chariot',
+    desc: 'Titan personification of the sun who drives his golden chariot across the sky. His all-seeing nature made him a witness to divine oaths. Cognate functionally with Vedic Surya and later partly absorbed into Apollo.',
+    traits: { solar: .95, healer: .4, 'Ascetic / wisdom': .4, 'Death / underworld': .3 },
+    domains: ["Sun", "Sight", "Oaths", "Time"],
+    symbols: ["Sun chariot", "Golden cup", "Rays", "White horses"],
+  },
+  {
+    id: 'Eos', pantheon: 'Greek', era: -800,
+    originalScript: 'Ἠώς',
+    epithet: 'Rosy-Fingered Dawn',
+    desc: 'Goddess of dawn, sister of Helios and Selene. Cognate with Vedic Uṣas and Latin Aurora — one of the clearest PIE solar-goddess continuities (*H₂éwsōs).',
+    traits: { solar: .7, fertility: .6, 'Liminal outsider': .6 },
+    domains: ["Dawn", "Renewal", "Youth"],
+    symbols: ["Rosy fingers", "Saffron robe", "Winged chariot"],
+  },
+  {
+    id: 'Hera', pantheon: 'Greek', era: -800,
+    originalScript: 'Ἥρα',
+    epithet: 'Queen of Olympus, Goddess of Marriage',
+    desc: 'Queen of the gods and goddess of marriage and childbirth. Her constant jealousy of Zeus\'s affairs drives many mythological cycles. Roman Juno.',
+    traits: { fertility: .8, 'War / victory': .4, 'Ascetic / wisdom': .4, 'Storm god': .3 },
+    domains: ["Marriage", "Queenship", "Childbirth", "Women"],
+    symbols: ["Peacock", "Diadem", "Pomegranate", "Cow"],
+  },
+
+  // ── VEDIC ──────────────────────────────────────────────────────
+  {
+    id: 'Rudra', pantheon: 'Vedic', era: -1500,
+    originalScript: 'रुद्र',
+    epithet: 'The Howler, Lord of Beasts, Archer of Archers',
+    desc: 'Fierce storm deity, supreme archer, and paradoxical healer. Dwells on the margins of civilization in forests and mountains. Proto-Śiva — the most direct ancestor of later Shaivism. Closest Vedic parallel to Apollo as archer-healer-disease-sender.',
+    traits: {
+      archer: .9, 'Disease sender': .9, healer: .85,
+      wilderness: .9, 'Ecstasy / madness': .7,
+      'Liminal outsider': .8, 'Storm god': .6, 'Ascetic / wisdom': .7,
+    },
+    domains: ["Storm", "Archery", "Disease", "Healing", "Wilderness", "Beasts"],
+    symbols: ["Bow", "Howling wind", "Mountain", "Medicinal herbs"],
+  },
+  {
+    id: 'Indra', pantheon: 'Vedic', era: -1500,
+    originalScript: 'इन्द्र',
+    epithet: 'King of the Gods, Vritra-Slayer',
+    desc: 'Warrior king of the Vedic pantheon. Slays the cosmic serpent Vṛtra to release the primordial waters — the classic PIE dragon-slaying myth. Drinks soma to enhance his power. Most hymns in the Rigveda are addressed to him. Parallel to Thor, Perun, Taranis, Zeus.',
+    traits: {
+      'Storm god': .95, 'War / victory': .9,
+      solar: .5, fire: .4, fertility: .5, 'Ecstasy / madness': .5,
+    },
+    domains: ["Thunder", "War", "Kingship", "Soma", "Waters"],
+    symbols: ["Vajra (thunderbolt)", "Rainbow", "White elephant Airavata"],
+  },
+  {
+    id: 'Agni', pantheon: 'Vedic', era: -1500,
+    originalScript: 'अग्नि',
+    epithet: 'Lord of Fire, Messenger Between Worlds',
+    desc: 'Personification of sacred sacrificial fire. The indispensable messenger between mortals and gods — every Vedic ritual required his presence. Second-most-hymned deity in the Rigveda. Parallel to Celtic Brigid’s flame and Greek Hephaestus’s forge-fire.',
+    traits: {
+      fire: .95, 'Smith / craft': .5,
+      'Ascetic / wisdom': .6, 'Liminal outsider': .7, healer: .4,
+    },
+    domains: ["Sacred fire", "Sacrifice", "Messenger", "Purification"],
+    symbols: ["Flame", "Ram", "Butter ladle", "Three heads/tongues"],
+  },
+  {
+    id: 'Varuna', pantheon: 'Vedic', era: -1500,
+    originalScript: 'वरुण',
+    epithet: 'Lord of Cosmic Order, All-Seeing Sovereign',
+    desc: 'Guardian of Ṛta (cosmic law) and omniscient sovereign who punishes oath-breakers with his snares. Later became god of the sea. His parallel with Odin (both sovereign magic-wielders who bind) is one of the most compelling PIE continuities.',
+    traits: {
+      'Sea / water': .8, 'Ascetic / wisdom': .85,
+      'Death / underworld': .6, 'Liminal outsider': .7, fertility: .3,
+    },
+    domains: ["Cosmic law (\u1e5bta)", "Oaths", "Waters", "Sovereignty", "Night sky"],
+    symbols: ["Noose (p\u0101\u015ba)", "Ocean", "White horse", "Umbrella"],
+  },
+  {
+    id: 'Surya', pantheon: 'Vedic', era: -1500,
+    originalScript: 'सूर्य',
+    epithet: 'Eye of the World, All-Seeing Sun',
+    desc: 'Solar deity who drives a golden chariot drawn by seven horses. Source of all light, life, and warmth. Cognate functionally with Greek Helios and later identified with aspects of Vishnu.',
+    traits: { solar: .95, healer: .6, 'Ascetic / wisdom': .5, 'War / victory': .4 },
+    domains: ["Sun", "Light", "Health", "Time"],
+    symbols: ["Seven-horse chariot", "Lotus", "Golden disc"],
+  },
+  {
+    id: 'Vishnu', pantheon: 'Vedic', era: -1000,
+    originalScript: 'विष्णु',
+    epithet: 'The Preserver, Lord of the Universe',
+    desc: 'Preserver of the universe in the later Hindu triad. In the Vedic period a minor solar deity who takes three strides across the cosmos. His avatar doctrine and role as upholder of dharma expand dramatically in the epics and Purāṇas.',
+    traits: {
+      'Ascetic / wisdom': .9, healer: .7,
+      solar: .6, fertility: .6, 'Death / underworld': .4, 'Liminal outsider': .5,
+    },
+    domains: ["Preservation", "Cosmic order", "Avatars", "Protection"],
+    symbols: ["Discus (cakra)", "Conch", "Mace", "Lotus", "Garuda"],
+  },
+  {
+    id: 'Shiva', pantheon: 'Vedic', era: -1000,
+    originalScript: 'शिव',
+    epithet: 'The Auspicious One, Lord of Yoga, Destroyer',
+    desc: 'The great ascetic and destroyer/transformer. Evolved from Vedic Rudra. Lord of yoga, dance (Naṭarāja), and wild beasts (Paśupati). Combines terrifying and benevolent aspects — the classic liminal outsider who dwells on the margins.',
+    traits: {
+      wilderness: .9, 'Ecstasy / madness': .9, 'Ascetic / wisdom': .9,
+      'Death / underworld': .7, fertility: .7, 'Liminal outsider': .8, archer: .6,
+    },
+    domains: ["Destruction", "Asceticism", "Yoga", "Dance", "Beasts"],
+    symbols: ["Trident", "Lingam", "Nandi bull", "Crescent moon", "Third eye"],
+  },
+  {
+    id: 'Yama', pantheon: 'Vedic', era: -1500,
+    originalScript: 'यम',
+    epithet: 'First of the Dead, King of the Ancestors',
+    desc: 'First mortal to die and thus the first of the dead; becomes lord of the underworld and judge of the departed. Parallel to Greek Hades and, more precisely, to the idea of the first ancestor who opened the path of death.',
+    traits: {
+      'Death / underworld': .95, 'Liminal outsider': .7,
+      'Ascetic / wisdom': .5, 'War / victory': .3,
+    },
+    domains: ["Death", "Ancestors", "Judgment", "Dharma"],
+    symbols: ["Noose", "Buffalo", "Staff", "Two dogs"],
+  },
+  {
+    id: 'Dyaus', pantheon: 'Vedic', era: -1500,
+    originalScript: 'द्यौस्',
+    epithet: 'Sky Father, Shining Heaven',
+    desc: 'Vedic sky father (*Dyáuṣ pitṛ́). Direct linguistic cognate of Greek Zeus and Latin Jupiter — the purest survival of PIE *Dyḗus ph₂tḗr. Already marginal in the Rigveda, overshadowed by Indra.',
+    traits: { 'Storm god': .8, solar: .7, fertility: .5, 'Ascetic / wisdom': .4 },
+    domains: ["Sky", "Daylight", "Fatherhood"],
+    symbols: ["Bright sky", "Rain"],
+  },
+  {
+    id: 'Ushas', pantheon: 'Vedic', era: -1500,
+    originalScript: 'उषस्',
+    epithet: 'Daughter of the Sky, Lady of the Dawn',
+    desc: 'Goddess of dawn. One of the most poetic figures in the Rigveda. Cognate with Greek Eos and Latin Aurora (*H₂éwsōs) — a secure PIE dawn-goddess reconstruction.',
+    traits: { solar: .85, fertility: .7, 'Liminal outsider': .65, healer: .3 },
+    domains: ["Dawn", "Renewal", "Truth"],
+    symbols: ["Red dawn light", "Chariot", "Golden jewellery"],
+  },
+
+  // ── NORSE ──────────────────────────────────────────────────────
+  {
+    id: 'Thor', pantheon: 'Norse', era: 800,
+    originalScript: 'Þórr',
+    epithet: 'Thunderer, Protector of Mankind',
+    desc: 'Thunder god and protector of gods and humans. Slayer of giants and of the Midgard Serpent. The Germanic reflex of the PIE thunder-warrior (Indra, Perun, Taranis, Zeus).',
+    traits: {
+      'Storm god': .95, 'War / victory': .9,
+      'Smith / craft': .3, fire: .3, wilderness: .4, fertility: .5,
+    },
+    domains: ["Thunder", "Protection", "Strength", "Oak"],
+    symbols: ["Mj\u00f6llnir", "Iron gloves", "Megingj\u00f6r\u00f0", "Goats"],
+  },
+  {
+    id: 'Odin', pantheon: 'Norse', era: 800,
+    originalScript: 'Óðinn',
+    epithet: 'Allfather, God of the Gallows, Wanderer',
+    desc: 'Chief of the Aesir. Sovereign magic-wielder who sacrificed an eye at Mimir\'s well and hung for nine days on Yggdrasil to learn the runes. God of war, death, poetry, and magic. Strong functional parallel with Vedic Varuna as binding sovereign and with Hermes as psychopomp and boundary-crosser.',
+    traits: {
+      'Ascetic / wisdom': .95, 'War / victory': .8,
+      'Death / underworld': .7, trickster: .6,
+      'Liminal outsider': .8, 'Ecstasy / madness': .7, solar: .2,
+    },
+    domains: ["Wisdom", "War", "Magic", "Poetry", "Death", "Kingship"],
+    symbols: ["Spear Gungnir", "Ravens", "Wolves", "Eight-legged horse", "Eye"],
+  },
+  {
+    id: 'Loki', pantheon: 'Norse', era: 800,
+    originalScript: 'Loki',
+    epithet: 'Shape-Shifter, Sly One, Trickster',
+    desc: 'Trickster and boundary-crosser among the gods. Neither fully Aesir nor giant, agent of both help and catastrophe. His role in Baldr’s death and at Ragnarök makes him the ultimate liminal figure. Parallels with Hermes, Veles, and aspects of Prometheus.',
+    traits: {
+      trickster: .95, 'Liminal outsider': .9,
+      'Smith / craft': .5, fire: .5, 'Ecstasy / madness': .6, 'Death / underworld': .4,
+    },
+    domains: ["Trickery", "Change", "Fire", "Boundary-crossing"],
+    symbols: ["Fire", "Nets", "Shape-shifting"],
+  },
+  {
+    id: 'Freyr', pantheon: 'Norse', era: 800,
+    originalScript: 'Freyr',
+    epithet: 'Lord of the Vanir, God of Plenty',
+    desc: 'God of fertility, sunshine, and fair weather. One of the Vanir who joined the Aesir. Associated with peace, prosperity, and good harvests. His sister is Freya.',
+    traits: {
+      fertility: .95, 'Sea / water': .4,
+      solar: .6, 'Ecstasy / madness': .4, wilderness: .5,
+    },
+    domains: ["Fertility", "Peace", "Sunshine", "Harvest"],
+    symbols: ["Boar Gullinbursti", "Ship Sk\u00ed\u00f0bla\u00f0nir", "Antler"],
+  },
+  {
+    id: 'Freya', pantheon: 'Norse', era: 800,
+    originalScript: 'Freyja',
+    epithet: 'Lady of the Vanir, Mistress of Magic',
+    desc: 'Goddess of love, fertility, war, and seiðr magic. Taught Odin the art of seiðr. First to choose among the battle-slain. Striking parallels with Mesopotamian Ishtar — a war-love goddess who is also connected with the underworld.',
+    traits: {
+      fertility: .9, 'Ecstasy / madness': .7,
+      'War / victory': .6, 'Death / underworld': .5, wilderness: .5,
+    },
+    domains: ["Love", "Fertility", "War", "Magic (sei\u00f0r)", "Death"],
+    symbols: ["Necklace Br\u00edsingamen", "Falcon cloak", "Cats", "Boar"],
+  },
+  {
+    id: 'Tyr', pantheon: 'Norse', era: 800,
+    originalScript: 'Týr',
+    epithet: 'One-Handed God of Justice',
+    desc: 'Ancient sky-father figure whose name (from *Tīwaz) is cognate with Zeus and Dyaus. Later demoted to god of law and single combat. Sacrificed his hand to bind the Fenris wolf — a classic oath-and-sacrifice motif.',
+    traits: {
+      'War / victory': .9, 'Ascetic / wisdom': .6, 'Liminal outsider': .5,
+    },
+    domains: ["Law", "Justice", "Single combat", "Oaths"],
+    symbols: ["Sword", "Right hand (missing)"],
+  },
+  {
+    id: 'Baldr', pantheon: 'Norse', era: 800,
+    originalScript: 'Baldr',
+    epithet: 'Shining God, Most Beloved',
+    desc: 'Beautiful, beloved god associated with light and purity. His death at the hands of Loki (via Höðr) triggers the sequence leading to Ragnarök. Name means ‘lord’ or ‘bright one’.',
+    traits: {
+      solar: .85, healer: .6,
+      'Death / underworld': .6, 'Ascetic / wisdom': .5,
+    },
+    domains: ["Light", "Purity", "Beauty", "Peace"],
+    symbols: ["Mistletoe", "White light", "Ship Hringhorni"],
+  },
+  {
+    id: 'Heimdall', pantheon: 'Norse', era: 800,
+    originalScript: 'Heimdallr',
+    epithet: 'Watchman of the Gods, Father of Mankind',
+    desc: 'Guardian of the Bifröst bridge between worlds. Requires less sleep than a bird and can hear grass grow. The ultimate liminal guardian — his domain is the threshold between realms.',
+    traits: {
+      'Liminal outsider': .95, solar: .6,
+      'Ascetic / wisdom': .5, 'War / victory': .4,
+    },
+    domains: ["Thresholds", "Watchfulness", "Guardianship", "Origins of mankind"],
+    symbols: ["Horn Gjallarhorn", "Rainbow bridge Bifr\u00f6st", "Gold teeth"],
+  },
+
+  // ── CELTIC ─────────────────────────────────────────────────────
+  {
+    id: 'Lugh', pantheon: 'Celtic', era: -800,
+    originalScript: 'Lugus',
+    epithet: 'Samildánach, Master of All Arts',
+    desc: 'Solar warrior and master of every craft and skill (Samildánach). Leads the Tuatha Dé Danann against the Fomorians. Name and solar-warrior role parallel Apollo and aspects of Rudra — a compelling PIE archer-craftsman archetype.',
+    traits: {
+      'Smith / craft': .9, solar: .9, 'War / victory': .85,
+      archer: .7, trickster: .4, 'Ascetic / wisdom': .5,
+    },
+    domains: ["Craft", "Skill", "Solar war", "Kingship", "Oaths"],
+    symbols: ["Spear", "Sling", "Harp", "Hound"],
+  },
+  {
+    id: 'The Dagda', pantheon: 'Celtic', era: -800,
+    originalScript: 'Dagda',
+    epithet: 'Good God, Father of All, Lord of Knowledge',
+    desc: 'Chief of the Tuatha Dé Danann. Controls weather, crops, time, and life and death with his magic club. Possesses an inexhaustible cauldron. Combines kingly and priestly functions — a classic ‘good god’ of abundance.',
+    traits: {
+      fertility: .9, 'Smith / craft': .6, 'Ascetic / wisdom': .6,
+      'Ecstasy / madness': .5, healer: .5, wilderness: .4,
+    },
+    domains: ["Fertility", "Druidic knowledge", "Weather", "Abundance"],
+    symbols: ["Club", "Cauldron", "Harp", "Oak"],
+  },
+  {
+    id: 'Cernunnos', pantheon: 'Celtic', era: -800,
+    originalScript: 'Cernunnos',
+    epithet: 'Horned God of the Wild, Lord of Animals',
+    desc: 'Antlered deity of wilderness, animals, fertility, and the underworld. Mediates between human and animal worlds. Iconography suggests connection to Vedic Paśupati (Śiva as Lord of Beasts).',
+    traits: {
+      wilderness: .95, fertility: .8, 'Ecstasy / madness': .7,
+      'Liminal outsider': .8, 'Death / underworld': .5,
+    },
+    domains: ["Wilderness", "Animals", "Fertility", "Underworld"],
+    symbols: ["Antlers", "Torc", "Horned serpent", "Stag"],
+  },
+  {
+    id: 'The Morrigan', pantheon: 'Celtic', era: -800,
+    originalScript: 'Morrígan',
+    epithet: 'Phantom Queen, Goddess of Fate',
+    desc: 'Triple goddess of war, fate, and death. Appears as a crow or raven on the battlefield. Her triple nature and role as battle-fate deity parallel Norse Freya/Valkyries and aspects of Iranian Anahita.',
+    traits: {
+      'War / victory': .9, 'Death / underworld': .85,
+      'Ecstasy / madness': .7, 'Liminal outsider': .7, trickster: .5,
+    },
+    domains: ["War", "Fate", "Death", "Sovereignty", "Prophecy"],
+    symbols: ["Crow/raven", "Eel", "Wolf", "Heifer"],
+  },
+  {
+    id: 'Brigid', pantheon: 'Celtic', era: -800,
+    originalScript: 'Brigantia',
+    epithet: 'Exalted One, Lady of the Flame',
+    desc: 'Goddess of healing, smithcraft, poetry, and the sacred flame. Often understood as a triple goddess. Her sacred flame at Kildare burned continuously and was later Christianized as Saint Brigid of Ireland.',
+    traits: {
+      healer: .9, 'Smith / craft': .8, fire: .8,
+      fertility: .6, 'Ascetic / wisdom': .5,
+    },
+    domains: ["Healing", "Smithcraft", "Poetry", "Sacred fire", "Spring"],
+    symbols: ["Eternal flame", "Forge", "Well", "White cow"],
+  },
+  {
+    id: 'Manannán', pantheon: 'Celtic', era: -800,
+    originalScript: 'Manannán',
+    epithet: 'Son of the Sea, Ruler of the Otherworld',
+    desc: 'God of the sea and of the Otherworld. Ferryman and guardian of magical islands. Master of illusions and mists. A classic liminal sea-psychopomp figure.',
+    traits: {
+      'Sea / water': .95, 'Liminal outsider': .9,
+      trickster: .6, 'Death / underworld': .6, fertility: .3,
+    },
+    domains: ["Sea", "Otherworld", "Magic", "Travel"],
+    symbols: ["Wave", "Cloak of mists", "Crane bag", "Horse Enbarr"],
+  },
+  {
+    id: 'Nuada', pantheon: 'Celtic', era: -800,
+    originalScript: 'Nuada',
+    epithet: 'Silver-Handed King, First of the Tuatha',
+    desc: 'First king of the Tuatha Dé Danann. Lost his arm in battle and was temporarily disqualified from kingship until given a silver prosthetic — a myth about physical perfection and legitimate rule.',
+    traits: {
+      'War / victory': .9, healer: .6,
+      'Smith / craft': .5, solar: .4,
+    },
+    domains: ["Kingship", "War", "Justice", "Restoration"],
+    symbols: ["Sword of light", "Silver arm"],
+  },
+  {
+    id: 'Taranis', pantheon: 'Celtic', era: -800,
+    originalScript: 'Taranis',
+    epithet: 'The Thunderer, Wheel-Bearer',
+    desc: 'Gaulish thunder god. Name from Celtic *toranos ‘thunder’. Iconographically associated with a wheel. Clear parallel to Thor, Indra, Perun, and the PIE thunder-warrior.',
+    traits: {
+      'Storm god': .9, 'War / victory': .7, fire: .5, wilderness: .4,
+    },
+    domains: ["Thunder", "Sky", "Wheel of the year"],
+    symbols: ["Wheel", "Thunderbolt", "Eagle"],
+  },
+
+  // ── ROMAN ──────────────────────────────────────────────────────
+  {
+    id: 'Mars', pantheon: 'Roman', era: -100,
+    originalScript: 'Mars',
+    epithet: 'Father of Rome, Guardian of the State',
+    desc: 'Roman god of war and, originally, of agriculture and boundary protection. More positively valued than Greek Ares. Father of Romulus and Remus; central to Roman state ideology.',
+    traits: {
+      'War / victory': .95, wilderness: .6,
+      fertility: .6, solar: .3, 'Disease sender': .3,
+    },
+    domains: ["War", "Agriculture", "Protection of the state"],
+    symbols: ["Spear", "Shield", "Wolf", "Woodpecker"],
+  },
+  {
+    id: 'Jupiter', pantheon: 'Roman', era: -100,
+    originalScript: 'Iuppiter',
+    epithet: 'Best and Greatest, Guardian of Rome',
+    desc: 'Supreme god of the Roman state. Direct linguistic and functional cognate of Greek Zeus and Vedic Dyaus — PIE *Dyḗus ph₂tḗr. Guardian of oaths and of the cosmic and political order.',
+    traits: {
+      'Storm god': .85, 'War / victory': .7,
+      'Ascetic / wisdom': .6, solar: .5, fertility: .4,
+    },
+    domains: ["Sky", "Thunder", "Oaths", "Kingship", "Law"],
+    symbols: ["Thunderbolt", "Eagle", "Oak", "Sceptre"],
+  },
+  {
+    id: 'Mercury', pantheon: 'Roman', era: -100,
+    originalScript: 'Mercurius',
+    epithet: 'Messenger God, Patron of Commerce',
+    desc: 'Roman god of trade, travel, and messages. Interpretatio romana of Greek Hermes. Also associated with Celtic Lugus in the provinces — another boundary-crossing, multi-skilled figure.',
+    traits: {
+      trickster: .85, 'Liminal outsider': .9,
+      'Ascetic / wisdom': .5, 'Death / underworld': .5, healer: .3,
+    },
+    domains: ["Trade", "Travel", "Messages", "Profit", "Boundaries"],
+    symbols: ["Caduceus", "Winged hat", "Purse", "Cockerel"],
+  },
+  {
+    id: 'Vulcan', pantheon: 'Roman', era: -100,
+    originalScript: 'Volcanus',
+    epithet: 'Divine Craftsman, Lord of the Forge',
+    desc: 'Roman god of fire and the forge. Interpretatio of Greek Hephaestus. His festival, the Volcanalia, was concerned with protecting the city from destructive fire.',
+    traits: {
+      'Smith / craft': .95, fire: .8,
+      'Liminal outsider': .5, 'Ecstasy / madness': .3,
+    },
+    domains: ["Fire", "Forge", "Volcanoes", "Craft"],
+    symbols: ["Hammer", "Anvil", "Tongs", "Volcano"],
+  },
+  {
+    id: 'Diana', pantheon: 'Roman', era: -100,
+    originalScript: 'Diana',
+    epithet: 'Lady of the Hunt, Goddess of the Moon',
+    desc: 'Roman goddess of the hunt, the moon, and the wilderness. Interpretatio of Greek Artemis. Important cult at Aricia (Lake Nemi) with the famous rex Nemorensis.',
+    traits: {
+      archer: .9, wilderness: .9,
+      'Liminal outsider': .7, 'Disease sender': .5, healer: .4,
+    },
+    domains: ["Hunt", "Moon", "Wilderness", "Childbirth"],
+    symbols: ["Bow", "Deer", "Crescent moon", "Torch"],
+  },
+  {
+    id: 'Neptune', pantheon: 'Roman', era: -100,
+    originalScript: 'Neptunus',
+    epithet: 'God of the Sea, Tamer of Horses',
+    desc: 'Roman god of freshwater and later of the sea. Interpretatio of Greek Poseidon. Originally more associated with springs and rivers than with the open ocean.',
+    traits: {
+      'Sea / water': .9, 'Storm god': .65,
+      'War / victory': .4, fertility: .3,
+    },
+    domains: ["Sea", "Fresh water", "Horses"],
+    symbols: ["Trident", "Horse", "Dolphin"],
+  },
+  {
+    id: 'Mithras', pantheon: 'Roman', era: 100,
+    originalScript: 'Mithras',
+    epithet: 'Unconquered Sun, Bull-Slayer',
+    desc: 'Central figure of the Roman mystery cult of Mithraism. Bull-slayer whose act releases life. Derived from Iranian Mithra but developed distinctively in the Roman Empire, especially among soldiers.',
+    traits: {
+      solar: .9, 'War / victory': .8,
+      'Liminal outsider': .7, archer: .6, 'Ascetic / wisdom': .6,
+    },
+    domains: ["Covenant", "Light", "Bull-slaying", "Salvation"],
+    symbols: ["Bull", "Dagger", "Phrygian cap", "Sun and moon", "Torchbearers"],
+  },
+
+  // ── SLAVIC ─────────────────────────────────────────────────────
+  {
+    id: 'Perun', pantheon: 'Slavic', era: -100,
+    originalScript: 'Перун',
+    epithet: 'Lord of Thunder, Ruler of the Sky',
+    desc: 'Chief Slavic thunder god. Slayer of the serpent (often identified with Veles). Clear member of the PIE thunder-warrior set: Indra, Thor, Taranis, Zeus.',
+    traits: {
+      'Storm god': .9, 'War / victory': .85,
+      'Smith / craft': .4, fire: .4, wilderness: .3,
+    },
+    domains: ["Thunder", "Oak", "War", "Law"],
+    symbols: ["Axe", "Oak", "Eagle", "Thunderbolt"],
+  },
+  {
+    id: 'Veles', pantheon: 'Slavic', era: -100,
+    originalScript: 'Велес',
+    epithet: 'Serpent God, Lord of the Underworld',
+    desc: 'Slavic god of the underworld, cattle, magic, and wealth. Eternal opponent of Perun — a chthonic, often serpentine figure. Strong trickster and boundary-crossing aspects; parallels with Loki, Hermes, and Varuna’s darker side.',
+    traits: {
+      'Death / underworld': .9, trickster: .8, 'Sea / water': .6,
+      'Liminal outsider': .7, fertility: .5, 'Ecstasy / madness': .4,
+    },
+    domains: ["Underworld", "Cattle", "Magic", "Wealth", "Trickery"],
+    symbols: ["Serpent", "Bear", "Cattle", "Willow"],
+  },
+  {
+    id: 'Svarog', pantheon: 'Slavic', era: -100,
+    originalScript: 'Сварог',
+    epithet: 'God of the Forge, Lord of Celestial Fire',
+    desc: 'Slavic sky and fire/smith god. Sometimes regarded as a divine smith or as a solar/sky father. Parallels with Hephaestus, Vulcan, and aspects of Agni and Svarog’s son Dažbog.',
+    traits: {
+      fire: .9, 'Smith / craft': .85,
+      solar: .6, 'Ascetic / wisdom': .4,
+    },
+    domains: ["Sky", "Fire", "Smithcraft", "Sun"],
+    symbols: ["Forge", "Fire", "Solar wheel"],
+  },
+  {
+    id: 'Mokosh', pantheon: 'Slavic', era: -100,
+    originalScript: 'Мокошь',
+    epithet: 'Moist Earth Mother, Goddess of Fate',
+    desc: 'Slavic earth and fertility goddess, protector of women and of spinning/weaving. One of the few clearly female deities retained in the later Slavic pantheon after Christianization. Parallels with Freya and various earth-mother archetypes.',
+    traits: {
+      fertility: .9, 'Sea / water': .5,
+      healer: .6, 'Ascetic / wisdom': .4, wilderness: .3,
+    },
+    domains: ["Earth", "Fertility", "Women\u2019s work", "Moisture"],
+    symbols: ["Spindle", "Sheep", "Moist earth"],
+  },
+
+  // ── MESOPOTAMIAN ────────────────────────────────────────────────
+  {
+    id: 'Enlil', pantheon: 'Mesopotamian', era: -2000,
+    originalScript: '𒀭𒂗𒆤',
+    epithet: 'Lord Wind, King of Heaven and Earth',
+    desc: 'Chief god of the Sumerian and early Akkadian pantheon. Lord of wind and storm, who confers kingship and issues the decrees of the gods. His temple was the Ekur at Nippur.',
+    traits: {
+      'Storm god': .9, 'War / victory': .7,
+      'Ascetic / wisdom': .6, fertility: .5,
+    },
+    domains: ["Wind", "Storm", "Kingship", "Decrees"],
+    symbols: ["Horn\u00e9d crown", "Tablet of destinies", "Storm"],
+  },
+  {
+    id: 'Marduk', pantheon: 'Mesopotamian', era: -1000,
+    originalScript: '𒀭𒀫𒌓',
+    epithet: 'Son of the Deep, King of the Gods',
+    desc: 'Patron god of Babylon. In the Enūma Eliš he defeats the chaos dragon Tiamat and creates the ordered world from her body — a classic combat-myth of order versus chaos, parallel to Indra–Vṛtra and Zeus–Typhon.',
+    traits: {
+      'War / victory': .9, solar: .7,
+      'Storm god': .6, 'Ascetic / wisdom': .6, 'Smith / craft': .4,
+    },
+    domains: ["Kingship", "Order", "Storm", "Creation"],
+    symbols: ["Spade", "Mu\u0161\u1e2bu\u0161\u0161u dragon", "Tablet of destinies"],
+  },
+  {
+    id: 'Nergal', pantheon: 'Mesopotamian', era: -1000,
+    originalScript: '𒀭𒄊𒀕𒃲',
+    epithet: 'Lord of the Great City, God of Plague',
+    desc: 'Mesopotamian god of war, plague, and the underworld. Husband of Ereshkigal. Represents the destructive, scorching aspect of the sun and the violence of epidemic disease.',
+    traits: {
+      'Death / underworld': .9, 'War / victory': .8,
+      'Disease sender': .85, fire: .5, 'Liminal outsider': .6,
+    },
+    domains: ["War", "Plague", "Underworld", "Scorching sun"],
+    symbols: ["Scimitar", "Lion", "Underworld gate"],
+  },
+  {
+    id: 'Ishtar', pantheon: 'Mesopotamian', era: -1000,
+    originalScript: '𒀭𒈹',
+    epithet: 'Queen of Heaven, Goddess of Love and War',
+    desc: 'Goddess of love, war, fertility, and political power. Descended to the underworld and returned — one of the oldest dying-and-rising narratives. Striking parallels with Norse Freya as a war-love goddess connected with the underworld.',
+    traits: {
+      fertility: .9, 'War / victory': .85,
+      'Liminal outsider': .8, 'Ecstasy / madness': .6, 'Death / underworld': .5,
+    },
+    domains: ["Love", "War", "Fertility", "Political power", "Descent"],
+    symbols: ["Eight-pointed star", "Lion", "Rosettes"],
+  },
+
+  // ── IRANIAN ─────────────────────────────────────────────────────
+  {
+    id: 'Ahura Mazda', pantheon: 'Iranian', era: -1000,
+    originalScript: '𐬀𐬵𐬎𐬭𐬋 𐬨𐬀𐬰𐬛𐬁',
+    epithet: 'Wise Lord, Supreme Creator',
+    desc: 'Supreme deity of Zoroastrianism. Embodiment of truth (Asha) and cosmic order. His eternal struggle against Angra Mainyu/Ahriman is one of the first explicit theological dualisms and may have influenced later Abrahamic ideas of cosmic evil.',
+    traits: {
+      'Ascetic / wisdom': .95, solar: .8,
+      healer: .5, fire: .5, 'War / victory': .4,
+    },
+    domains: ["Truth (Asha)", "Creation", "Light", "Wisdom"],
+    symbols: ["Winged disc", "Fire", "Light"],
+  },
+  {
+    id: 'Mithra', pantheon: 'Iranian', era: -1000,
+    originalScript: '𐬨𐬌𐬚𐬭𐬀',
+    epithet: 'God of the Covenant, Keeper of Truth',
+    desc: 'Iranian god of contracts, light, and justice. Cosmic warrior associated with the sun and with the upholding of agreements. Direct ancestor of Roman Mithras. Name (*Mitrá) cognate with Vedic Mitra.',
+    traits: {
+      solar: .9, 'War / victory': .8,
+      'Ascetic / wisdom': .7, 'Liminal outsider': .6, archer: .5,
+    },
+    domains: ["Covenant", "Light", "Justice", "War", "Pastures"],
+    symbols: ["Sun", "Mace", "Chariot", "Bull"],
+  },
+  {
+    id: 'Ahriman', pantheon: 'Iranian', era: -1000,
+    originalScript: '𐬀𐬢𐬭𐬀⸱𐬨𐬀𐬌𐬥𐬌𐬌𐬎',
+    epithet: 'Destructive Spirit, Principle of Evil',
+    desc: 'Zoroastrian principle of evil and destruction (Angra Mainyu). Eternal adversary of Ahura Mazda. One of the earliest theological embodiments of evil as a cosmic force rather than merely a chaotic personality.',
+    traits: {
+      'Death / underworld': .85, 'Ecstasy / madness': .7,
+      'Disease sender': .8, 'Liminal outsider': .6, trickster: .5,
+    },
+    domains: ["Destruction", "Lie (Druj)", "Darkness", "Disease"],
+    symbols: ["Darkness", "Corruption", "Destructive spirit"],
+  },
+
+  // ── EGYPTIAN ────────────────────────────────────────────────────
+  // Egyptian religion is not IE in origin but is included for
+  // comparative purposes — several archetypes show striking
+  // functional parallels with attested IE figures.
+  {
+    id: 'Ra', pantheon: 'Egyptian', era: -2000,
+    originalScript: '𓂋𓂝',
+    epithet: 'King of the Gods, The Hidden One',
+    desc: 'Supreme solar deity who sails across the sky by day and through the underworld by night. Chief of the Egyptian pantheon in the Old Kingdom. Merged with Amun as Amun-Ra. Included for comparative solar and combat-myth parallels.',
+    traits: { solar: .98, 'War / victory': .6, 'Ascetic / wisdom': .6, 'Death / underworld': .5, 'Liminal outsider': .5, fire: .4 },
+    domains: ["Sun", "Creation", "Kingship", "Order"],
+    symbols: ["Sun disc", "Falcon", "Solar barque", "Uraeus"],
+  },
+  {
+    id: 'Osiris', pantheon: 'Egyptian', era: -2000,
+    originalScript: '𓊨𓁹',
+    epithet: 'Lord of the Dead, King of the Afterlife',
+    desc: 'God of the afterlife, death, and resurrection. Murdered by Set, restored by Isis. His death and rebirth made him the prototype of the dying-and-rising god in Egyptian religion.',
+    traits: { 'Death / underworld': .95, fertility: .8, 'Ascetic / wisdom': .6, 'Liminal outsider': .7, 'Ecstasy / madness': .3, solar: .3 },
+    domains: ["Afterlife", "Resurrection", "Fertility", "Judgment"],
+    symbols: ["Crook and flail", "White crown", "Djed pillar", "Green skin"],
+  },
+  {
+    id: 'Isis', pantheon: 'Egyptian', era: -2000,
+    originalScript: '𓊨𓏏𓆇',
+    epithet: 'Great Mother, Mistress of Magic',
+    desc: 'Goddess of magic, healing, marriage, and protection. Resurrected Osiris and conceived Horus. One of the most widely worshipped deities of the ancient world; her cult spread throughout the Roman Empire.',
+    traits: { healer: .9, 'Ascetic / wisdom': .8, 'Liminal outsider': .7, fertility: .7, trickster: .4, 'Death / underworld': .5 },
+    domains: ["Magic", "Healing", "Protection", "Motherhood", "Kingship"],
+    symbols: ["Throne hieroglyph", "Wings", "Ankh", "Tyet knot"],
+  },
+  {
+    id: 'Horus', pantheon: 'Egyptian', era: -2000,
+    originalScript: '𓅃',
+    epithet: 'Lord of the Sky, Avenger of His Father',
+    desc: 'Falcon-headed sky and solar deity. Son of Osiris and Isis; defeats Set to claim the throne of Egypt. Every living pharaoh was an incarnation of Horus.',
+    traits: { solar: .85, 'War / victory': .9, 'Ascetic / wisdom': .5, archer: .5, 'Liminal outsider': .4, healer: .3 },
+    domains: ["Sky", "Kingship", "Vengeance", "Protection"],
+    symbols: ["Falcon", "Eye of Horus", "Double crown"],
+  },
+  {
+    id: 'Set', pantheon: 'Egyptian', era: -2000,
+    originalScript: '𓃩',
+    epithet: 'Lord of Chaos, God of the Desert',
+    desc: 'God of chaos, storms, and the desert. Murderer of Osiris and opponent of Horus, yet also a protector of Ra’s solar barque against Apophis — an ambiguous figure comparable to Loki.',
+    traits: { 'Storm god': .85, "War / victory": .75, 'Ecstasy / madness': .7, 'Liminal outsider': .7, trickster: .6, 'Disease sender': .4, wilderness: .6 },
+    domains: ["Chaos", "Storm", "Desert", "Strength", "Ambiguity"],
+    symbols: ["Set-animal", "Was-sceptre", "Desert"],
+  },
+  {
+    id: 'Anubis', pantheon: 'Egyptian', era: -2000,
+    originalScript: '𓃣',
+    epithet: 'Guardian of the Scales, Lord of Embalming',
+    desc: 'Jackal-headed god of death, embalming, and the afterlife. Guides souls and weighs hearts against the feather of Ma’at. The quintessential liminal psychopomp.',
+    traits: { 'Death / underworld': .95, 'Liminal outsider': .9, healer: .4, 'Ascetic / wisdom': .5, wilderness: .4 },
+    domains: ["Embalming", "Psychopomp", "Judgment", "Necropolis"],
+    symbols: ["Jackal", "Flail", "Was-sceptre", "Mummy wrappings"],
+  },
+  {
+    id: 'Thoth', pantheon: 'Egyptian', era: -2000,
+    originalScript: '𓅝',
+    epithet: 'Lord of Divine Words, Scribe of the Gods',
+    desc: 'Ibis-headed god of writing, wisdom, magic, and the moon. Keeper of divine records and mediator between the gods. Identified in the Hellenistic period with Hermes as Hermes Trismegistus.',
+    traits: { 'Ascetic / wisdom': .95, trickster: .6, 'Liminal outsider': .8, healer: .5, 'Death / underworld': .5, solar: .4 },
+    domains: ["Writing", "Wisdom", "Magic", "Moon", "Mediation"],
+    symbols: ["Ibis", "Baboon", "Scribe palette", "Moon disc"],
+  },
+  {
+    id: 'Sekhmet', pantheon: 'Egyptian', era: -2000,
+    originalScript: '𓌂𓐍𓏏',
+    epithet: 'The Powerful One, Lady of Pestilence',
+    desc: 'Lioness goddess of war, fire, and plague. Sent by Ra to punish humanity and nearly destroyed mankind. Also invoked as a healer — the same disease-sender/healer duality seen in Apollo and Rudra.',
+    traits: { 'War / victory': .9, 'Disease sender': .88, healer: .7, fire: .6, 'Ecstasy / madness': .6, wilderness: .5 },
+    domains: ["War", "Plague", "Healing", "Fire", "Protection"],
+    symbols: ["Lioness", "Solar disc", "Fire", "Red linen"],
+  },
+  {
+    id: 'Hathor', pantheon: 'Egyptian', era: -2000,
+    originalScript: '𓉡',
+    epithet: 'Lady of the West, Mistress of Joy',
+    desc: 'Goddess of love, beauty, music, fertility, and the sky. One of the most ancient and widely worshipped Egyptian deities. In her destructive aspect she is identified with Sekhmet.',
+    traits: { fertility: .92, solar: .6, 'Ecstasy / madness': .6, healer: .5, 'Death / underworld': .4, 'Liminal outsider': .4 },
+    domains: ["Love", "Music", "Fertility", "Joy", "Sky"],
+    symbols: ["Cow horns", "Sistrum", "Mirror", "Menat necklace"],
+  },
+  {
+    id: 'Apophis', pantheon: 'Egyptian', era: -2000,
+    originalScript: '𓆙',
+    epithet: 'Serpent of Chaos, Enemy of Ra',
+    desc: 'The great chaos serpent who tries to devour Ra’s solar barque every night. His nightly defeat mirrors the PIE dragon-slaying myth — Egyptian counterpart to Vṛtra, Typhon, and Jörmungandr.',
+    traits: { 'Death / underworld': .85, 'Ecstasy / madness': .8, 'Disease sender': .6, 'Liminal outsider': .5, 'Storm god': .4 },
+    domains: ["Chaos", "Darkness", "Destruction", "Serpent"],
+    symbols: ["Serpent", "Dark water", "Coils"],
+  },
+];
+
+/* ── Archetype metadata: icons, lore, and lookup helpers ────────── */
+export const normTrait = (t) => (t || '').toLowerCase().replace(/\s*\/\s*/g, ' / ').trim();
+
+export function getTraitValue(deity, traitName) {
+  if (!deity || !deity.traits) return 0;
+  const t = normTrait(traitName);
+  const entry = Object.entries(deity.traits).find(([k]) => normTrait(k) === t);
+  return entry ? entry[1] : 0;
+}
+
+export const TRAIT_ICONS = {
+  archer: '🏹', healer: '🩺', 'disease sender': '☠️', 'storm god': '⚡',
+  wilderness: '🌲', 'liminal outsider': '🌗', 'ecstasy / madness': '🍷',
+  'ascetic / wisdom': '🦉', solar: '☀️', 'war / victory': '⚔️',
+  trickster: '🎭', 'smith / craft': '⚒️', 'sea / water': '🌊',
+  'death / underworld': '💀', fertility: '🌾', fire: '🔥',
+};
+
+export const TRAIT_LORE = {
+  archer: 'The far-shooter who strikes from afar with unerring aim. From Apollo’s silver bow to Rudra’s thousand arrows, the archer god binds together plague and healing — the same hand that wounds can also cure.',
+  healer: 'The divine physician who restores wholeness to mortals. Healing deities stand at the threshold of death, bargaining with the underworld for human lives.',
+  'disease sender': 'The bringer of plague and sudden illness. In the Indo-European imagination, disease was an arrow shot by an offended god — appeasement, not medicine, was the cure.',
+  'storm god': 'The thunder-warrior who rides the storm and slays the cosmic serpent. His battle to release the imprisoned waters is the oldest reconstructible PIE myth.',
+  wilderness: 'Lord and lady of the wild places — beast, forest, and untamed margin. These deities guard the boundary between civilization and the raw power of nature.',
+  'liminal outsider': 'The threshold-dweller who crosses between worlds: life and death, divine and mortal, order and chaos. Psychopomps, guardians, and sacred outsiders.',
+  'ecstasy / madness': 'The god who dissolves the boundaries of the self through wine, dance, and ritual frenzy — ecstasy as both liberation and divine possession.',
+  'ascetic / wisdom': 'Keeper of sacred knowledge — seer, sage, and bound ascetic who wins wisdom through sacrifice, silence, or suffering.',
+  solar: 'The all-seeing eye of the sky, driver of the golden chariot. Solar deities witness oaths, judge the dead, and renew the world at every dawn.',
+  'war / victory': 'The god of battle and triumphant force. From the berserker’s fury to the strategist’s calm, war deities embody both the cost and the glory of combat.',
+  trickster: 'The boundary-crosser and culture-hero who breaks every rule. Thief, liar, and inventor — the trickster’s cunning reshapes the cosmic order.',
+  'smith / craft': 'The divine craftsman of the forge, master of fire and metal. Often lame or exiled, the smith god transforms raw matter into weapons, treasures, and worlds.',
+  'sea / water': 'Ruler of the deep and earth-shaker, guardian of springs and oceans. Water deities hold the primordial chaos that surrounds the ordered world.',
+  'death / underworld': 'First of the dead and lord of the departed. These deities do not merely kill — they receive, judge, and rule the shades below.',
+  fertility: 'The giver of increase: harvest, herd, and child. Fertility deities bind the community to the cycles of soil, season, and renewal.',
+  fire: 'The messenger flame that carries sacrifice to the gods. Fire is hearth and forge, purifier and destroyer — the spark of civilization itself.',
+};
