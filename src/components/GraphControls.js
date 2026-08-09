@@ -77,10 +77,11 @@ export class GraphControls {
   setupSubscriptions() {}
 
   _autoRegenerate() {
-    if (this.store.get(STATE_KEYS.SELECTED_DEITY)) {
-      this.generator.generate();
-    }
+  if (this.store.get(STATE_KEYS.SELECTED_DEITY)) {
+    this.store.set(STATE_KEYS.GRAPH_DATA, { nodes: [], edges: [] });
+    this.generator.generate();
   }
+}
 
   bindEvents() {
     const $ = id => this.container.querySelector(`#${id}`);
