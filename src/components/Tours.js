@@ -26,8 +26,10 @@ export class Tours {
     this.container.innerHTML = `
       <div class="panel">
         <div class="panel-title"><span class="panel-icon">✦</span> Guided tours</div>
-        <div style="font-size:11px;color:var(--text-3);margin-bottom:10px">
-          Pre-built story paths through the network
+        <div style="font-size:12px;color:var(--text-2);line-height:1.55;margin-bottom:14px;padding:0 2px">
+          Each tour loads a curated group of deities that share a deep mythological pattern 
+          (e.g. the Thunder Warrior myth that appears from India to Scandinavia). 
+          Click a tour to open its network and read the story behind the connections.
         </div>
         <div class="tour-list">
           ${TOURS.map(tour => this.buildTourCard(tour)).join('')}
