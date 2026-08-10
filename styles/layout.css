@@ -233,7 +233,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(9, 9, 11, 0.9);
+  background: rgba(9, 9, 11, 0.95);
   backdrop-filter: blur(8px);
   border-top: 1px solid var(--border-1);
   padding: 12px 16px;
@@ -242,7 +242,7 @@
   gap: 10px;
   font-size: 13px;
   flex-wrap: wrap;
-  z-index: var(--z-overlay);
+  z-index: 20;
   animation: fadeIn 0.2s ease both;
 }
 
@@ -503,4 +503,44 @@
   padding: 8px 12px;
   z-index: var(--z-overlay);
   max-width: 220px;
+}
+
+/* ── Path Step & Connector Styling ────────────────────────────── */
+.path-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.path-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin: 0 4px;
+}
+
+.path-trait {
+  font-size: 10px;
+  color: var(--accent); /* Gold color */
+  font-style: italic;
+  white-space: nowrap;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.path-arrow {
+  color: var(--text-3);
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Make the main path strip wrap nicely on mobile */
+#path-strip {
+  justify-content: center; /* Center the path steps */
+  overflow-x: auto;        /* Allow horizontal scroll if path is long */
+  white-space: nowrap;
 }
