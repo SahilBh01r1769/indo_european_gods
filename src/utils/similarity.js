@@ -7,16 +7,23 @@ import { TRAITS, DEITIES } from '../data/deities.js';
 import { getCognate } from '../data/cognates.js';
 
 /* ── Trait vector ───────────────────────────────────────────────── */
+const _vectorCache = new Map();
+
 export function traitVector(deity) {
-  const traits = deity.traits || {};
-  return TRAITS.map(t => {
-    const tNorm = t.toLowerCase().replace(/\s*\/\s*/g, ' / ').trim();
-    const key = Object.keys(traits).find(k => {
-      const kNorm = k.toLowerCase().replace(/\s*\/\s*/g, ' / ').trim();
-      return kNorm === tNorm;
-    });
-    return key !== undefined ? traits[key] : 0;
+  if (!deity?.id) return TRAITS.map(() => 0);
+  if (_vectorCache.has(deity.id)) return _vectorCache.get(deity.id);
+
+  const vec = TRAITS.map(t => {
+    const key = Object.keys(deity.traits || {}).find(k =>
+      k === t ||
+      k.replace(/\s*\/\s*/g, ' / ') === t ||
+      k.replace(/\s*\/\s*/g, '/') === t.replace(/\s*\/\s*/g, '/')
+    );
+    return key !== undefined ? deity.traits[key] : 0;
   });
+
+  _vectorCache.set(deity.id, vec);
+  return vec;
 }
 
 /* ── Cosine similarity ──────────────────────────────────────────── */
