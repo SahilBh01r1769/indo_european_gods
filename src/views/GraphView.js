@@ -78,6 +78,8 @@ export class GraphView {
     this.currentNodes = nodes;
     if (this.simulation) this.simulation.stop();
 
+    const activePath = this.store.get(STATE_KEYS.ACTIVE_PATH) || [];
+
     const {
       animate = this.store.get(STATE_KEYS.ANIMATE_ENTRANCE),
       showLabels = this.store.get(STATE_KEYS.SHOW_LABELS),
@@ -112,8 +114,12 @@ export class GraphView {
       .attr('stroke-width', 0);
 
     const linkMerge = linkEnter.merge(link)
-      .attr('stroke', d => edgeColor(d.similarity))
+      .attr('stroke', d => {
+        if (d.isPathEdge) return '#fbbf24';
+        return edgeColor(d.similarity);
+      })
       .attr('class', d => {
+        if (d.isPathEdge) return 'link link-path';
         const src = d.source.id || d.source;
         const tgt = d.target.id || d.target;
         if (showCognates && getCognate(src, tgt)) return 'link link-cognate';
@@ -125,13 +131,9 @@ export class GraphView {
     linkMerge.transition()
       .duration(animate ? 800 : 0)
       .ease(d3.easeCubicInOut)
-      .attr('stroke-width', d => Math.max(1, (d.similarity || 0) * 4))
-      .attr('stroke-opacity', d => {
-        const src = d.source.id || d.source;
-        const tgt = d.target.id || d.target;
-        if (showCognates && getCognate(src, tgt)) return 0.95;
-        return 0.25 + (d.similarity || 0) * 0.55;
-      });;
+      .attr('stroke-width', d => d.isPathEdge ? 4 : Math.max(1, (d.similarity || 0) * 4))
+      .attr('stroke-opacity', d => d.isPathEdge ? 1 : (0.25 + (d.similarity || 0) * 0.55));
+
 
     // ── Nodes with smooth transitions ──
     const node = this.gNodes.selectAll('g.node')
@@ -158,10 +160,17 @@ export class GraphView {
       .attr('class', 'node-circle')
       .attr('r', 0)
       .attr('fill', d => PANTHEON_COLORS[d.pantheon] || '#888')
-      .attr('stroke', d => d.id === centerDeityId ? '#fff' : 'rgba(255,255,255,0.2)')
-      .attr('stroke-width', d => d.id === centerDeityId ? 2.5 : 1.5)
+      .attr('stroke', d => {
+        if (activePath.includes(d.id)) return '#fbbf24';
+        return d.id === centerDeityId ? '#fff' : 'rgba(255,255,255,0.2)';
+      })
+      .attr('stroke-width', d => {
+        if (activePath.includes(d.id)) return 3;
+        return d.id === centerDeityId ? 2.5 : 1.5;
+      })
       .style('color', d => PANTHEON_COLORS[d.pantheon] || '#888');
-    
+
+
     nodeEnter.append('circle')
       .attr('class', 'pin-ring')
       .attr('r', d => d.id === centerDeityId ? 18 : 14)
