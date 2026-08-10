@@ -108,6 +108,9 @@ export class GraphControls {
       if (searchInput) searchInput.value = '';
       document.getElementById('path-strip').style.display = 'none';
       document.getElementById('surprising-panel').style.display = 'none';
+      this.store.set(STATE_KEYS.ACTIVE_PATH, []);
+      document.getElementById('path-btn')?.classList.remove('btn-active');
+      this.store.set(STATE_KEYS.MODE, 'explore');
     });
 
     $('link-mode-tabs')?.addEventListener('click', e => {
@@ -154,19 +157,24 @@ export class GraphControls {
     });
 
     // Compare mode
-$('compare-btn')?.addEventListener('click', () => {
-  const mode = this.store.get(STATE_KEYS.MODE);
-  if (mode === 'compare') {
-    this.store.set(STATE_KEYS.MODE, 'explore');
-    $('compare-btn').classList.remove('btn-active');
-    this.store.set(STATE_KEYS.UI_TOAST, 'Compare mode off');
-  } else {
-    this.store.set(STATE_KEYS.MODE, 'compare');
-    $('compare-btn').classList.add('btn-active');
-    this.store.set(STATE_KEYS.COMPARE_A, null);
-    this.store.set(STATE_KEYS.COMPARE_B, null);
-    this.store.set(STATE_KEYS.UI_TOAST, 'Compare mode: click two deities');
-  }
+    $('compare-btn')?.addEventListener('click', () => {
+      const mode = this.store.get(STATE_KEYS.MODE);
+      if (mode === 'compare') {
+        this.store.set(STATE_KEYS.MODE, 'explore');
+        $('compare-btn').classList.remove('btn-active');
+        this.store.set(STATE_KEYS.UI_TOAST, 'Compare mode off');
+      } else {
+        this.store.set(STATE_KEYS.MODE, 'compare');
+        $('compare-btn').classList.add('btn-active');
+        this.store.set(STATE_KEYS.COMPARE_A, null);
+        this.store.set(STATE_KEYS.COMPARE_B, null);
+        this.store.set(STATE_KEYS.UI_TOAST, 'Compare mode: click two deities');
+
+        $('path-btn')?.classList.remove('btn-active');
+        this.store.set(STATE_KEYS.PATH_FROM, null);
+        this.store.set(STATE_KEYS.PATH_TO, null);
+        this.store.set(STATE_KEYS.ACTIVE_PATH, []);
+      }
     });
 
     $('cognate-btn')?.addEventListener('click', () => {
@@ -216,16 +224,18 @@ $('compare-btn')?.addEventListener('click', () => {
         $('path-btn').classList.remove('btn-active');
         this.store.set(STATE_KEYS.PATH_FROM, null);
         this.store.set(STATE_KEYS.PATH_TO, null);
+        this.store.set(STATE_KEYS.ACTIVE_PATH, []);
         document.getElementById('path-strip').style.display = 'none';
+        window.dispatchEvent(new CustomEvent('path:found', { detail: null }));
         this.store.set(STATE_KEYS.UI_TOAST, 'Path mode off');
       } else {
-        // leave compare if needed
         this.store.set(STATE_KEYS.MODE, 'path');
         $('compare-btn')?.classList.remove('btn-active');
         $('path-btn').classList.add('btn-active');
         this.store.set(STATE_KEYS.PATH_FROM, null);
         this.store.set(STATE_KEYS.PATH_TO, null);
-        this.store.set(STATE_KEYS.UI_TOAST, 'Path mode: click start deity, then destination');
+        this.store.set(STATE_KEYS.ACTIVE_PATH, []);
+        this.store.set(STATE_KEYS.UI_TOAST, 'Path mode: click start, then destination');
       }
     });
 
