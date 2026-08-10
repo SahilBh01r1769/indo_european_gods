@@ -62,6 +62,10 @@ export class GraphView {
       this.render(data.nodes, data.edges);
     });
 
+    this.store.subscribe(STATE_KEYS.ACTIVE_PATH, path => {
+      this.highlightPath(path);
+    });
+
     window.addEventListener('path:found', (e) => {
       this.highlightPath(e.detail);
     });
