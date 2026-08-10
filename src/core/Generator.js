@@ -237,82 +237,61 @@ export class Generator {
     this.store.set(STATE_KEYS.ACTIVE_TRAIT_FILTER, trait);
     this.generate();
   }
-
-  async findPath(fromId, toId) {
-    this.store.set(STATE_KEYS.UI_LOADING, true);
-    try {
-      // First, try to find path within the CURRENT graph only
-      const currentNodes = this.store.get(STATE_KEYS.GRAPH_DATA).nodes || [];
-      const currentNodeIds = currentNodes.map(n => n.id);
-      
-      // Check if both nodes are in current graph
-      if (currentNodeIds.includes(fromId) && currentNodeIds.includes(toId)) {
-        const pathInCurrentGraph = await workerClient.findPath(
-          fromId, toId, currentNodes,
-          this.store.get(STATE_KEYS.SIMILARITY_METHOD),
-          this.store.get(STATE_KEYS.GRAPH_THRESHOLD)
-        );
-        
-        if (pathInCurrentGraph && pathInCurrentGraph.length > 0) {
-          // Found path in current graph! Highlight it without replacing the graph
-          this.store.set(STATE_KEYS.ACTIVE_PATH, pathInCurrentGraph);
-          this.store.set(STATE_KEYS.UI_TOAST, `Path found in current view: ${pathInCurrentGraph.join(' → ')}`);
-          this.store.set(STATE_KEYS.MODE, 'explore');
-          return;
-        }
-      }
-      
-      // No path in current graph - ask user if they want to search all deities
-      this.store.set(STATE_KEYS.UI_TOAST, `No path in current view. Click "Search All" to find path across all deities.`);
-      this.store.set(STATE_KEYS.PATH_SEARCH_PENDING, { fromId, toId });
-      
-    } catch (err) {
-      this.store.set(STATE_KEYS.UI_TOAST, 'Path error: ' + err.message);
-    } finally {
-      this.store.set(STATE_KEYS.UI_LOADING, false);
-    }
-  }
   
-  async findPath(fromId, toId) {
-    this.store.set(STATE_KEYS.UI_LOADING, true);
-    try {
-      const pathIds = await workerClient.findPath(
-        fromId, toId, DEITIES,
-        this.store.get(STATE_KEYS.SIMILARITY_METHOD),
-        this.store.get(STATE_KEYS.GRAPH_THRESHOLD)
-      );
-      
-      if (pathIds && pathIds.length > 0) {
-        this.store.set(STATE_KEYS.ACTIVE_PATH, pathIds);
-        this.store.set(STATE_KEYS.UI_TOAST, `Path found: ${pathIds.join(' → ')}`);
-        
-        // Build nodes and edges for the path
-        const nodes = pathIds.map(id => DEITIES.find(d => d.id === id)).filter(Boolean);
-        const edges = [];
-        for (let i = 0; i < pathIds.length - 1; i++) {
-          edges.push({
-            source: pathIds[i],
-            target: pathIds[i+1],
-            similarity: 1.0,
-            isPathEdge: true
-          });
-        }
-        
-        // Replace the graph with path nodes
-        this.store.set(STATE_KEYS.GRAPH_DATA, { nodes, edges });
-        this.store.set(STATE_KEYS.CURRENT_VIEW, 'graph');
-        this.store.set(STATE_KEYS.MODE, 'explore');
-      } else {
-        this.store.set(STATE_KEYS.ACTIVE_PATH, []);
-        this.store.set(STATE_KEYS.UI_TOAST, 'No path found between those deities.');
+async findPath(fromId, toId) {
+  this.store.set(STATE_KEYS.UI_LOADING, true);
+  try {
+    const pathIds = await workerClient.findPath(
+      fromId,
+      toId,
+      DEITIES,
+      this.store.get(STATE_KEYS.SIMILARITY_METHOD),
+      this.store.get(STATE_KEYS.GRAPH_THRESHOLD)
+    );
+
+    if (pathIds && pathIds.length > 0) {
+      this.store.set(STATE_KEYS.ACTIVE_PATH, pathIds);
+
+      const nodes = pathIds
+        .map(id => DEITIES.find(d => d.id === id))
+        .filter(Boolean);
+
+      const metric = this.store.get(STATE_KEYS.SIMILARITY_METHOD) || 'cosine';
+      const edges = [];
+      for (let i = 0; i < pathIds.length - 1; i++) {
+        const a = nodes[i];
+        const b = nodes[i + 1];
+        const sim = a && b ? computeSimilarity(a, b, metric) : 0.5;
+        edges.push({
+          source: pathIds[i],
+          target: pathIds[i + 1],
+          similarity: sim,
+          isPathEdge: true,
+        });
       }
-    } catch (err) {
+
+      this.store.set(STATE_KEYS.GRAPH_DATA, { nodes, edges });
+      this.store.set(STATE_KEYS.CURRENT_VIEW, 'graph');
+      this.store.set(STATE_KEYS.UI_TOAST, `Path: ${pathIds.join(' → ')}`);
+
+      // Exit path mode and sync button
+      this.store.set(STATE_KEYS.MODE, 'explore');
+      document.getElementById('path-btn')?.classList.remove('btn-active');
+
+      window.dispatchEvent(new CustomEvent('path:found', { detail: pathIds }));
+    } else {
       this.store.set(STATE_KEYS.ACTIVE_PATH, []);
-      this.store.set(STATE_KEYS.UI_TOAST, 'Path error: ' + err.message);
-    } finally {
-      this.store.set(STATE_KEYS.UI_LOADING, false);
+      this.store.set(STATE_KEYS.UI_TOAST, 'No path found between those deities.');
+      window.dispatchEvent(new CustomEvent('path:found', { detail: null }));
     }
+  } catch (err) {
+    this.store.set(STATE_KEYS.ACTIVE_PATH, []);
+    this.store.set(STATE_KEYS.UI_TOAST, 'Path error: ' + err.message);
+    window.dispatchEvent(new CustomEvent('path:found', { detail: null }));
+  } finally {
+    this.store.set(STATE_KEYS.UI_LOADING, false);
   }
+}
 }
 
 
