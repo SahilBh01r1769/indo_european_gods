@@ -61,6 +61,10 @@ export class GraphView {
       const data = this.store.get(STATE_KEYS.GRAPH_DATA);
       this.render(data.nodes, data.edges);
     });
+
+    window.addEventListener('path:found', (e) => {
+      this.highlightPath(e.detail);
+    });
   }
 
   W() { return document.getElementById('graph-view')?.clientWidth || 800; }
@@ -445,4 +449,37 @@ export class GraphView {
     this.gNodes.selectAll('*').remove();
     this.updateMinimap();
   }
+
+  highlightPath(path) {
+  // clear previous
+  this.gNodes.selectAll('g.node').classed('node-dimmed', false).classed('node-highlighted', false);
+  this.gLinks.selectAll('line.link').classed('link-dimmed', false).classed('link-path', false);
+
+  if (!path || path.length < 2) return;
+
+  const inPath = new Set(path);
+  const edgeSet = new Set();
+  for (let i = 0; i < path.length - 1; i++) {
+    const a = path[i], b = path[i + 1];
+    edgeSet.add(a < b ? `${a}|${b}` : `${b}|${a}`);
+  }
+
+  this.gNodes.selectAll('g.node')
+    .classed('node-dimmed', d => !inPath.has(d.id))
+    .classed('node-highlighted', d => inPath.has(d.id));
+
+  this.gLinks.selectAll('line.link')
+    .classed('link-dimmed', d => {
+      const s = d.source.id || d.source;
+      const t = d.target.id || d.target;
+      const key = s < t ? `${s}|${t}` : `${t}|${s}`;
+      return !edgeSet.has(key);
+    })
+    .classed('link-path', d => {
+      const s = d.source.id || d.source;
+      const t = d.target.id || d.target;
+      const key = s < t ? `${s}|${t}` : `${t}|${s}`;
+      return edgeSet.has(key);
+    });
+}
 }
