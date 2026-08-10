@@ -223,6 +223,7 @@ export class GraphView {
       .force('charge', d3.forceManyBody().strength(-150))
       .force('center', d3.forceCenter(W / 2, H / 2))
       .force('collision', d3.forceCollide().radius(20));
+    this.simulation.on('end', () => this._startIdleMotion());
 
     if (cluster) {
       const pantheons = [...new Set(nodes.map(n => n.pantheon))];
@@ -412,6 +413,17 @@ export class GraphView {
       ctx.fill();
     });
   }
+
+  _startIdleMotion() {
+  if (this._idleTimer) return;
+  this._idleTimer = setInterval(() => {
+    this.gNodes.selectAll('g.node:not(.node-center) circle.node-circle')
+      .transition().duration(2000)
+      .attr('r', d => (d.id === this.store.get(STATE_KEYS.SELECTED_DEITY) ? 12 : 8) + 0.6)
+      .transition().duration(2000)
+      .attr('r', d => d.id === this.store.get(STATE_KEYS.SELECTED_DEITY) ? 12 : 8);
+  }, 4000);
+}
 
   clearGraph() {
   if (this._idleTimer) {
