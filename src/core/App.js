@@ -117,5 +117,16 @@ export class App {
     if (loader) loader.classList.add('hidden');
 
     console.log('[App] Initialized.');
+
+    window.addEventListener('router:loadDeity', (e) => {
+      const id = e.detail;
+      if (id) this.generator.loadDeity(id, { resetGraph: true });
+    });
+
+    // If hash already had a deity before listeners, read once more after mount
+    const hashDeity = (location.hash.match(/deity=([^&]+)/) || [])[1];
+    if (hashDeity) {
+      this.generator.loadDeity(decodeURIComponent(hashDeity), { resetGraph: true });
+    }
   }
 }
