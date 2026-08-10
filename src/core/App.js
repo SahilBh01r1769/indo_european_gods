@@ -42,7 +42,7 @@ export class App {
     this.graphControls = new GraphControls(store, this.generator, this.feedback);
     this.legend        = new Legend(store, this.generator);
     this.compareModal  = new CompareModal(store);
-    this.pathStrip     = new PathStrip(store);
+    this.pathStrip     = new PathStrip(store, this.generator);
   }
 
   start() {
@@ -128,5 +128,23 @@ export class App {
     if (hashDeity) {
       this.generator.loadDeity(decodeURIComponent(hashDeity), { resetGraph: true });
     }
+
+    // Watch for path completion and trigger pathfinding
+    let pathFrom = this.store.get(STATE_KEYS.PATH_FROM);
+    let pathTo = this.store.get(STATE_KEYS.PATH_TO);
+
+    this.store.subscribe(STATE_KEYS.PATH_FROM, from => {
+      pathFrom = from;
+      if (pathFrom && pathTo) {
+        this.generator.findPath(pathFrom, pathTo);
+      }
+    });
+
+    this.store.subscribe(STATE_KEYS.PATH_TO, to => {
+      pathTo = to;
+      if (pathFrom && pathTo) {
+        this.generator.findPath(pathFrom, pathTo);
+      }
+    });
   }
 }
