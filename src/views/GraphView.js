@@ -15,6 +15,8 @@ export class GraphView {
     this.simulation = null;
     this.tooltip = null;
     this.currentNodes = [];
+    this._minimapLast = 0;
+    this._idleTimer = null;
   }
 
   mount(svgElement) {
@@ -267,6 +269,7 @@ export class GraphView {
   }
 
   dragstarted(event, d) {
+    this._stopIdleMotion();
     if (!event.active) this.simulation.alphaTarget(0.3).restart();
     d.fx = d.x;
     d.fy = d.y;
@@ -283,6 +286,10 @@ export class GraphView {
     if (!pinned.has(d.id)) {
       d.fx = null;
       d.fy = null;
+    }
+    // restart idle after drag settles
+    if (this.simulation) {
+      this.simulation.on('end', () => this._startIdleMotion());
     }
   }
 
@@ -391,6 +398,10 @@ export class GraphView {
   }
 
   updateMinimap() {
+    const now = performance.now();
+    if (now - this._minimapLast < 100) return; // ~10 fps max
+    this._minimapLast = now;
+
     const canvas = document.getElementById('minimap-canvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
