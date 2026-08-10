@@ -285,12 +285,12 @@
 }
 
 .empty-rune {
-  font-size: 56px;
+  font-size: 64px;
   line-height: 1;
   margin-bottom: 16px;
   color: var(--gold-bright);
   opacity: 0.85;
-  text-shadow: 0 0 40px rgba(245, 158, 11, 0.45);
+  text-shadow: 0 0 50px rgba(245, 158, 11, 0.55);
   animation: runePulse 4s ease-in-out infinite;
 }
 
@@ -302,7 +302,7 @@
 .empty-title {
   font-family: var(--font-serif);
   font-size: 26px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-0);
   margin-bottom: 10px;
@@ -343,16 +343,34 @@
   border-radius: var(--r-full);
   font-size: 12px;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
+  transition: border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
 .empty-tag:hover {
   border-color: var(--gold);
   color: var(--gold-bright);
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
-  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.3);
+  transform: translateY(-2px);
 }
 
+  /* staggered entrance */
+  #empty-state .empty-rune,
+  #empty-state .empty-title,
+  #empty-state .empty-sub,
+  #empty-state .empty-hint,
+  #empty-state .empty-tags {
+    animation: emptyFade 0.7s ease both;
+  }
+  #empty-state .empty-title { animation-delay: 0.08s; }
+  #empty-state .empty-sub   { animation-delay: 0.16s; }
+  #empty-state .empty-hint  { animation-delay: 0.24s; }
+  #empty-state .empty-tags  { animation-delay: 0.32s; }
+
+  @keyframes emptyFade {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  
 /* ── Loading overlay ────────────────────────────────────────────── */
 #loader {
   position: fixed;
@@ -443,16 +461,18 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: rgba(24, 24, 27, 0.72);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(63, 63, 70, 0.85);
+  background: rgba(24, 24, 27, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(245, 158, 11, 0.14);
   border-radius: var(--r-lg);
   padding: 12px;
   max-width: 280px;
   max-height: calc(100vh - 100px);
   overflow-y: auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
 }
 
 .control-group {
