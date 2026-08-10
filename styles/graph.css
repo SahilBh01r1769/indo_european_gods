@@ -15,32 +15,23 @@
   inset: 0;
   pointer-events: none;
   z-index: 0;
-
-  /* Multiple layers of different sizes = more realistic star field */
   background-image:
-    radial-gradient(1px 1px at 20px 30px, #fff, transparent),
-    radial-gradient(1px 1px at 40px 70px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 20px 30px,   #fff, transparent),
+    radial-gradient(1px 1px at 40px 70px,   rgba(255,255,255,.8), transparent),
     radial-gradient(1.5px 1.5px at 90px 40px, #fff, transparent),
-    radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 130px 80px,  rgba(255,255,255,.6), transparent),
     radial-gradient(1px 1px at 160px 120px, #fff, transparent),
-    radial-gradient(2px 2px at 200px 50px, rgba(200, 220, 255, 0.9), transparent),
+    radial-gradient(2px 2px at 200px 50px,  rgba(200,220,255,.9), transparent),
     radial-gradient(1px 1px at 250px 160px, #fff, transparent);
-
   background-size: 280px 200px;
   background-repeat: repeat;
-  opacity: 0.75;
-
+  opacity: 0.7;
   animation: starDrift 120s linear infinite;
 }
 
 @keyframes starDrift {
-  from {
-    background-position: 0 0;
-  }
-
-  to {
-    background-position: 280px 200px;
-  }
+  from { background-position: 0 0; }
+  to   { background-position: 280px 200px; }
 }
 
 #graph-view::after {
@@ -58,34 +49,49 @@
 /* ── Edges / Links ──────────────────────────────────────────────── */
 .link {
   stroke-linecap: round;
+  pointer-events: stroke;          /* makes thin lines easier to hover */
   transition: stroke-opacity 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
   cursor: pointer;
-  animation: edgeShimmer 6s ease-in-out infinite;
+  animation: edgeShimmer 7s ease-in-out infinite;
 }
 
 @keyframes edgeShimmer {
-  0%, 100% {
-    stroke-opacity: 0.35;
-  }
-
-  50% {
-    stroke-opacity: 0.55;
-  }
+  0%, 100% { stroke-opacity: 0.35; }
+  50%      { stroke-opacity: 0.55; }
 }
 
-.link:hover { 
-  stroke-opacity: 1 !important; 
-  stroke-width: 3px !important;
-  filter: drop-shadow(0 0 4px currentColor);
+.link:hover {
+  stroke-opacity: 1 !important;
+  stroke-width: 3.5px !important;
+  filter: drop-shadow(0 0 6px currentColor);
+  animation: none;
 }
 
-/* Vibrant, high-contrast edge colors */
-.link-strong  { stroke: #c084fc; }
-.link-medium  { stroke: #22d3ee; }
-.link-weak    { stroke: #64748b; }
-.link-cognate { stroke: #fbbf24; stroke-dasharray: 6 4; }
-.link-path    { stroke: var(--accent-bright); stroke-dasharray: none; }
+.link-strong  {
+  stroke: #c084fc;
+  stroke-width: 2.5px;
+}
+.link-medium  {
+  stroke: #22d3ee;
+  stroke-width: 1.8px;
+}
+.link-weak    {
+  stroke: #64748b;
+  stroke-width: 1px;
+}
+.link-cognate {
+  stroke: #fbbf24;
+  stroke-dasharray: 6 4;
+  animation: cognateFlow 4s linear infinite, edgeShimmer 7s ease-in-out infinite;
+}
+.link-path {
+  stroke: var(--accent-bright);
+  stroke-dasharray: none;
+}
 
+@keyframes cognateFlow {
+  to { stroke-dashoffset: -40; }
+}
 .edge-label {
   font-size: 9px;
   fill: var(--text-2);
@@ -106,8 +112,19 @@
 
 .node-center .node-circle {
   stroke: var(--gold-bright) !important;
-  stroke-width: 2.5px !important;
-  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.4));
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.55));
+  animation: centerPulse 3s ease-in-out infinite;
+}
+
+@keyframes centerPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.4));
+    r: 12;
+  }
+  50% {
+    filter: drop-shadow(0 0 18px rgba(251, 191, 36, 0.8));
+  }
 }
 
 .node:hover .node-circle {
@@ -175,4 +192,53 @@
 }
 @keyframes spin {
   to { stroke-dashoffset: -40; }
+}
+
+/* Graph tooltip (used by GraphView.js) */
+.graph-tooltip {
+  position: absolute;
+  z-index: 9999;
+  max-width: 260px;
+  padding: 12px 14px;
+  background: rgba(24, 24, 27, 0.95);
+  border: 1px solid rgba(63, 63, 70, 0.9);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #e4e4e7;
+}
+
+.graph-tooltip .tt-name {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: #fbbf24;
+  margin-bottom: 4px;
+}
+
+.graph-tooltip .tt-pantheon {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.graph-tooltip .tt-epithet {
+  font-size: 11px;
+  font-style: italic;
+  color: #a1a1aa;
+  margin-bottom: 6px;
+}
+
+.graph-tooltip .tt-sim {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #fbbf24;
+  margin-bottom: 4px;
+}
+
+.graph-tooltip .tt-traits {
+  font-size: 11px;
+  color: #a1a1aa;
 }
