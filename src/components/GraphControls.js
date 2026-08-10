@@ -59,6 +59,7 @@ export class GraphControls {
 
         <div class="control-group">
           <button class="btn btn-sm" id="compare-btn" title="Compare two deities">⚖ Compare</button>
+          <button class="btn btn-sm" id="path-btn" title="Find path between two deities">↝ Path</button>
           <button class="btn btn-sm" id="cognate-btn" title="Toggle cognate highlighting">Cognates</button>
           <button class="btn btn-sm btn-icon" id="zoom-in-btn" title="Zoom in">+</button>
           <button class="btn btn-sm btn-icon" id="zoom-out-btn" title="Zoom out">−</button>
@@ -206,6 +207,26 @@ $('compare-btn')?.addEventListener('click', () => {
     $('export-svg-btn')?.addEventListener('click', () => {
       const filename = exportSVG();
       this.store.set(STATE_KEYS.UI_TOAST, filename ? `Exported: ${filename}` : 'Nothing to export');
+    });
+
+    $('path-btn')?.addEventListener('click', () => {
+      const mode = this.store.get(STATE_KEYS.MODE);
+      if (mode === 'path') {
+        this.store.set(STATE_KEYS.MODE, 'explore');
+        $('path-btn').classList.remove('btn-active');
+        this.store.set(STATE_KEYS.PATH_FROM, null);
+        this.store.set(STATE_KEYS.PATH_TO, null);
+        document.getElementById('path-strip').style.display = 'none';
+        this.store.set(STATE_KEYS.UI_TOAST, 'Path mode off');
+      } else {
+        // leave compare if needed
+        this.store.set(STATE_KEYS.MODE, 'path');
+        $('compare-btn')?.classList.remove('btn-active');
+        $('path-btn').classList.add('btn-active');
+        this.store.set(STATE_KEYS.PATH_FROM, null);
+        this.store.set(STATE_KEYS.PATH_TO, null);
+        this.store.set(STATE_KEYS.UI_TOAST, 'Path mode: click start deity, then destination');
+      }
     });
 
     $('methodology-btn')?.addEventListener('click', () => {
