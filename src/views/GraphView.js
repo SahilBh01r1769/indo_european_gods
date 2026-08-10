@@ -67,6 +67,7 @@ export class GraphView {
   render(nodes, edges, options = {}) {
     if (!this.svg) return;
     const empty = document.getElementById('empty-state');
+    this._stopIdleMotion();
     if (empty) empty.style.display = nodes.length ? 'none' : 'flex';
     this.currentNodes = nodes;
     if (this.simulation) this.simulation.stop();
@@ -189,16 +190,16 @@ export class GraphView {
         .delay((_, i) => i * 40)
         .duration(600)
         .ease(d3.easeElasticOut.amplitude(1).period(0.4))
-        .attr('r', d => d.id === centerDeityId ? 12 : 8);
+        .attr('r', d => d.id === centerDeityId ? 14 : 8);
 
       // existing nodes stay visible immediately
       nodeMerge.filter(function () {
         return !this.__enter__;   // only non-enter
       }).attr('opacity', 1)
-        .select('circle.node-circle').attr('r', d => d.id === centerDeityId ? 12 : 8);
+        .select('circle.node-circle').attr('r', d => d.id === centerDeityId ? 14 : 8);
     } else {
       nodeMerge.attr('opacity', 1);
-      nodeMerge.select('circle').attr('r', d => d.id === centerDeityId ? 12 : 8);
+      nodeMerge.select('circle').attr('r', d => d.id === centerDeityId ? 14 : 8);
     }
 
     nodeMerge
@@ -219,11 +220,17 @@ export class GraphView {
 
     // ── Simulation with smooth clustering ──
     this.simulation = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(edges).id(d => d.id).distance(80))
+      .force('link', d3.forceLink(edges)
+        .id(d => d.id)
+        .distance(d => {
+          const s = d.similarity || 0;
+          return 40 + (1 - s) * 140;
+        })
+        .strength(d => 0.3 + (d.similarity || 0) * 0.7)
+      )
       .force('charge', d3.forceManyBody().strength(-150))
       .force('center', d3.forceCenter(W / 2, H / 2))
       .force('collision', d3.forceCollide().radius(20));
-    this.simulation.on('end', () => this._startIdleMotion());
 
     if (cluster) {
       const pantheons = [...new Set(nodes.map(n => n.pantheon))];
@@ -255,20 +262,8 @@ export class GraphView {
       this.updateMinimap();
     });
 
-    // Idle breathing animation once the graph settles
-    this.simulation.on('end', () => {
-      if (!this._idleTimer) {
-        this._idleTimer = setInterval(() => {
-          this.gNodes.selectAll('g.node:not(.node-center) circle.node-circle')
-            .transition()
-            .duration(1800)
-            .attr('r', d => 8 + Math.sin(Date.now() / 900 + (d.x || 0)) * 0.8)
-            .transition()
-            .duration(1800)
-            .attr('r', 8);
-        }, 3600);
-      }
-    });
+    // One idle start only
+    this.simulation.on('end', () => this._startIdleMotion());
   }
 
   dragstarted(event, d) {
@@ -334,25 +329,25 @@ export class GraphView {
         <div class="tt-traits" style="margin-top:6px">${topTraits || 'No strong traits'}</div>
       `)
       .style('left', (event.pageX + 14) + 'px')
-      .style('top',  (event.pageY - 10) + 'px');
+      .style('top', (event.pageY - 10) + 'px');
   }
 
-    onEdgeHover(event, d) {
-      const srcId = d.source.id || d.source;
-      const tgtId = d.target.id || d.target;
-      const sim   = d.similarity ?? d.weight ?? 0;
-      const shared = d.shared || d._shared || [];
+  onEdgeHover(event, d) {
+    const srcId = d.source.id || d.source;
+    const tgtId = d.target.id || d.target;
+    const sim = d.similarity ?? d.weight ?? 0;
+    const shared = d.shared || d._shared || [];
 
-      this.tooltip
-        .style('opacity', 1)
-        .html(`
-          <div class="tt-name">${srcId} ↔ ${tgtId}</div>
-          <div class="tt-sim">${(sim * 100).toFixed(1)}% similarity</div>
-          <div class="tt-traits">Shared: ${shared.length ? shared.join(', ') : '—'}</div>
-        `)
-        .style('left', (event.pageX + 14) + 'px')
-        .style('top',  (event.pageY - 10) + 'px');
-    }
+    this.tooltip
+      .style('opacity', 1)
+      .html(`
+        <div class="tt-name">${srcId} ↔ ${tgtId}</div>
+        <div class="tt-sim">${(sim * 100).toFixed(1)}% similarity</div>
+        <div class="tt-traits">Shared: ${shared.length ? shared.join(', ') : '—'}</div>
+      `)
+      .style('left', (event.pageX + 14) + 'px')
+      .style('top', (event.pageY - 10) + 'px');
+  }
 
   hideTooltip() {
     this.tooltip.style('opacity', 0);
@@ -415,21 +410,25 @@ export class GraphView {
   }
 
   _startIdleMotion() {
-  if (this._idleTimer) return;
-  this._idleTimer = setInterval(() => {
-    this.gNodes.selectAll('g.node:not(.node-center) circle.node-circle')
-      .transition().duration(2000)
-      .attr('r', d => (d.id === this.store.get(STATE_KEYS.SELECTED_DEITY) ? 12 : 8) + 0.6)
-      .transition().duration(2000)
-      .attr('r', d => d.id === this.store.get(STATE_KEYS.SELECTED_DEITY) ? 12 : 8);
-  }, 4000);
-}
+    if (this._idleTimer) return;
+    this._idleTimer = setInterval(() => {
+      this.gNodes.selectAll('g.node:not(.node-center) circle.node-circle')
+        .transition().duration(1800)
+        .attr('r', 8.8)
+        .transition().duration(1800)
+        .attr('r', 8);
+    }, 4000);
+  }
+
+  _stopIdleMotion() {
+    if (this._idleTimer) {
+      clearInterval(this._idleTimer);
+      this._idleTimer = null;
+    }
+  }
 
   clearGraph() {
-  if (this._idleTimer) {
-    clearInterval(this._idleTimer);
-    this._idleTimer = null;
-  }
+    this._stopIdleMotion();
     if (this.simulation) this.simulation.stop();
     this.gLinks.selectAll('*').remove();
     this.gNodes.selectAll('*').remove();
