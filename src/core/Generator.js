@@ -214,9 +214,11 @@ export class Generator {
       if (!from) {
         this.store.set(STATE_KEYS.PATH_FROM, nodeId);
         this.store.set(STATE_KEYS.UI_TOAST, `Path start: ${nodeId}. Pick destination.`);
+      } else if (from === nodeId) {
+        this.store.set(STATE_KEYS.UI_TOAST, 'Pick a different destination.');
       } else {
         this.store.set(STATE_KEYS.PATH_TO, nodeId);
-        this.store.set(STATE_KEYS.MODE, 'explore');
+        this.findPath(from, nodeId);
       }
       return;
     }
@@ -244,10 +246,15 @@ export class Generator {
         this.store.get(STATE_KEYS.SIMILARITY_METHOD),
         this.store.get(STATE_KEYS.GRAPH_THRESHOLD)
       );
-      if (path) {
+      if (path && path.length) {
         this.store.set(STATE_KEYS.UI_TOAST, `Path: ${path.join(' → ')}`);
+        // store full path for UI highlight
+        this.store.set(STATE_KEYS.PATH_FROM, fromId);
+        this.store.set(STATE_KEYS.PATH_TO, toId);
+        window.dispatchEvent(new CustomEvent('path:found', { detail: path }));
       } else {
         this.store.set(STATE_KEYS.UI_TOAST, 'No path found between those deities.');
+        window.dispatchEvent(new CustomEvent('path:found', { detail: null }));
       }
     } catch (err) {
       this.store.set(STATE_KEYS.UI_TOAST, 'Path error: ' + err.message);
