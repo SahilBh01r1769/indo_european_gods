@@ -758,6 +758,32 @@
 
 .path-arrow { color: var(--text-3); font-size: 12px; }
 
+.path-node-btn {
+  background: var(--bg-4);
+  border: 1px solid var(--border-1);
+  color: var(--gold-bright);
+  border-radius: var(--r-sm);
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-serif);
+}
+.path-node-btn:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+}
+.path-arrow {
+  color: var(--text-3);
+  margin: 0 2px;
+}
+
+.link-path {
+  stroke: #fbbf24 !important;
+  stroke-width: 3px !important;
+  stroke-opacity: 1 !important;
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.6));
+}
+
 /* ── Legend dots ────────────────────────────────────────────────── */
 .legend-item {
   display: flex;
