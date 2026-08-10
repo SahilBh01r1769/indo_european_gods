@@ -11,52 +11,41 @@ export class PathStrip {
     this.container = container;
 
     this.container?.querySelector('#path-strip-close')?.addEventListener('click', () => {
-      this.container.style.display = 'none';
-      this.store.set(STATE_KEYS.PATH_FROM, null);
-      this.store.set(STATE_KEYS.PATH_TO, null);
-      this.store.set(STATE_KEYS.ACTIVE_PATH, []);
-      this.store.set(STATE_KEYS.PATH_SEARCH_PENDING, null);
+      this.hide();
     });
 
-    // Show "Search All" button when path not found in current view
-    this.store.subscribe(STATE_KEYS.PATH_SEARCH_PENDING, pending => {
-      if (pending) {
-        this.container.style.display = 'flex';
-        this.container.querySelector('#path-strip-text').innerHTML = `
-          <span>No path in current view.</span>
-          <button id="search-all-btn" class="btn btn-sm btn-accent">Search All Deities</button>
-        `;
-        
-        document.getElementById('search-all-btn')?.addEventListener('click', () => {
-          if (this.generator) {
-            this.generator.findPathGlobal(pending.fromId, pending.toId);
-          }
-          this.store.set(STATE_KEYS.PATH_SEARCH_PENDING, null);
-        });
-      }
-    });
-
-    // Show the path when found
     this.store.subscribe(STATE_KEYS.ACTIVE_PATH, pathIds => {
       if (pathIds && pathIds.length > 0) {
         this.container.style.display = 'flex';
-        const html = pathIds.map((id, i) => {
-          const isLast = i === pathIds.length - 1;
-          return `<span class="path-node" data-deity="${id}">${id}</span>${isLast ? '' : '<span class="path-arrow">→</span>'}`;
-        }).join('');
-        
-        this.container.querySelector('#path-strip-text').innerHTML = html;
-        
+        this.container.querySelector('#path-strip-text').innerHTML = pathIds
+          .map((id, i) => {
+            const isLast = i === pathIds.length - 1;
+            return (
+              `<span class="path-node" data-deity="${id}">${id}</span>` +
+              (isLast ? '' : '<span class="path-arrow">→</span>')
+            );
+          })
+          .join('');
+
         this.container.querySelectorAll('.path-node').forEach(node => {
           node.addEventListener('click', () => {
-            if (this.generator) {
-              this.generator.loadDeity(node.dataset.deity, { resetGraph: false });
-            }
+            this.generator?.loadDeity(node.dataset.deity, { resetGraph: true });
           });
         });
-      } else if (!this.store.get(STATE_KEYS.PATH_SEARCH_PENDING)) {
+      } else {
         this.container.style.display = 'none';
       }
     });
+  }
+
+  hide() {
+    if (!this.container) return;
+    this.container.style.display = 'none';
+    this.store.set(STATE_KEYS.PATH_FROM, null);
+    this.store.set(STATE_KEYS.PATH_TO, null);
+    this.store.set(STATE_KEYS.ACTIVE_PATH, []);
+    this.store.set(STATE_KEYS.MODE, 'explore');
+    document.getElementById('path-btn')?.classList.remove('btn-active');
+    window.dispatchEvent(new CustomEvent('path:found', { detail: null }));
   }
 }
