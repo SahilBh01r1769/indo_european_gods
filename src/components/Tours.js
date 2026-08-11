@@ -81,11 +81,11 @@ export class Tours {
       }
     }
 
-    // Re-center on the original center
     this.store.set(STATE_KEYS.SELECTED_DEITY, centerId);
     this.store.set(STATE_KEYS.UI_TOAST, `Tour: ${tour.name} — ${tour.deities.length} deities loaded`);
 
-    this.renderNarrative(tour);
+    // Wait for force layout to settle, then show first narrative step
+    setTimeout(() => this.renderNarrative(tour), 800);
   }
 
   renderNarrative(tour) {
@@ -96,23 +96,41 @@ export class Tours {
     if (!narrative.length) return;
 
     const section = narrative[this.currentNarrativeIndex];
+    const focusId = section.focus || tour.centerDeity || tour.deities[0];
+
+    // Move camera + highlight this step's deity
+    this.focusStep(focusId);
+
+    // Switch sidebar to Info tab so user sees the narrative
+    document.getElementById('stab-info')?.classList.add('active');
+    document.getElementById('stab-tours')?.classList.remove('active');
+    const toursContent = document.getElementById('stab-tours-content');
+    const infoContent = document.getElementById('stab-info-content');
+    if (toursContent) toursContent.style.display = 'none';
+    if (infoContent) infoContent.style.display = '';
+
+    // Save original info HTML once so we don't stack panels forever
+    if (!infoPanel.dataset.baseHtml) {
+      infoPanel.dataset.baseHtml = infoPanel.innerHTML;
+    }
 
     const narrativeHTML = `
-      <div class="panel">
-        <div class="panel-title"><span class="panel-icon">${tour.icon}</span> ${tour.name}</div>
+      <div class="panel tour-playback">
+        <div class="panel-title"><span class="panel-icon">${tour.icon || '✦'}</span> ${tour.name}</div>
         <div class="tour-narrative">
+          <div class="tour-step-meta">${this.currentNarrativeIndex + 1} / ${narrative.length}</div>
           <div class="tour-narrative-title">${section.heading || ''}</div>
+          ${focusId ? `<div class="tour-focus-chip">Focus: ${focusId}</div>` : ''}
           <div class="tour-narrative-text">
             ${section.text.split('\n\n').map(p => `<p>${p}</p>`).join('')}
           </div>
           <div class="tour-nav">
             <button class="btn btn-sm btn-ghost" id="tour-prev" ${this.currentNarrativeIndex === 0 ? 'disabled' : ''}>← Prev</button>
-            <span style="font-size:10px;color:var(--text-3);align-self:center;">${this.currentNarrativeIndex + 1} / ${narrative.length}</span>
             <button class="btn btn-sm btn-accent" id="tour-next" ${this.currentNarrativeIndex === narrative.length - 1 ? 'disabled' : ''}>Next →</button>
           </div>
         </div>
       </div>
-      ${infoPanel.innerHTML}`;
+      ${infoPanel.dataset.baseHtml || ''}`;
 
     infoPanel.innerHTML = narrativeHTML;
 
@@ -128,6 +146,12 @@ export class Tours {
         this.renderNarrative(tour);
       }
     });
+  }
+
+  focusStep(deityId) {
+    if (!deityId) return;
+    this.store.set(STATE_KEYS.SELECTED_DEITY, deityId);
+    window.dispatchEvent(new CustomEvent('tour:focus', { detail: deityId }));
   }
 
   clear() {
