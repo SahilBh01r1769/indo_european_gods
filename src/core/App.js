@@ -69,6 +69,12 @@ export class App {
     const legendHost = document.getElementById('graph-view');
     if (legendHost) this.legend.mount(legendHost);
 
+    // URL load must be registered BEFORE router.setup() reads the hash
+    window.addEventListener('router:loadDeity', (e) => {
+      const id = e.detail;
+      if (id) this.generator.loadDeity(id, { resetGraph: true });
+    });
+
     // Subscriptions
     this.router.setup();
     this.graphView.setupSubscriptions();
@@ -118,33 +124,33 @@ export class App {
 
     console.log('[App] Initialized.');
 
-    window.addEventListener('router:loadDeity', (e) => {
-      const id = e.detail;
-      if (id) this.generator.loadDeity(id, { resetGraph: true });
-    });
+        // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
-    // If hash already had a deity before listeners, read once more after mount
-    const hashDeity = (location.hash.match(/deity=([^&]+)/) || [])[1];
-    if (hashDeity) {
-      this.generator.loadDeity(decodeURIComponent(hashDeity), { resetGraph: true });
-    }
-
-    // Watch for path completion and trigger pathfinding
-    let pathFrom = this.store.get(STATE_KEYS.PATH_FROM);
-    let pathTo = this.store.get(STATE_KEYS.PATH_TO);
-
-    this.store.subscribe(STATE_KEYS.PATH_FROM, from => {
-      pathFrom = from;
-      if (pathFrom && pathTo) {
-        this.generator.findPath(pathFrom, pathTo);
+      if (e.key === 'Escape') {
+        this.store.set(STATE_KEYS.MODE, 'explore');
+        this.store.set(STATE_KEYS.PATH_FROM, null);
+        this.store.set(STATE_KEYS.PATH_TO, null);
+        this.store.set(STATE_KEYS.ACTIVE_PATH, []);
+        document.getElementById('path-btn')?.classList.remove('btn-active');
+        document.getElementById('compare-btn')?.classList.remove('btn-active');
+        const strip = document.getElementById('path-strip');
+        if (strip) strip.style.display = 'none';
+        window.dispatchEvent(new CustomEvent('path:found', { detail: null }));
+        this.store.set(STATE_KEYS.UI_TOAST, 'Modes cleared');
       }
-    });
 
-    this.store.subscribe(STATE_KEYS.PATH_TO, to => {
-      pathTo = to;
-      if (pathFrom && pathTo) {
-        this.generator.findPath(pathFrom, pathTo);
+      if (e.key === '/') {
+        e.preventDefault();
+        document.querySelector('.search-input')?.focus();
       }
+
+      if (e.key === '1') this.store.set(STATE_KEYS.CURRENT_VIEW, 'graph');
+      if (e.key === '2') this.store.set(STATE_KEYS.CURRENT_VIEW, 'matrix');
+      if (e.key === '3') this.store.set(STATE_KEYS.CURRENT_VIEW, 'archetypes');
+      if (e.key === '4') this.store.set(STATE_KEYS.CURRENT_VIEW, 'map');
     });
   }
 }
