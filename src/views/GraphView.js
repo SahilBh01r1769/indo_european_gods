@@ -69,6 +69,11 @@ export class GraphView {
     window.addEventListener('path:found', (e) => {
       this.highlightPath(e.detail);
     });
+
+    window.addEventListener('tour:focus', (e) => {
+      this.focusDeity(e.detail);
+    });
+
   }
 
   W() { return document.getElementById('graph-view')?.clientWidth || 800; }
@@ -383,7 +388,10 @@ export class GraphView {
   }
 
   clearHighlight() {
-    this.gNodes.selectAll('g.node').attr('opacity', 1);
+    this.gNodes.selectAll('g.node')
+      .attr('opacity', 1)
+      .classed('node-dimmed', false)
+      .classed('node-highlighted', false);
     this.store.set(STATE_KEYS.ACTIVE_TRAIT_FILTER, null);
   }
 
@@ -495,4 +503,25 @@ export class GraphView {
       return edgeSet.has(key);
     });
 }
+
+  focusDeity(id) {
+    if (!id || !this.gNodes) return;
+
+    this.gNodes.selectAll('g.node')
+      .classed('node-dimmed', d => d.id !== id)
+      .classed('node-highlighted', d => d.id === id);
+
+    const node = (this.currentNodes || []).find(n => n.id === id);
+    if (!node || node.x == null || !this.svg || !this.zoom) return;
+
+    const W = this.W();
+    const H = this.H();
+    const scale = 1.35;
+    const transform = d3.zoomIdentity
+      .translate(W / 2, H / 2)
+      .scale(scale)
+      .translate(-node.x, -node.y);
+
+    this.svg.transition().duration(650).call(this.zoom.transform, transform);
+  }
 }
