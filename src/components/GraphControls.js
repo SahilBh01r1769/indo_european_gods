@@ -76,11 +76,35 @@ export class GraphControls {
 
     this.bindEvents();
       this._updateKinButton();
+      this._updatePathButton();
   }
 
   setupSubscriptions() {
     this.store.subscribe(STATE_KEYS.SELECTED_DEITY, () => this._updateKinButton());
-    this.store.subscribe(STATE_KEYS.GRAPH_DATA, () => this._updateKinButton());
+    this.store.subscribe(STATE_KEYS.GRAPH_DATA, () => {
+      this._updateKinButton();
+      this._updatePathButton();
+    });
+
+    // Keep slider / tabs in sync when URL restores state
+    this.store.subscribe(STATE_KEYS.GRAPH_THRESHOLD, v => {
+      const sl = this.container?.querySelector('#thresh-sl');
+      const val = this.container?.querySelector('#thresh-val');
+      if (sl) sl.value = Math.round((v ?? 0.35) * 100);
+      if (val) val.textContent = (v ?? 0.35).toFixed(2);
+    });
+
+    this.store.subscribe(STATE_KEYS.LINK_MODE, mode => {
+      this.container?.querySelectorAll('#link-mode-tabs .tab-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.link === mode)
+      );
+    });
+
+    this.store.subscribe(STATE_KEYS.SIMILARITY_METHOD, metric => {
+      this.container?.querySelectorAll('#metric-tabs .tab-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.metric === metric)
+      );
+    });
   }
 
   _autoRegenerate() {
@@ -94,6 +118,13 @@ export class GraphControls {
     if (!btn) return;
     const hasDeity = !!this.store.get(STATE_KEYS.SELECTED_DEITY);
     btn.disabled = !hasDeity;
+  }
+
+  _updatePathButton() {
+    const btn = this.container?.querySelector('#path-btn');
+    if (!btn) return;
+    const n = this.store.get(STATE_KEYS.GRAPH_DATA)?.nodes?.length || 0;
+    btn.disabled = n < 2;
   }
 
   bindEvents() {
