@@ -183,6 +183,9 @@ export class Generator {
     this.store.set(STATE_KEYS.SELECTED_DEITY, null);
     this.store.set(STATE_KEYS.ACTIVE_TRAIT_FILTER, null);
     this.store.set(STATE_KEYS.PINNED_NODES, new Set());
+    this.store.set(STATE_KEYS.ACTIVE_PATH, []);
+    this.store.set(STATE_KEYS.PATH_FROM, null);
+    this.store.set(STATE_KEYS.PATH_TO, null);
     this.store.set(STATE_KEYS.UI_STATUS, '');
   }
 
