@@ -63,10 +63,11 @@ export class Generator {
     const center = requestedCenter || nodes[0];
 
     this.currentGenerationId++;
-    this.store.set(STATE_KEYS.GRAPH_DATA, { nodes, edges });
     this.store.set(STATE_KEYS.SELECTED_DEITY, center.id);
     this.store.set(STATE_KEYS.ACTIVE_TRAIT_FILTER, null);
     this.store.set(STATE_KEYS.CURRENT_VIEW, 'graph');
+    // GRAPH_DATA is set after SELECTED_DEITY so GraphView reads the correct center.
+    this.store.set(STATE_KEYS.GRAPH_DATA, { nodes, edges });
     this.store.set(STATE_KEYS.UI_STATUS, `${nodes.length} curated deities · ${edges.length} connections`);
     return true;
   }
