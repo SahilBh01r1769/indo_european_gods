@@ -66,7 +66,8 @@ export const store = new Store({
   [STATE_KEYS.MODE]:                'explore',
   [STATE_KEYS.SIMILARITY_METHOD]:   'cosine',
   [STATE_KEYS.GRAPH_THRESHOLD]:     0.35,
-  [STATE_KEYS.ERA_FILTER]:          0,
+  // null = all eras; otherwise numeric historical cutoff (e.g. -800 = 800 BCE)
+  [STATE_KEYS.ERA_FILTER]:          null,
   [STATE_KEYS.SHOW_COGNATES]:       false,
   [STATE_KEYS.PINNED_NODES]:        new Set(),
   [STATE_KEYS.SELECTED_DEITY]:      null,
