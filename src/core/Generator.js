@@ -8,14 +8,6 @@ import { STATE_KEYS } from '../utils/store.js';
 import { DEITIES, getTraitValue } from '../data/deities.js';
 import { getCognate } from '../data/cognates.js';
 
-const ERA_CUTOFFS = {
-  1: 800,
-  2: -100,
-  3: -800,
-  4: -1500,
-  5: -2000,
-};
-
 export class Generator {
   constructor(store, feedback) {
     this.store = store;
@@ -24,9 +16,8 @@ export class Generator {
   }
 
   getCandidateDeities() {
-    const eraFilter = this.store.get(STATE_KEYS.ERA_FILTER) ?? 0;
-    const cutoff = ERA_CUTOFFS[eraFilter];
-    return cutoff == null ? DEITIES : DEITIES.filter(d => d.era >= cutoff);
+    const cutoff = this.store.get(STATE_KEYS.ERA_FILTER);
+    return cutoff == null ? DEITIES : DEITIES.filter(d => d.era <= cutoff);
   }
 
   async loadDeity(nameOrId, options = {}) {
@@ -102,12 +93,15 @@ export class Generator {
       }
 
       const existing = this.store.get(STATE_KEYS.GRAPH_DATA) || { nodes: [], edges: [] };
-      const existingNodeIds = new Set(existing.nodes.map(n => n.id));
-      const existingEdgeKeys = new Set(existing.edges.map(e => this.edgeKey(e.source, e.target)));
-
       const nodes = [...existing.nodes].filter(n => candidateDeities.some(d => d.id === n.id));
-      existingNodeIds.clear();
-      nodes.forEach(n => existingNodeIds.add(n.id));
+      const existingNodeIds = new Set(nodes.map(n => n.id));
+      const validNodeIds = new Set(nodes.map(n => n.id));
+      const edges = existing.edges.filter(e => {
+        const source = e.source?.id || e.source;
+        const target = e.target?.id || e.target;
+        return validNodeIds.has(source) && validNodeIds.has(target);
+      });
+      const existingEdgeKeys = new Set(edges.map(e => this.edgeKey(e.source, e.target)));
 
       if (!existingNodeIds.has(deity.id)) {
         nodes.push(deity);
@@ -120,13 +114,6 @@ export class Generator {
           existingNodeIds.add(connection.deity.id);
         }
       }
-
-      const validNodeIds = new Set(nodes.map(n => n.id));
-      const edges = existing.edges.filter(e => {
-        const source = e.source?.id || e.source;
-        const target = e.target?.id || e.target;
-        return validNodeIds.has(source) && validNodeIds.has(target);
-      });
 
       for (const connection of limited) {
         const key = this.edgeKey(deity.id, connection.deity.id);
@@ -142,7 +129,6 @@ export class Generator {
       console.error('[Generator] Error:', err);
       this.store.set(STATE_KEYS.UI_TOAST, 'Error: ' + err.message);
     } finally {
-      // Do not let an older request hide the loading state of a newer one.
       if (genId === this.currentGenerationId) {
         this.store.set(STATE_KEYS.UI_LOADING, false);
       }
@@ -276,11 +262,9 @@ export class Generator {
       }
 
       this.store.set(STATE_KEYS.ACTIVE_PATH, pathIds);
-      const nodes = pathIds
-        .map(id => candidates.find(d => d.id === id))
-        .filter(Boolean);
-
+      const nodes = pathIds.map(id => candidates.find(d => d.id === id)).filter(Boolean);
       const edges = [];
+
       for (let i = 0; i < pathIds.length - 1; i++) {
         const a = nodes[i];
         const b = nodes[i + 1];
