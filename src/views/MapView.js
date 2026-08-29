@@ -1,17 +1,18 @@
 import { PANTHEON_COLORS } from '../data/deities.js';
 import { STATE_KEYS } from '../utils/store.js';
 
-// Approximate geographic centers for each pantheon
+// Approximate cultural centers for each tradition. These are visualization
+// anchors, not deity-specific archaeological coordinates.
 const PANTHEON_LOCATIONS = {
-  Greek:        { lat: 38.0, lng: 23.7 },  // Athens
-  Vedic:        { lat: 28.6, lng: 77.2 },  // Delhi region
-  Norse:        { lat: 59.9, lng: 10.7 },  // Oslo
-  Celtic:       { lat: 53.3, lng: -6.3 },  // Ireland
-  Roman:        { lat: 41.9, lng: 12.5 },  // Rome
-  Slavic:       { lat: 50.4, lng: 30.5 },  // Kyiv
-  Mesopotamian: { lat: 33.3, lng: 44.4 },  // Baghdad/Babylon
-  Iranian:      { lat: 35.7, lng: 51.4 },  // Tehran/Persepolis
-  Egyptian:     { lat: 30.0, lng: 31.2 },  // Cairo/Memphis
+  Greek:        { lat: 38.0, lng: 23.7 },
+  Vedic:        { lat: 28.6, lng: 77.2 },
+  Norse:        { lat: 59.9, lng: 10.7 },
+  Celtic:       { lat: 53.3, lng: -6.3 },
+  Roman:        { lat: 41.9, lng: 12.5 },
+  Slavic:       { lat: 50.4, lng: 30.5 },
+  Mesopotamian: { lat: 33.3, lng: 44.4 },
+  Iranian:      { lat: 35.7, lng: 51.4 },
+  Egyptian:     { lat: 30.0, lng: 31.2 },
 };
 
 export class MapView {
@@ -30,62 +31,89 @@ export class MapView {
 
   setupSubscriptions() {
     this.store.subscribe(STATE_KEYS.CURRENT_VIEW, view => {
-      if (view === 'map' && !this.map) {
-        this.initMap();
-        this.render();
-      }
+      if (view !== 'map') return;
+      if (!this.map) this.initMap();
+      this.render();
+      requestAnimationFrame(() => this.map?.invalidateSize());
     });
+
     this.store.subscribe(STATE_KEYS.GRAPH_DATA, () => {
       if (this.store.get(STATE_KEYS.CURRENT_VIEW) === 'map') this.render();
     });
+
+    this.store.subscribe(STATE_KEYS.ERA_FILTER, () => {
+      if (this.store.get(STATE_KEYS.CURRENT_VIEW) === 'map') this.render();
+    });
+
+    if (this.store.get(STATE_KEYS.CURRENT_VIEW) === 'map') {
+      this.initMap();
+      this.render();
+    }
   }
 
   initMap() {
+    if (this.map) return;
+
     this.map = L.map('leaflet-map').setView([35, 30], 3);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 19,
     }).addTo(this.map);
+  }
+
+  getVisibleDeities() {
+    const graphNodes = this.store.get(STATE_KEYS.GRAPH_DATA)?.nodes || [];
+    if (graphNodes.length) return graphNodes;
+
+    const all = this.store.get(STATE_KEYS.DEITIES) || [];
+    const cutoff = this.store.get(STATE_KEYS.ERA_FILTER);
+    return cutoff == null ? all : all.filter(d => d.era <= cutoff);
   }
 
   render() {
     if (!this.map) return;
 
-    this.markers.forEach(m => m.remove());
+    this.markers.forEach(marker => marker.remove());
     this.markers = [];
 
-    const { nodes } = this.store.get(STATE_KEYS.GRAPH_DATA);
-    const deitiesToShow = (nodes && nodes.length > 0) ? nodes : (this.store.get(STATE_KEYS.DEITIES) || []);
+    const deitiesToShow = this.getVisibleDeities();
+    const pantheonIndex = new Map();
 
-    deitiesToShow.forEach((d, index) => {
+    deitiesToShow.forEach(d => {
       const baseLoc = PANTHEON_LOCATIONS[d.pantheon];
       if (!baseLoc) return;
 
-      // Add slight random offset to prevent overlap
-      const offset = (index % 10) * 0.5;
-      const lat = baseLoc.lat + (Math.sin(index) * offset);
-      const lng = baseLoc.lng + (Math.cos(index) * offset);
+      const index = pantheonIndex.get(d.pantheon) || 0;
+      pantheonIndex.set(d.pantheon, index + 1);
+
+      // Small deterministic spiral around the cultural center so markers remain
+      // clickable without implying false precision over hundreds of kilometres.
+      const angle = index * 2.399963229728653;
+      const radius = 0.08 + 0.035 * Math.sqrt(index);
+      const lat = baseLoc.lat + Math.sin(angle) * radius;
+      const lng = baseLoc.lng + Math.cos(angle) * radius;
 
       const color = PANTHEON_COLORS[d.pantheon] || '#888';
       const icon = L.divIcon({
         className: 'custom-deity-marker',
-        html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,0.3);"></div>`,
+        html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.55);"></div>`,
         iconSize: [18, 18],
         iconAnchor: [9, 9],
       });
 
       const marker = L.marker([lat, lng], { icon })
         .bindPopup(`
-          <div style="font-family:var(--font-sans);">
+          <div style="font-family:var(--font-sans);min-width:150px;">
             <strong style="color:${color}">${d.id}</strong><br>
-            <span style="font-size:11px;color:#666;">${d.pantheon}</span><br>
-            <span style="font-size:10px;color:#888;">${d.epithet || ''}</span>
+            <span style="font-size:11px;color:#a1a1aa;">${d.pantheon}</span><br>
+            <span style="font-size:10px;color:#71717a;">${d.epithet || ''}</span>
           </div>
         `)
         .addTo(this.map);
 
       marker.on('click', () => {
         this.generator.loadDeity(d.id, { resetGraph: true });
-        this.store.set(STATE_KEYS.CURRENT_VIEW, 'graph');
       });
 
       this.markers.push(marker);
