@@ -1,9 +1,9 @@
 export class FeedbackUI {
   constructor() {
-    this.toastEl  = document.getElementById('toast');
+    this.toastEl = document.getElementById('toast');
     this.loaderEl = document.getElementById('loading-indicator');
     this.statusEl = document.getElementById('status-bar');
-    this._timer   = null;
+    this._timer = null;
   }
 
   toast(msg) {
@@ -21,6 +21,8 @@ export class FeedbackUI {
 
   setStatus(msg) {
     if (!this.statusEl) return;
-    this.statusEl.textContent = msg;
+    const text = msg || '';
+    this.statusEl.textContent = text;
+    this.statusEl.style.display = text ? 'block' : 'none';
   }
 }
