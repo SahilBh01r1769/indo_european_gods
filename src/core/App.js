@@ -1,4 +1,4 @@
-import { DEITIES, TRAITS } from '../data/deities.js';
+import { DEITIES } from '../data/deities.js';
 import { TOURS } from '../data/tours.js';
 import { STATE_KEYS } from '../utils/store.js';
 
@@ -25,38 +25,35 @@ export class App {
   constructor(store) {
     this.store = store;
 
-    this.feedback  = new FeedbackUI();
-    this.router    = new Router(store);
+    this.feedback = new FeedbackUI();
+    this.router = new Router(store);
     this.generator = new Generator(store, this.feedback);
     this.methodologyModal = new MethodologyModal();
 
-    this.graphView      = new GraphView(store, this.generator, this.feedback);
-    this.matrixView     = new MatrixView(store, this.generator);
+    this.graphView = new GraphView(store, this.generator, this.feedback);
+    this.matrixView = new MatrixView(store, this.generator);
     this.archetypesView = new ArchetypesView(store, this.generator);
-    this.mapView        = new MapView(store, this.generator);
+    this.mapView = new MapView(store, this.generator);
 
-    this.sidebar       = new Sidebar(store, this.generator, this.feedback);
-    this.searchBar     = new SearchBar(store, this.generator);
-    this.tours         = new Tours(store, this.generator, this.feedback);
-    this.surprising    = new Surprising(store, this.generator, this.feedback);
+    this.sidebar = new Sidebar(store, this.generator, this.feedback);
+    this.searchBar = new SearchBar(store, this.generator);
+    this.tours = new Tours(store, this.generator, this.feedback);
+    this.surprising = new Surprising(store, this.generator, this.feedback);
     this.graphControls = new GraphControls(store, this.generator, this.feedback);
-    this.legend        = new Legend(store, this.generator);
-    this.compareModal  = new CompareModal(store);
-    this.pathStrip     = new PathStrip(store, this.generator);
+    this.legend = new Legend(store, this.generator);
+    this.compareModal = new CompareModal(store);
+    this.pathStrip = new PathStrip(store, this.generator);
   }
 
   start() {
-
-
     this.store.set(STATE_KEYS.DEITIES, DEITIES);
     this.store.set(STATE_KEYS.TOURS, TOURS);
 
-    // Mount
+    // Mount all UI before subscriptions or URL restoration fire.
     this.graphView.mount(document.getElementById('graph-svg'));
     this.matrixView.mount(document.getElementById('matrix-view'));
     this.archetypesView.mount(document.getElementById('archetypes-view'));
     this.mapView.mount(document.getElementById('map-view'));
-
     this.methodologyModal.mount();
     this.sidebar.mount();
     this.searchBar.mount(document.getElementById('search-wrap'));
@@ -69,14 +66,14 @@ export class App {
     const legendHost = document.getElementById('graph-view');
     if (legendHost) this.legend.mount(legendHost);
 
-    // URL load must be registered BEFORE router.setup() reads the hash
-    window.addEventListener('router:loadDeity', (e) => {
-      const id = e.detail;
-      if (id) this.generator.loadDeity(id, { resetGraph: true });
+    this.searchBar.buildIndex(DEITIES);
+
+    // Router can request a deity while restoring a shared URL.
+    window.addEventListener('router:loadDeity', e => {
+      if (e.detail) this.generator.loadDeity(e.detail, { resetGraph: true });
     });
 
-    // Subscriptions
-    this.router.setup();
+    // Register every state subscriber before Router reads location.hash.
     this.graphView.setupSubscriptions();
     this.matrixView.setupSubscriptions();
     this.archetypesView.setupSubscriptions();
@@ -85,59 +82,69 @@ export class App {
     this.tours.setupSubscriptions();
     this.graphControls.setupSubscriptions();
 
-    this.searchBar.buildIndex(DEITIES);
-
-    // Global UI
-    this.store.subscribe(STATE_KEYS.UI_TOAST, msg => { if (msg) this.feedback.toast(msg); });
-    this.store.subscribe(STATE_KEYS.UI_LOADING, v => this.feedback.showLoading(v));
+    this.store.subscribe(STATE_KEYS.UI_TOAST, msg => {
+      if (msg) this.feedback.toast(msg);
+    });
+    this.store.subscribe(STATE_KEYS.UI_LOADING, visible => this.feedback.showLoading(visible));
     this.store.subscribe(STATE_KEYS.UI_STATUS, msg => this.feedback.setStatus(msg));
-    
     this.store.subscribe(STATE_KEYS.SELECTED_DEITY, id => {
       if (id) this.surprising.render(id);
       else this.surprising.hide();
     });
-    
-    // Sidebar tabs (same pattern as original inline script)
-    const setSidebarTab = (tab) => {
-      ['info', 'tours'].forEach(t => {
-        const btn  = document.getElementById(`stab-${t}`);
-        const cont = document.getElementById(`stab-${t}-content`);
-        if (btn)  btn.classList.toggle('active', t === tab);
-        if (cont) cont.style.display = (t === tab) ? '' : 'none';
-      });
-    };
-    document.querySelector('.sidebar-tabs')?.addEventListener('click', e => {
-      const btn = e.target.closest('[data-tab]');
-      if (btn) setSidebarTab(btn.dataset.tab);
-    });
 
-    // Graph control events
-    window.addEventListener('graph:zoomIn',    () => this.graphView.zoomIn());
-    window.addEventListener('graph:zoomOut',   () => this.graphView.zoomOut());
-    window.addEventListener('graph:resetZoom', () => this.graphView.resetZoom());
-    window.addEventListener('graph:unpinAll',  () => {
-      this.graphView.unpinAll(this.store.get(STATE_KEYS.GRAPH_DATA).nodes);
-    });
+    this.setupSidebarTabs();
+    this.setupGraphCommands();
+    this.setupKeyboardShortcuts();
+
+    // URL restoration comes last so all components observe restored state.
+    this.router.setup();
 
     const loader = document.getElementById('loader');
     if (loader) loader.classList.add('hidden');
 
     console.log('[App] Initialized.');
+  }
 
-        // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      const tag = (e.target && e.target.tagName) || '';
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  setupSidebarTabs() {
+    const setSidebarTab = tab => {
+      ['info', 'tours'].forEach(name => {
+        const btn = document.getElementById(`stab-${name}`);
+        const content = document.getElementById(`stab-${name}-content`);
+        if (btn) btn.classList.toggle('active', name === tab);
+        if (content) content.style.display = name === tab ? '' : 'none';
+      });
+    };
+
+    document.querySelector('.sidebar-tabs')?.addEventListener('click', e => {
+      const btn = e.target.closest('[data-tab]');
+      if (btn) setSidebarTab(btn.dataset.tab);
+    });
+  }
+
+  setupGraphCommands() {
+    window.addEventListener('graph:zoomIn', () => this.graphView.zoomIn());
+    window.addEventListener('graph:zoomOut', () => this.graphView.zoomOut());
+    window.addEventListener('graph:resetZoom', () => this.graphView.resetZoom());
+    window.addEventListener('graph:unpinAll', () => {
+      const nodes = this.store.get(STATE_KEYS.GRAPH_DATA)?.nodes || [];
+      this.graphView.unpinAll(nodes);
+    });
+  }
+
+  setupKeyboardShortcuts() {
+    document.addEventListener('keydown', e => {
+      const tag = e.target?.tagName || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
       if (e.key === 'Escape') {
         this.store.set(STATE_KEYS.MODE, 'explore');
         this.store.set(STATE_KEYS.PATH_FROM, null);
         this.store.set(STATE_KEYS.PATH_TO, null);
         this.store.set(STATE_KEYS.ACTIVE_PATH, []);
+        this.store.set(STATE_KEYS.COMPARE_A, null);
+        this.store.set(STATE_KEYS.COMPARE_B, null);
         document.getElementById('path-btn')?.classList.remove('btn-active');
         document.getElementById('compare-btn')?.classList.remove('btn-active');
-        const strip = document.getElementById('path-strip');
-        if (strip) strip.style.display = 'none';
         window.dispatchEvent(new CustomEvent('path:found', { detail: null }));
         this.store.set(STATE_KEYS.UI_TOAST, 'Modes cleared');
       }
