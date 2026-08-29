@@ -1,123 +1,236 @@
 # 🏛️ Mythos Network — Indo-European Gods
 
-An interactive, computational tool for exploring the archetypal, linguistic, and historical connections between Indo-European deities. Instead of a genealogy chart, deities are represented as 16-dimensional trait vectors and connected by similarity math — so the graph reflects what gods *do* (storm, death, trickery, fire...) rather than who they're descended from.
+An interactive knowledge graph for exploring **mythological, functional and linguistic connections** between deities across Indo-European traditions.
 
-Built with **zero build step and zero framework** — plain ES modules, no npm install, no bundler. Open `index.html` behind any static server and it runs.
+Rather than treating mythology as a family tree, the project represents each deity as a **16-dimensional curated trait vector** and compares those vectors computationally. This makes it possible to explore questions such as:
 
-![D3.js](https://img.shields.io/badge/D3.js-v7-orange)
-![Leaflet](https://img.shields.io/badge/Leaflet-1.9-199900)
-![Vanilla JS](https://img.shields.io/badge/JS-ES6_Modules-yellow)
+- Which storm-warrior figures have the closest functional profiles?
+- How similar are two pantheons on average?
+- Which deities share an attested Proto-Indo-European cognate relationship?
+- What is the shortest similarity-chain between two figures?
+- Which archetypal roles recur across otherwise distant traditions?
 
----
-
-## ✨ Features
-
-**Graph View (D3.js)**
-- Force-directed network of 67 deities across 9 pantheons, physics-tuned for fast stabilization
-- Pantheon clustering — toggle nodes into distinct color-coded bands
-- Node pinning (animated dashed gold ring), drag-and-drop, zoom/pan, and a live canvas minimap
-- Edge width scales with similarity weight; cognate connections render as dashed gold lines
-- Trait highlighting — click a trait to dim everything not connected by it
-
-**Map View (Leaflet.js)**
-- Plots deities geographically on a CARTO dark basemap
-- Custom color-coded markers per pantheon
-- Synced with the era filter to show how myths spread geographically over time
-
-**Matrix & Archetype Views**
-- Similarity matrix: heatmap of average trait overlap between entire pantheons, with top connecting pairs on hover
-- Archetype view: clusters deities by dominant trait instead of pantheon of origin
-
-**Smart Interactions**
-- **Pathfinding (BFS)** — shortest similarity-chain between any two deities, visualizing "conceptual distance"
-- **Comparison modal** — side-by-side trait bars for two selected deities
-- **Guided tours** — six curated narrative paths (e.g. *The Thunder Warrior Cluster*, *Liminal Tricksters*, *Sacred Fire & the Divine Smith*)
-- **Trie-backed search** — prefix tree autocomplete over deity names, pantheons, and traits for instant results regardless of dataset size
-
-**Exports**
-- SVG (self-contained, inlined styles), JSON (node/edge snapshot), and CSV (pantheon similarity matrix, for analysis in Excel/R)
+The application is deliberately **zero-build and framework-free**: plain ES modules, D3.js and Leaflet. The optional Node tooling is only for validation/tests.
 
 ---
 
-## 🧮 The Data Model
+## What is in the dataset?
 
-Each deity is a **16-dimensional trait vector** (values 0.0–1.0), covering things like *archer, healer, storm god, trickster, death/underworld, fertility, fire*, and more — scored by academic consensus of mythological prominence, not vibes.
+The main Indo-European traditions represented are **Greek, Vedic, Roman, Norse, Celtic, Slavic and Iranian**.
 
-Two similarity metrics drive the graph edges:
-- **Cosine similarity** — angle between two trait vectors; finds deities with the same *proportional* trait profile regardless of overall intensity
-- **Weighted overlap** (Jaccard-like) — `Σ min(A,B) / Σ max(A,B)`; rewards deities that share the same traits at similarly high strength
+**Egyptian and Mesopotamian material is included as a comparative outgroup**, not because those traditions are Indo-European. Their presence makes it possible to distinguish specifically Indo-European continuities from broader cross-cultural mythological patterns.
 
-Deities also carry a **numeric era** (earliest widespread attestation, e.g. `-800` for ~800 BCE), letting you filter the graph by historical period — from Early Bronze Age Rigvedic deities through Norse/Slavic material as late as ~1200 CE.
-
-A separate **cognates dataset** links deities that share a verified Proto-Indo-European etymological root (Zeus / Jupiter / Dyaus Pita, for example) — these render as distinct dashed gold edges regardless of trait similarity.
+Trait values are **curated heuristic weights informed by comparative-mythology sources**. They should be read as a computational model for exploration, not as measurements directly reported by the cited scholars.
 
 ---
 
-## 🗂️ Project Structure
+## Features
 
+### Graph view — D3.js
+
+- Force-directed similarity network
+- Cosine similarity or weighted overlap
+- Kin / Top 5 / Top 10 / All connection modes
+- Similarity threshold control
+- Historical attestation cutoff
+- Optional pantheon clustering
+- Node pinning, drag, zoom/pan and minimap
+- Cognate highlighting
+- Compare mode and shortest similarity-chain mode
+- Shareable URL state
+
+### Map view — Leaflet
+
+- Dark CARTO basemap matching the main interface
+- Approximate cultural centers for each tradition
+- Deterministic marker spreading to avoid overlap without implying false geographic precision
+- Synchronized historical cutoff
+- Clicking a marker opens that deity in the graph
+
+> Map coordinates are visualization anchors for traditions, **not deity-specific archaeological coordinates**.
+
+### Matrix view
+
+- Average pairwise similarity between traditions
+- Top deity pairs behind each matrix cell
+- CSV export
+
+### Archetype explorer
+
+- Browse the 16 canonical traits
+- See their strongest representatives and cultural spread
+- Open an archetype directly as a graph
+
+### Guided tours
+
+Curated, deterministic subgraphs with narrative steps for selected mythological patterns. Tour membership is explicit rather than being expanded by the normal Top-N graph behavior.
+
+### Search
+
+- Prefix autocomplete over names, epithets, pantheons and strong traits
+- Fuzzy fallback for near-matches
+- Keyboard navigation
+- `/` or `Ctrl/Cmd + K` to focus search
+
+### Export
+
+- Graph snapshot as JSON
+- Current graph as SVG
+- Pantheon matrix as CSV
+
+---
+
+## Similarity model
+
+Each deity maps onto the same 16 canonical dimensions, including:
+
+- archer
+- healer
+- disease sender
+- storm god
+- wilderness
+- liminal outsider
+- ecstasy / madness
+- ascetic / wisdom
+- solar
+- war / victory
+- trickster
+- smith / craft
+- sea / water
+- death / underworld
+- fertility
+- fire
+
+The application supports two metrics.
+
+### Cosine similarity
+
+```text
+cos(θ) = (A · B) / (|A| × |B|)
 ```
+
+This emphasizes the overall *shape* of two trait profiles.
+
+### Weighted overlap
+
+```text
+Σ min(Ai, Bi) / Σ max(Ai, Bi)
+```
+
+This is more sensitive to agreement in the actual trait strengths.
+
+All graph, comparison, matrix, path, export and Web Worker calculations use the **same canonical similarity module** so the results cannot drift between features.
+
+---
+
+## Project structure
+
+```text
 index.html
+package.json                 # optional Node validation/test scripts
+scripts/
+  validate-data.js           # dataset/schema sanity checks
+tests/
+  similarity.test.js         # core similarity regression tests
 src/
-  app.js                     # Entry point — state, event wiring, view switching
+  core/
+    main.js                  # boot
+    App.js                   # composition + global wiring
+    Generator.js             # graph generation/orchestration
+    Router.js                # URL hash state
   data/
-    deities.js                # 67 deities, 16-trait vectors, pantheon color map
-    cognates.js                # PIE etymological cognate pairs
-    tours.js                    # Guided tour definitions
-    citations.js                 # Academic sourcing
+    deities.js               # deity records + canonical trait metadata
+    cognates.js              # linguistic cognate pairs
+    tours.js                 # guided-tour definitions
+    citations.js             # bibliography + per-deity references
   utils/
-    similarity.js              # Cosine similarity, weighted overlap, BFS pathfinding
-    trie.js                     # Prefix tree for search autocomplete
-    store.js                     # Lightweight pub/sub state store
-    workerClient.js               # Main-thread wrapper around the similarity worker
-    export.js                      # SVG / JSON / CSV export
+    similarity.js            # canonical math/path/matrix engine
+    store.js                 # lightweight pub/sub store
+    trie.js                  # search index
+    workerClient.js          # similarity worker client
+    export.js                # JSON/SVG/CSV export
   workers/
-    similarityWorker.js         # Offloads similarity/matrix/pathfinding math off the main thread
+    similarityWorker.js      # module worker reusing similarity.js
   views/
-    graph.js                   # D3 force-directed graph
-    map.js                      # Leaflet geographic view
-    matrix.js                    # Pantheon similarity heatmap
-    archetypes.js                 # Trait-clustered view
+    GraphView.js
+    MatrixView.js
+    ArchetypesView.js
+    MapView.js
   components/
-    search.js                   # Trie-backed search box
-    sidebar.js                    # Deity detail panel
-    tours.js                       # Guided tour UI
-    surprising.js                   # "Most surprising connection" finder
+    Sidebar.js
+    SearchBar.js
+    GraphControls.js
+    CompareModal.js
+    MethodologyModal.js
+    Legend.js
+    PathStrip.js
+    Surprising.js
+    Tours.js
+  ui/
+    Feedback.js
 styles/
-  base.css, layout.css, components.css, graph.css, views.css, search.css
+  base.css
+  layout.css
+  components.css
+  graph.css
+  views.css
+  search.css
 ```
 
 ---
 
-## 🎨 Design
+## Run locally
 
-Dark theme — deep indigo-ink backgrounds with warm gold and violet accents, built for contrast against a graph full of colored nodes and edges. `Cinzel` for headings (classical feel), `Inter` for UI text, `JetBrains Mono` for scores and coordinates, plus `Noto Sans Greek`/`Devanagari` so original-script names (Ζεύς, इन्द्र) render correctly. Tooltips and modals use `backdrop-filter` glass panels.
-
----
-
-## 🚀 Running Locally
-
-No build step — just needs to be served (ES modules require `http://`, not `file://`):
+Because the application uses ES modules and a Web Worker, serve it over HTTP rather than opening `index.html` with `file://`.
 
 ```bash
 python3 -m http.server 8000
-# or
-npx serve .
 ```
 
-Then open `http://localhost:8000`.
+Then open:
+
+```text
+http://localhost:8000
+```
+
+No install or build step is required to run the application.
 
 ---
 
-## 🗺️ Roadmap
+## Validation and tests
 
-- Deep-linkable state via URL hash routing (share exact graph views)
-- 3D graph migration (Three.js) for denser clustering
-- "Ask the Oracle" — natural-language querying over the dataset via RAG
-- Community data submissions via GitHub PRs
-- Expanded pantheons: Baltic, Armenian, Hittite
+Node 20+ can run the optional checks with no third-party dependencies:
+
+```bash
+npm run check
+```
+
+This validates the deity dataset and runs regression tests for the core similarity model. Pull requests to `master` run the same checks in GitHub Actions.
 
 ---
 
-## 📚 Sources
+## Sources and interpretation
 
-Trait scoring and cognate relationships are drawn from standard comparative mythology references, including Georges Dumézil's trifunctional hypothesis, Mallory & Adams' *Encyclopedia of Indo-European Culture*, and M.L. West's *Indo-European Poetry and Myth*. See `src/data/citations.js` for per-deity sourcing.
+The project draws on comparative mythology and Indo-European studies including M. L. West, J. P. Mallory & D. Q. Adams, Calvert Watkins, Georges Dumézil and tradition-specific references. See `src/data/citations.js` for the bibliography and per-deity references.
+
+The project deliberately separates two kinds of relationship:
+
+1. **Computational similarity** — produced by the curated trait-vector model.
+2. **Linguistic cognacy** — explicitly recorded only where a historical/etymological relationship is asserted in the cognates dataset.
+
+Functional similarity alone does **not** imply common linguistic descent.
+
+---
+
+## Roadmap
+
+Possible future directions:
+
+- Split the large Sidebar renderer into smaller context-specific panels
+- Move pantheon metadata/colors/locations into one canonical configuration object
+- Improve accessibility and mobile control density
+- Replace shortest-hop BFS with an optional weighted conceptual-distance path
+- Improve the “surprising connection” score relative to pantheon baselines
+- Add confidence/provenance metadata to individual trait weights
+- Expand Baltic, Armenian and Anatolian/Hittite material
+- Community data submissions through reviewed pull requests
