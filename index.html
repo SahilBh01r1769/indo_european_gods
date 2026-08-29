@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
-  <title>Indo-European Myth Network</title>
-  <meta name="description" content="Explore how Indo-European gods relate through shared archetypal traits — an interactive mythological knowledge graph." />
+  <title>Mythos Network — Comparative Mythology Atlas</title>
+  <meta name="description" content="Explore recurring archetypes, cognates, and cultural parallels across Indo-European mythology in an interactive visual atlas." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Greek:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&display=swap" rel="stylesheet">
@@ -19,21 +19,25 @@
   <link rel="stylesheet" href="styles/graph.css" />
   <link rel="stylesheet" href="styles/views.css" />
   <link rel="stylesheet" href="styles/search.css" />
+  <link rel="stylesheet" href="styles/polish.css" />
 </head>
 <body>
 
   <div id="loader">
     <div class="loader-inner">
       <span class="loader-rune">☽</span>
-      <div class="loader-text">Loading the pantheons…</div>
+      <div class="loader-text">Opening the atlas…</div>
     </div>
   </div>
 
   <div id="app">
     <header id="header">
-      <div class="header-logo">
-        <i class="logo-icon" aria-hidden="true">ᛝ</i>
-        <span>Indo-European Myth Network</span>
+      <div class="header-logo" aria-label="Mythos Network">
+        <span class="logo-mark" aria-hidden="true">ᛝ</span>
+        <span class="brand-lockup">
+          <strong class="brand-title">Mythos Network</strong>
+          <small class="brand-subtitle">Comparative mythology atlas</small>
+        </span>
       </div>
       <div class="header-sep"></div>
       <div class="header-tabs" id="view-tabs"></div>
@@ -45,7 +49,7 @@
       <aside id="sidebar">
         <div class="panel">
           <div class="sidebar-tabs">
-            <button class="sidebar-tab active" id="stab-info" data-tab="info">Deity Info</button>
+            <button class="sidebar-tab active" id="stab-info" data-tab="info">Dossier</button>
             <button class="sidebar-tab" id="stab-tours" data-tab="tours">Guided Tours</button>
           </div>
         </div>
@@ -60,19 +64,36 @@
           <svg id="graph-svg"></svg>
 
           <div id="empty-state">
-            <div class="empty-rune">ᛝ</div>
-            <div class="empty-title">Trace the threads of myth</div>
-            <div class="empty-sub">Search for a deity above, or begin with one of these:</div>
-            <div class="empty-hint">Apollo ↔ Rudra · Thor ↔ Indra · Lugh ↔ Mithra</div>
-            <div class="empty-tags">
-              <span class="empty-tag" data-deity="Zeus">Zeus</span>
-              <span class="empty-tag" data-deity="Odin">Odin</span>
-              <span class="empty-tag" data-deity="Indra">Indra</span>
-              <span class="empty-tag" data-deity="Thor">Thor</span>
-              <span class="empty-tag" data-deity="Apollo">Apollo</span>
-              <span class="empty-tag" data-deity="Lugh">Lugh</span>
-              <span class="empty-tag" data-deity="Ishtar">Ishtar</span>
-              <span class="empty-tag" data-deity="Ra">Ra</span>
+            <div class="empty-hero">
+              <div class="empty-kicker">Comparative mythology atlas</div>
+              <div class="empty-rune" aria-hidden="true">ᛝ</div>
+              <div class="empty-title">Trace the threads of myth</div>
+              <div class="empty-sub">Begin with one deity. The network reveals recurring archetypes, cultural parallels, linguistic cognates, and unexpected echoes across traditions.</div>
+
+              <div class="empty-pair-grid" aria-label="Suggested starting points">
+                <button class="empty-tag empty-pair" data-deity="Apollo">
+                  <span class="empty-pair-names">Apollo ↔ Rudra</span>
+                  <span class="empty-pair-meta">arrows · healing · liminality</span>
+                </button>
+                <button class="empty-tag empty-pair" data-deity="Thor">
+                  <span class="empty-pair-names">Thor ↔ Indra</span>
+                  <span class="empty-pair-meta">storm · combat · serpent-slayer</span>
+                </button>
+                <button class="empty-tag empty-pair" data-deity="Lugh">
+                  <span class="empty-pair-names">Lugh ↔ Mithra</span>
+                  <span class="empty-pair-meta">sovereignty · skill · order</span>
+                </button>
+              </div>
+
+              <div class="empty-start-label">Or open a dossier</div>
+              <div class="empty-tags">
+                <button class="empty-tag" data-deity="Zeus">Zeus</button>
+                <button class="empty-tag" data-deity="Odin">Odin</button>
+                <button class="empty-tag" data-deity="Indra">Indra</button>
+                <button class="empty-tag" data-deity="Apollo">Apollo</button>
+                <button class="empty-tag" data-deity="Ishtar">Ishtar</button>
+                <button class="empty-tag" data-deity="Ra">Ra</button>
+              </div>
             </div>
           </div>
 
@@ -80,7 +101,7 @@
 
           <div id="minimap">
             <canvas id="minimap-canvas" width="180" height="120"></canvas>
-            <div class="minimap-label">MINIMAP</div>
+            <div class="minimap-label">OVERVIEW</div>
           </div>
 
           <div id="path-strip" style="display:none;">
@@ -114,7 +135,7 @@
   <div id="loading-indicator" style="display:none;position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;">
     <div style="display:flex;align-items:center;gap:10px;background:var(--bg-4);border:1px solid var(--border-2);border-radius:var(--r-full);padding:7px 18px;box-shadow:var(--shadow-lg);">
       <div style="width:14px;height:14px;border:2px solid var(--text-3);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;"></div>
-      <span style="font-size:12px;color:var(--text-1);">Computing…</span>
+      <span style="font-size:12px;color:var(--text-1);">Tracing connections…</span>
     </div>
   </div>
 
