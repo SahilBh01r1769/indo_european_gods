@@ -2,14 +2,11 @@ import { App } from './App.js';
 import { store } from '../utils/store.js';
 
 function boot() {
-  const app = new App(store);
-  app.start();
-  const loader = document.getElementById('loader');
-  if (loader) loader.style.display = 'none';
+  new App(store).start();
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', boot);
+  document.addEventListener('DOMContentLoaded', boot, { once: true });
 } else {
   boot();
 }
