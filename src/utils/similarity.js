@@ -1,9 +1,10 @@
 /* ─────────────────────────────────────────────────────────────────
-   utils/similarity.js — Similarity engine
-   Cosine similarity, weighted overlap, BFS path finder
+   utils/similarity.js — Canonical similarity engine
+   All graph, matrix, comparison, path, export and worker calculations
+   should flow through this module so they cannot drift apart.
    ───────────────────────────────────────────────────────────────── */
 
-import { TRAITS, DEITIES } from '../data/deities.js';
+import { TRAITS, DEITIES, normTrait, getTraitValue } from '../data/deities.js';
 import { getCognate } from '../data/cognates.js';
 
 /* ── Trait vector ───────────────────────────────────────────────── */
@@ -13,32 +14,30 @@ export function traitVector(deity) {
   if (!deity?.id) return TRAITS.map(() => 0);
   if (_vectorCache.has(deity.id)) return _vectorCache.get(deity.id);
 
-  const vec = TRAITS.map(t => {
-    const key = Object.keys(deity.traits || {}).find(k =>
-      k === t ||
-      k.replace(/\s*\/\s*/g, ' / ') === t ||
-      k.replace(/\s*\/\s*/g, '/') === t.replace(/\s*\/\s*/g, '/')
-    );
-    return key !== undefined ? deity.traits[key] : 0;
-  });
-
+  // getTraitValue() performs the canonical case/spacing normalization.
+  const vec = TRAITS.map(trait => getTraitValue(deity, trait));
   _vectorCache.set(deity.id, vec);
   return vec;
 }
 
 /* ── Cosine similarity ──────────────────────────────────────────── */
 export function cosineSimilarity(a, b) {
+  if (a.length !== b.length) return 0;
+
   let dot = 0, magA = 0, magB = 0;
   for (let i = 0; i < a.length; i++) {
     dot  += a[i] * b[i];
     magA += a[i] * a[i];
     magB += b[i] * b[i];
   }
+
   return (magA && magB) ? dot / (Math.sqrt(magA) * Math.sqrt(magB)) : 0;
 }
 
 /* ── Weighted overlap (Jaccard-like) ────────────────────────────── */
 export function weightedOverlap(a, b) {
+  if (a.length !== b.length) return 0;
+
   let num = 0, den = 0;
   for (let i = 0; i < a.length; i++) {
     num += Math.min(a[i], b[i]);
@@ -51,35 +50,35 @@ export function weightedOverlap(a, b) {
 export function computeSimilarity(deityA, deityB, metric = 'cosine') {
   const va = traitVector(deityA);
   const vb = traitVector(deityB);
-  return metric === 'cosine'
-    ? cosineSimilarity(va, vb)
-    : weightedOverlap(va, vb);
+  return metric === 'overlap'
+    ? weightedOverlap(va, vb)
+    : cosineSimilarity(va, vb);
 }
 
 /* ── Shared traits above threshold ─────────────────────────────── */
 export function sharedTraits(deityA, deityB, threshold = 0.4) {
-  const shared = [];
-  const traitsA = deityA.traits || {};
-  const traitsB = deityB.traits || {};
-  for (const [trait, valA] of Object.entries(traitsA)) {
-    const valB = traitsB[trait] || 0;
-    if (valA >= threshold && valB >= threshold) {
-      shared.push(trait);
-    }
-  }
-  return shared;
+  return TRAITS.filter(trait =>
+    getTraitValue(deityA, trait) >= threshold &&
+    getTraitValue(deityB, trait) >= threshold
+  );
 }
 
 /* ── Get all connections for a deity ───────────────────────────── */
-export function getConnections(deity, metric = 'cosine', threshold = 0.20, eraMin = 0) {
-  return DEITIES
+export function getConnections(
+  deity,
+  metric = 'cosine',
+  threshold = 0.20,
+  eraMin = Number.NEGATIVE_INFINITY,
+  deities = DEITIES,
+) {
+  return deities
     .filter(d => d.id !== deity.id && d.era >= eraMin)
     .map(d => ({
-    deity: d,
-    score: computeSimilarity(deity, d, metric),   // was weight
-    shared: sharedTraits(deity, d),
-    cognate: getCognate(deity.id, d.id),
-  }))
+      deity: d,
+      score: computeSimilarity(deity, d, metric),
+      shared: sharedTraits(deity, d),
+      cognate: getCognate(deity.id, d.id),
+    }))
     .filter(x => x.score >= threshold)
     .sort((a, b) => b.score - a.score);
 }
@@ -105,22 +104,29 @@ export function getMostSurprisingConnection(deity, metric = 'cosine') {
   return scored[0] || null;
 }
 
-/* ── BFS shortest path ──────────────────────────────────────────── */
-export function findPath(fromId, toId, metric = 'cosine', threshold = 0.3) {
-  const from = DEITIES.find(d => d.id === fromId);
-  const to   = DEITIES.find(d => d.id === toId);
-  if (!from || !to || fromId === toId) return null;
+/* ── BFS shortest similarity-chain ──────────────────────────────── */
+export function findPath(
+  fromId,
+  toId,
+  metric = 'cosine',
+  threshold = 0.3,
+  deities = DEITIES,
+) {
+  const from = deities.find(d => d.id === fromId);
+  const to   = deities.find(d => d.id === toId);
+  if (!from || !to) return null;
+  if (fromId === toId) return [fromId];
 
   const simCache = new Map();
-     const getSim = (a, b) => {
-       const key = a.id < b.id ? `${a.id}-${b.id}` : `${b.id}-${a.id}`;
-       if (simCache.has(key)) return simCache.get(key);
-       const sim = computeSimilarity(a, b, metric);
-       simCache.set(key, sim);
-       return sim;
-     };
-  
-  const queue   = [[from]];
+  const getSim = (a, b) => {
+    const key = a.id < b.id ? `${a.id}-${b.id}` : `${b.id}-${a.id}`;
+    if (simCache.has(key)) return simCache.get(key);
+    const sim = computeSimilarity(a, b, metric);
+    simCache.set(key, sim);
+    return sim;
+  };
+
+  const queue = [[from]];
   const visited = new Set([fromId]);
 
   while (queue.length) {
@@ -128,32 +134,33 @@ export function findPath(fromId, toId, metric = 'cosine', threshold = 0.3) {
     if (path.length > 8) continue;
 
     const current = path[path.length - 1];
-    const neighbors = DEITIES.filter(d => {
+    const neighbors = deities.filter(d => {
       if (visited.has(d.id)) return false;
-      return getSim(current, d, metric) >= threshold;
+      return getSim(current, d) >= threshold;
     });
 
     for (const neighbor of neighbors) {
       const newPath = [...path, neighbor];
-      if (neighbor.id === toId) return newPath;
+      if (neighbor.id === toId) return newPath.map(d => d.id);
       visited.add(neighbor.id);
       queue.push(newPath);
       if (queue.length > 8000) return null;
     }
   }
+
   return null;
 }
 
 /* ── Pairwise similarity matrix ────────────────────────────────── */
-export function computePantheonMatrix(metric = 'cosine') {
-  const pantheons = [...new Set(DEITIES.map(d => d.pantheon))].sort();
+export function computePantheonMatrix(metric = 'cosine', deities = DEITIES) {
+  const pantheons = [...new Set(deities.map(d => d.pantheon))].sort();
   const n = pantheons.length;
   const matrix = Array.from({ length: n }, () => new Array(n).fill(0));
   const counts = Array.from({ length: n }, () => new Array(n).fill(0));
 
-  for (let i = 0; i < DEITIES.length; i++) {
-    for (let j = i + 1; j < DEITIES.length; j++) {
-      const di = DEITIES[i], dj = DEITIES[j];
+  for (let i = 0; i < deities.length; i++) {
+    for (let j = i + 1; j < deities.length; j++) {
+      const di = deities[i], dj = deities[j];
       if (di.pantheon === dj.pantheon) continue;
       const pi = pantheons.indexOf(di.pantheon);
       const pj = pantheons.indexOf(dj.pantheon);
@@ -167,8 +174,11 @@ export function computePantheonMatrix(metric = 'cosine') {
 
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < n; j++) {
-      if (i === j) { matrix[i][j] = 1; continue; }
-      matrix[i][j] = counts[i][j] > 0 ? matrix[i][j] / counts[i][j] : 0;
+      if (i === j) {
+        matrix[i][j] = 1;
+      } else {
+        matrix[i][j] = counts[i][j] > 0 ? matrix[i][j] / counts[i][j] : 0;
+      }
     }
   }
 
@@ -176,18 +186,20 @@ export function computePantheonMatrix(metric = 'cosine') {
   for (let pi = 0; pi < n; pi++) {
     for (let pj = pi + 1; pj < n; pj++) {
       const pa = pantheons[pi], pb = pantheons[pj];
-      const deitiesA = DEITIES.filter(d => d.pantheon === pa);
-      const deitiesB = DEITIES.filter(d => d.pantheon === pb);
+      const deitiesA = deities.filter(d => d.pantheon === pa);
+      const deitiesB = deities.filter(d => d.pantheon === pb);
       const pairs = [];
+
       for (const da of deitiesA) {
         for (const db of deitiesB) {
           pairs.push({ a: da, b: db, score: computeSimilarity(da, db, metric) });
         }
       }
+
       pairs.sort((x, y) => y.score - x.score);
-      const key = `${pa}--${pb}`;
-      topPairs[key] = pairs.slice(0, 5);
-      topPairs[`${pb}--${pa}`] = pairs.slice(0, 5);
+      const best = pairs.slice(0, 5);
+      topPairs[`${pa}--${pb}`] = best;
+      topPairs[`${pb}--${pa}`] = best;
     }
   }
 
@@ -196,13 +208,11 @@ export function computePantheonMatrix(metric = 'cosine') {
 
 /* ── Get deities by trait ───────────────────────────────────────── */
 export function getDeitiesByTrait(traitName, minVal = 0.4) {
+  const canonical = TRAITS.find(t => normTrait(t) === normTrait(traitName));
+  if (!canonical) return [];
+
   return DEITIES
-    .map(d => {
-      const vec = traitVector(d);
-      const idx = TRAITS.indexOf(traitName);
-      const val = idx >= 0 ? vec[idx] : 0;
-      return { deity: d, value: val };
-    })
+    .map(d => ({ deity: d, value: getTraitValue(d, canonical) }))
     .filter(x => x.value >= minVal)
     .sort((a, b) => b.value - a.value);
 }
@@ -210,23 +220,22 @@ export function getDeitiesByTrait(traitName, minVal = 0.4) {
 /* ── Utility: get deity by id (case-insensitive) ────────────────── */
 export function getDeityById(nameOrId) {
   if (!nameOrId) return null;
-  return DEITIES.find(d =>
-    d.id === nameOrId || d.id.toLowerCase() === nameOrId.toLowerCase()
-  ) || null;
+  const normalized = String(nameOrId).trim().toLowerCase();
+  return DEITIES.find(d => d.id.toLowerCase() === normalized) || null;
 }
 
 /* ── Utility: edge color from weight ───────────────────────────── */
 export function edgeColor(weight, isCognate = false) {
-  if (isCognate) return '#fbbf24';       // gold
-  if (weight >= 0.75) return '#c084fc';  // bright purple
-  if (weight >= 0.55) return '#22d3ee';  // cyan
-  return '#94a3b8';                      // bright slate gray
+  if (isCognate) return '#fbbf24';
+  if (weight >= 0.75) return '#c084fc';
+  if (weight >= 0.55) return '#22d3ee';
+  return '#94a3b8';
 }
 
 /* ── Utility: trait fill color from value ──────────────────────── */
 export function traitFillColor(value) {
-  if (value > 0.8) return '#ef4444'; // Vibrant Red
-  if (value > 0.6) return '#f97316'; // Vibrant Orange
-  if (value > 0.4) return '#3b82f6'; // Vibrant Blue
-  return '#71717a';                  // Muted Gray
+  if (value > 0.8) return '#ef4444';
+  if (value > 0.6) return '#f97316';
+  if (value > 0.4) return '#3b82f6';
+  return '#71717a';
 }
