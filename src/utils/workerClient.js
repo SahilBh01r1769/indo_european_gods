@@ -1,9 +1,7 @@
 class SimilarityWorkerClient {
   constructor() {
-    // Fixed path resolution
-    // Robust path resolution for Web Workers in ES Modules
     const workerUrl = new URL('../workers/similarityWorker.js', import.meta.url).href;
-    this.worker = new Worker(workerUrl);
+    this.worker = new Worker(workerUrl, { type: 'module' });
     this.requestId = 0;
     this.pendingRequests = new Map();
 
@@ -11,8 +9,10 @@ class SimilarityWorkerClient {
       const { type, requestId, result, error } = event.data;
       const pending = this.pendingRequests.get(requestId);
       if (!pending) return;
+
       if (type === 'SUCCESS') pending.resolve(result);
       else if (type === 'ERROR') pending.reject(new Error(error));
+
       this.pendingRequests.delete(requestId);
     };
 
@@ -31,18 +31,22 @@ class SimilarityWorkerClient {
     });
   }
 
-  async computeSimilarity(deityA, deityB, method = 'cosine') {
+  computeSimilarity(deityA, deityB, method = 'cosine') {
     return this._send('COMPUTE_SIMILARITY', { deityA, deityB, method });
   }
-  async getConnections(deity, deities, method = 'cosine', threshold = 0.35) {
+
+  getConnections(deity, deities, method = 'cosine', threshold = 0.35) {
     return this._send('GET_CONNECTIONS', { deity, deities, method, threshold });
   }
-  async computeMatrix(deities, method = 'cosine') {
+
+  computeMatrix(deities, method = 'cosine') {
     return this._send('COMPUTE_MATRIX', { deities, method });
   }
-  async findPath(startId, endId, deities, method = 'cosine', threshold = 0.3) {
+
+  findPath(startId, endId, deities, method = 'cosine', threshold = 0.3) {
     return this._send('FIND_PATH', { startId, endId, deities, method, threshold });
   }
+
   destroy() {
     this.worker.terminate();
     this.pendingRequests.clear();
