@@ -1,5 +1,4 @@
 import { Trie } from '../utils/trie.js';
-import { STATE_KEYS } from '../utils/store.js';
 
 export class SearchBar {
   constructor(store, generator) {
@@ -17,18 +16,19 @@ export class SearchBar {
     container.innerHTML = `
       <div class="search-wrapper">
         <div class="search-input-group">
-          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
             <circle cx="11" cy="11" r="8"/>
             <path d="m21 21-4.35-4.35"/>
           </svg>
           <input type="text" class="search-input" placeholder="Search deities, epithets, traits..."
-                 autocomplete="off" aria-label="Search deities" aria-expanded="false" role="combobox" />
-          <kbd class="search-kbd">⌘K</kbd>
+                 autocomplete="off" aria-label="Search deities" aria-expanded="false"
+                 aria-controls="search-results" role="combobox" />
+          <kbd class="search-kbd">/</kbd>
         </div>
-        <div class="search-dropdown" role="listbox" hidden></div>
+        <div class="search-dropdown" id="search-results" role="listbox" hidden></div>
       </div>`;
 
-    this.input    = container.querySelector('.search-input');
+    this.input = container.querySelector('.search-input');
     this.dropdown = container.querySelector('.search-dropdown');
     this.bindEvents();
   }
@@ -40,10 +40,10 @@ export class SearchBar {
   bindEvents() {
     this.input.addEventListener('input', () => this.onInput());
     this.input.addEventListener('keydown', e => this.onKeydown(e));
-    this.input.addEventListener('blur', () => setTimeout(() => this.close(), 200));
+    this.input.addEventListener('blur', () => setTimeout(() => this.close(), 150));
 
     document.addEventListener('keydown', e => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         this.input.focus();
       }
@@ -52,10 +52,27 @@ export class SearchBar {
 
   onInput() {
     const q = this.input.value.trim().toLowerCase();
-    if (!q || !this.trie) { this.close(); return; }
+    if (!q || !this.trie) {
+      this.close();
+      return;
+    }
 
-    this.results = this.trie.search(q).slice(0, 8);
-    if (!this.results.length) { this.close(); return; }
+    let results = this.trie.search(q);
+    if (!results.length && q.length >= 3) results = this.trie.fuzzySearch(q);
+
+    const seen = new Set();
+    this.results = results
+      .filter(result => {
+        if (seen.has(result.id)) return false;
+        seen.add(result.id);
+        return true;
+      })
+      .slice(0, 8);
+
+    if (!this.results.length) {
+      this.close();
+      return;
+    }
 
     this.isOpen = true;
     this.selectedIndex = -1;
@@ -63,10 +80,15 @@ export class SearchBar {
     this.input.setAttribute('aria-expanded', 'true');
 
     this.dropdown.innerHTML = this.results.map((d, i) => `
-      <div class="search-result" data-index="${i}" data-id="${d.id}">
-        <span class="sr-name">${d.name || d.id}</span>
+      <div class="search-result" id="search-result-${i}" role="option"
+           aria-selected="false" data-index="${i}" data-id="${d.id}">
+        <div class="search-result-main">
+          <span class="search-result-name">${d.name || d.id}</span>
+          ${d.epithet ? `<span class="search-result-epithet">${d.epithet}</span>` : ''}
+        </div>
         <span class="sr-pantheon">${d.pantheon}</span>
-      </div>`).join('');
+      </div>
+    `).join('');
 
     this.dropdown.querySelectorAll('.search-result').forEach(el => {
       el.addEventListener('mousedown', e => {
@@ -86,6 +108,7 @@ export class SearchBar {
       }
       return;
     }
+
     if (!this.isOpen) return;
 
     if (e.key === 'ArrowDown') {
@@ -103,11 +126,15 @@ export class SearchBar {
 
   highlight() {
     this.dropdown.querySelectorAll('.search-result').forEach((el, i) => {
-      el.classList.toggle('selected', i === this.selectedIndex);
+      const selected = i === this.selectedIndex;
+      el.classList.toggle('selected', selected);
+      el.setAttribute('aria-selected', String(selected));
+      if (selected) this.input.setAttribute('aria-activedescendant', el.id);
     });
   }
 
   select(deityId) {
+    this.input.value = deityId;
     this.generator.loadDeity(deityId, { resetGraph: true });
     this.close();
   }
@@ -117,5 +144,6 @@ export class SearchBar {
     this.selectedIndex = -1;
     this.dropdown.hidden = true;
     this.input.setAttribute('aria-expanded', 'false');
+    this.input.removeAttribute('aria-activedescendant');
   }
 }
