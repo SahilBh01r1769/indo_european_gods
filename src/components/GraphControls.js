@@ -15,9 +15,8 @@ export class GraphControls {
     this.container.innerHTML = `
       <div class="controls-bar">
         <div class="control-group">
-          <button class="btn btn-sm" id="gen-btn" title="Generate network">▶ Generate</button>
           <button class="btn btn-sm btn-gold" id="surprise-btn" title="Random deity">✦ Surprise</button>
-          <button class="btn btn-sm btn-danger" id="clear-btn" title="Clear">✕ Clear</button>
+          <button class="btn btn-sm btn-danger" id="clear-btn" title="Clear network">✕ Clear</button>
         </div>
 
         <div class="control-group">
@@ -43,6 +42,19 @@ export class GraphControls {
         </div>
 
         <div class="control-group">
+          <span class="slider-label">Era</span>
+          <select id="era-select" class="btn btn-sm" title="Show traditions attested by this period">
+            <option value="all">All eras</option>
+            <option value="-2000">By 2000 BCE</option>
+            <option value="-1500">By 1500 BCE</option>
+            <option value="-800">By 800 BCE</option>
+            <option value="-100">By 100 BCE</option>
+            <option value="800">By 800 CE</option>
+            <option value="1200">By 1200 CE</option>
+          </select>
+        </div>
+
+        <div class="control-group">
           <label class="toggle-row">
             <span class="toggle-label">Cluster</span>
             <div class="toggle"><input type="checkbox" id="cluster-cb" /><span class="toggle-track"></span></div>
@@ -59,8 +71,11 @@ export class GraphControls {
 
         <div class="control-group">
           <button class="btn btn-sm" id="compare-btn" title="Compare two deities">⚖ Compare</button>
-          <button class="btn btn-sm" id="path-btn" title="Find path between two deities">↝ Path</button>
+          <button class="btn btn-sm" id="path-btn" title="Find shortest similarity chain">↝ Path</button>
           <button class="btn btn-sm" id="cognate-btn" title="Toggle cognate highlighting">Cognates</button>
+        </div>
+
+        <div class="control-group">
           <button class="btn btn-sm btn-icon" id="zoom-in-btn" title="Zoom in">+</button>
           <button class="btn btn-sm btn-icon" id="zoom-out-btn" title="Zoom out">−</button>
           <button class="btn btn-sm btn-icon" id="reset-zoom-btn" title="Reset zoom">⌂</button>
@@ -75,8 +90,7 @@ export class GraphControls {
       </div>`;
 
     this.bindEvents();
-      this._updateKinButton();
-      this._updatePathButton();
+    this._syncControls();
   }
 
   setupSubscriptions() {
@@ -86,7 +100,6 @@ export class GraphControls {
       this._updatePathButton();
     });
 
-    // Keep slider / tabs in sync when URL restores state
     this.store.subscribe(STATE_KEYS.GRAPH_THRESHOLD, v => {
       const sl = this.container?.querySelector('#thresh-sl');
       const val = this.container?.querySelector('#thresh-val');
@@ -105,10 +118,33 @@ export class GraphControls {
         b.classList.toggle('active', b.dataset.metric === metric)
       );
     });
+
+    this.store.subscribe(STATE_KEYS.ERA_FILTER, cutoff => {
+      const select = this.container?.querySelector('#era-select');
+      if (select) select.value = cutoff == null ? 'all' : String(cutoff);
+    });
+  }
+
+  _syncControls() {
+    const threshold = this.store.get(STATE_KEYS.GRAPH_THRESHOLD) ?? 0.35;
+    const cutoff = this.store.get(STATE_KEYS.ERA_FILTER);
+    const thresholdInput = this.container?.querySelector('#thresh-sl');
+    const thresholdValue = this.container?.querySelector('#thresh-val');
+    const eraSelect = this.container?.querySelector('#era-select');
+
+    if (thresholdInput) thresholdInput.value = Math.round(threshold * 100);
+    if (thresholdValue) thresholdValue.textContent = threshold.toFixed(2);
+    if (eraSelect) eraSelect.value = cutoff == null ? 'all' : String(cutoff);
+
+    this._updateKinButton();
+    this._updatePathButton();
   }
 
   _autoRegenerate() {
-    if (!this.store.get(STATE_KEYS.SELECTED_DEITY)) return;
+    const hasDeity = !!this.store.get(STATE_KEYS.SELECTED_DEITY);
+    const hasTrait = !!this.store.get(STATE_KEYS.ACTIVE_TRAIT_FILTER);
+    if (!hasDeity && !hasTrait) return;
+
     this.store.set(STATE_KEYS.GRAPH_DATA, { nodes: [], edges: [] });
     this.generator.generate();
   }
@@ -116,8 +152,7 @@ export class GraphControls {
   _updateKinButton() {
     const btn = this.container?.querySelector('#link-kin');
     if (!btn) return;
-    const hasDeity = !!this.store.get(STATE_KEYS.SELECTED_DEITY);
-    btn.disabled = !hasDeity;
+    btn.disabled = !this.store.get(STATE_KEYS.SELECTED_DEITY);
   }
 
   _updatePathButton() {
@@ -128,19 +163,20 @@ export class GraphControls {
   }
 
   bindEvents() {
-    const $ = id => this.container.querySelector(`#${id}`);
+    const $ = id => this.container?.querySelector(`#${id}`);
 
-    $('gen-btn')?.addEventListener('click', () => this._autoRegenerate());
     $('surprise-btn')?.addEventListener('click', () => this.generator.surprise());
 
     $('clear-btn')?.addEventListener('click', () => {
       this.generator.clearGraph();
       const searchInput = document.querySelector('.search-input');
       if (searchInput) searchInput.value = '';
-      document.getElementById('path-strip').style.display = 'none';
-      document.getElementById('surprising-panel').style.display = 'none';
-      this.store.set(STATE_KEYS.ACTIVE_PATH, []);
+      const pathStrip = document.getElementById('path-strip');
+      const surprisingPanel = document.getElementById('surprising-panel');
+      if (pathStrip) pathStrip.style.display = 'none';
+      if (surprisingPanel) surprisingPanel.style.display = 'none';
       document.getElementById('path-btn')?.classList.remove('btn-active');
+      document.getElementById('compare-btn')?.classList.remove('btn-active');
       this.store.set(STATE_KEYS.MODE, 'explore');
     });
 
@@ -148,9 +184,6 @@ export class GraphControls {
       const btn = e.target.closest('.tab-btn');
       if (!btn || btn.disabled) return;
       this.store.set(STATE_KEYS.LINK_MODE, btn.dataset.link);
-      this.container.querySelectorAll('#link-mode-tabs .tab-btn').forEach(b =>
-        b.classList.toggle('active', b.dataset.link === btn.dataset.link)
-      );
       this._autoRegenerate();
     });
 
@@ -158,25 +191,24 @@ export class GraphControls {
       const btn = e.target.closest('.tab-btn');
       if (!btn) return;
       this.store.set(STATE_KEYS.SIMILARITY_METHOD, btn.dataset.metric);
-      this.container.querySelectorAll('#metric-tabs .tab-btn').forEach(b =>
-        b.classList.toggle('active', b.dataset.metric === btn.dataset.metric)
-      );
       this._autoRegenerate();
     });
 
     $('thresh-sl')?.addEventListener('input', e => {
-      const value = parseFloat(e.target.value) / 100;
+      const value = Number(e.target.value) / 100;
       this.store.set(STATE_KEYS.GRAPH_THRESHOLD, value);
-      $('thresh-val').textContent = value.toFixed(2);
-      
       clearTimeout(this._regenTimer);
       this._regenTimer = setTimeout(() => this._autoRegenerate(), 400);
     });
 
+    $('era-select')?.addEventListener('change', e => {
+      const cutoff = e.target.value === 'all' ? null : Number(e.target.value);
+      this.store.set(STATE_KEYS.ERA_FILTER, cutoff);
+      this._autoRegenerate();
+    });
 
     $('cluster-cb')?.addEventListener('change', e => {
       this.store.set(STATE_KEYS.CLUSTER_BY_PAN, e.target.checked);
-      this._autoRegenerate();
     });
 
     $('labels-cb')?.addEventListener('change', e => {
@@ -187,47 +219,71 @@ export class GraphControls {
       this.store.set(STATE_KEYS.EXPAND_ON_CLICK, e.target.checked);
     });
 
-    // Compare mode
     $('compare-btn')?.addEventListener('click', () => {
       const mode = this.store.get(STATE_KEYS.MODE);
       if (mode === 'compare') {
         this.store.set(STATE_KEYS.MODE, 'explore');
         $('compare-btn').classList.remove('btn-active');
         this.store.set(STATE_KEYS.UI_TOAST, 'Compare mode off');
-      } else {
-        this.store.set(STATE_KEYS.MODE, 'compare');
-        $('compare-btn').classList.add('btn-active');
-        this.store.set(STATE_KEYS.COMPARE_A, null);
-        this.store.set(STATE_KEYS.COMPARE_B, null);
-        this.store.set(STATE_KEYS.UI_TOAST, 'Compare mode: click two deities');
+        return;
+      }
 
-        $('path-btn')?.classList.remove('btn-active');
+      this.store.set(STATE_KEYS.MODE, 'compare');
+      $('compare-btn').classList.add('btn-active');
+      $('path-btn')?.classList.remove('btn-active');
+      this.store.set(STATE_KEYS.COMPARE_A, null);
+      this.store.set(STATE_KEYS.COMPARE_B, null);
+      this.store.set(STATE_KEYS.PATH_FROM, null);
+      this.store.set(STATE_KEYS.PATH_TO, null);
+      this.store.set(STATE_KEYS.ACTIVE_PATH, []);
+      this.store.set(STATE_KEYS.UI_TOAST, 'Compare mode: click two deities');
+    });
+
+    $('path-btn')?.addEventListener('click', () => {
+      const mode = this.store.get(STATE_KEYS.MODE);
+      if (mode === 'path') {
+        this.store.set(STATE_KEYS.MODE, 'explore');
+        $('path-btn').classList.remove('btn-active');
         this.store.set(STATE_KEYS.PATH_FROM, null);
         this.store.set(STATE_KEYS.PATH_TO, null);
         this.store.set(STATE_KEYS.ACTIVE_PATH, []);
+        window.dispatchEvent(new CustomEvent('path:found', { detail: null }));
+        this.store.set(STATE_KEYS.UI_TOAST, 'Path mode off');
+        return;
       }
+
+      this.store.set(STATE_KEYS.MODE, 'path');
+      $('compare-btn')?.classList.remove('btn-active');
+      $('path-btn').classList.add('btn-active');
+      this.store.set(STATE_KEYS.COMPARE_A, null);
+      this.store.set(STATE_KEYS.COMPARE_B, null);
+      this.store.set(STATE_KEYS.PATH_FROM, null);
+      this.store.set(STATE_KEYS.PATH_TO, null);
+      this.store.set(STATE_KEYS.ACTIVE_PATH, []);
+      this.store.set(STATE_KEYS.UI_TOAST, 'Path mode: click start, then destination');
     });
 
     $('cognate-btn')?.addEventListener('click', () => {
       const next = !this.store.get(STATE_KEYS.SHOW_COGNATES);
       this.store.set(STATE_KEYS.SHOW_COGNATES, next);
       $('cognate-btn').classList.toggle('btn-active', next);
-      this.store.set(STATE_KEYS.UI_TOAST,
-        next ? 'Cognate pairs highlighted in gold' : 'Cognate highlighting off');
+      this.store.set(
+        STATE_KEYS.UI_TOAST,
+        next ? 'Cognate pairs highlighted in gold' : 'Cognate highlighting off',
+      );
     });
 
-    $('zoom-in-btn')?.addEventListener('click', () => {
-      window.dispatchEvent(new CustomEvent('graph:zoomIn'));
-    });
-    $('zoom-out-btn')?.addEventListener('click', () => {
-      window.dispatchEvent(new CustomEvent('graph:zoomOut'));
-    });
-    $('reset-zoom-btn')?.addEventListener('click', () => {
-      window.dispatchEvent(new CustomEvent('graph:resetZoom'));
-    });
+    $('zoom-in-btn')?.addEventListener('click', () =>
+      window.dispatchEvent(new CustomEvent('graph:zoomIn'))
+    );
+    $('zoom-out-btn')?.addEventListener('click', () =>
+      window.dispatchEvent(new CustomEvent('graph:zoomOut'))
+    );
+    $('reset-zoom-btn')?.addEventListener('click', () =>
+      window.dispatchEvent(new CustomEvent('graph:resetZoom'))
+    );
     $('unpin-btn')?.addEventListener('click', () => {
       window.dispatchEvent(new CustomEvent('graph:unpinAll'));
-      this.store.set(STATE_KEYS.PINNED_NODES, new Set());
       this.store.set(STATE_KEYS.UI_TOAST, 'All nodes unpinned');
     });
 
@@ -240,34 +296,15 @@ export class GraphControls {
         metric: this.store.get(STATE_KEYS.SIMILARITY_METHOD),
         threshold: this.store.get(STATE_KEYS.GRAPH_THRESHOLD),
       });
-      this.store.set(STATE_KEYS.UI_TOAST, filename ? `Exported: ${filename}` : 'Generate a network first');
+      this.store.set(
+        STATE_KEYS.UI_TOAST,
+        filename ? `Exported: ${filename}` : 'Generate a network first',
+      );
     });
 
     $('export-svg-btn')?.addEventListener('click', () => {
       const filename = exportSVG();
       this.store.set(STATE_KEYS.UI_TOAST, filename ? `Exported: ${filename}` : 'Nothing to export');
-    });
-
-    $('path-btn')?.addEventListener('click', () => {
-      const mode = this.store.get(STATE_KEYS.MODE);
-      if (mode === 'path') {
-        this.store.set(STATE_KEYS.MODE, 'explore');
-        $('path-btn').classList.remove('btn-active');
-        this.store.set(STATE_KEYS.PATH_FROM, null);
-        this.store.set(STATE_KEYS.PATH_TO, null);
-        this.store.set(STATE_KEYS.ACTIVE_PATH, []);
-        document.getElementById('path-strip').style.display = 'none';
-        window.dispatchEvent(new CustomEvent('path:found', { detail: null }));
-        this.store.set(STATE_KEYS.UI_TOAST, 'Path mode off');
-      } else {
-        this.store.set(STATE_KEYS.MODE, 'path');
-        $('compare-btn')?.classList.remove('btn-active');
-        $('path-btn').classList.add('btn-active');
-        this.store.set(STATE_KEYS.PATH_FROM, null);
-        this.store.set(STATE_KEYS.PATH_TO, null);
-        this.store.set(STATE_KEYS.ACTIVE_PATH, []);
-        this.store.set(STATE_KEYS.UI_TOAST, 'Path mode: click start, then destination');
-      }
     });
 
     $('methodology-btn')?.addEventListener('click', () => {
