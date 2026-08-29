@@ -209,6 +209,7 @@ export class GraphControls {
 
     $('cluster-cb')?.addEventListener('change', e => {
       this.store.set(STATE_KEYS.CLUSTER_BY_PAN, e.target.checked);
+      this._autoRegenerate();
     });
 
     $('labels-cb')?.addEventListener('change', e => {
