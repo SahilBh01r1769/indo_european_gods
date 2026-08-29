@@ -28,7 +28,6 @@ export class Generator {
     }
 
     const { resetGraph = false } = options;
-
     if (resetGraph || this.store.get(STATE_KEYS.MODE) !== 'explore') {
       this.store.set(STATE_KEYS.GRAPH_DATA, { nodes: [], edges: [] });
     }
@@ -36,8 +35,40 @@ export class Generator {
     this.store.set(STATE_KEYS.SELECTED_DEITY, deity.id);
     this.store.set(STATE_KEYS.ACTIVE_TRAIT_FILTER, null);
     this.store.set(STATE_KEYS.CURRENT_VIEW, 'graph');
-
     await this.generate();
+  }
+
+  loadExplicitGraph(deityIds, options = {}) {
+    const candidateIds = new Set(this.getCandidateDeities().map(d => d.id));
+    const seen = new Set();
+    const nodes = deityIds
+      .map(id => getDeityById(id))
+      .filter(Boolean)
+      .filter(d => candidateIds.has(d.id))
+      .filter(d => {
+        if (seen.has(d.id)) return false;
+        seen.add(d.id);
+        return true;
+      });
+
+    if (!nodes.length) {
+      this.store.set(STATE_KEYS.UI_TOAST, 'No tour deities match the active era filter');
+      return false;
+    }
+
+    const metric = this.store.get(STATE_KEYS.SIMILARITY_METHOD) || 'cosine';
+    const threshold = this.store.get(STATE_KEYS.GRAPH_THRESHOLD) ?? 0.35;
+    const edges = this.buildEdges(nodes, metric, threshold);
+    const requestedCenter = options.centerId && nodes.find(d => d.id === options.centerId);
+    const center = requestedCenter || nodes[0];
+
+    this.currentGenerationId++;
+    this.store.set(STATE_KEYS.GRAPH_DATA, { nodes, edges });
+    this.store.set(STATE_KEYS.SELECTED_DEITY, center.id);
+    this.store.set(STATE_KEYS.ACTIVE_TRAIT_FILTER, null);
+    this.store.set(STATE_KEYS.CURRENT_VIEW, 'graph');
+    this.store.set(STATE_KEYS.UI_STATUS, `${nodes.length} curated deities · ${edges.length} connections`);
+    return true;
   }
 
   async generate() {
@@ -135,32 +166,36 @@ export class Generator {
     }
   }
 
-  generateArchetypeGraph(activeTrait, candidateDeities, metric, threshold, genId) {
-    const matchingDeities = candidateDeities.filter(d => getTraitValue(d, activeTrait) > 0.2);
-    if (genId !== this.currentGenerationId) return;
-
+  buildEdges(nodes, metric, threshold) {
     const edges = [];
-    for (let i = 0; i < matchingDeities.length; i++) {
-      for (let j = i + 1; j < matchingDeities.length; j++) {
-        const a = matchingDeities[i];
-        const b = matchingDeities[j];
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i];
+        const b = nodes[j];
         const score = computeSimilarity(a, b, metric);
-        if (score >= threshold) {
-          edges.push({
-            source: a.id,
-            target: b.id,
-            similarity: score,
-            shared: sharedTraits(a, b),
-            cognate: getCognate(a.id, b.id) || null,
-          });
-        }
+        if (score < threshold) continue;
+
+        edges.push({
+          source: a.id,
+          target: b.id,
+          similarity: score,
+          shared: sharedTraits(a, b),
+          cognate: getCognate(a.id, b.id) || null,
+        });
       }
     }
+    return edges;
+  }
 
-    this.store.set(STATE_KEYS.GRAPH_DATA, { nodes: matchingDeities, edges });
+  generateArchetypeGraph(activeTrait, candidateDeities, metric, threshold, genId) {
+    const nodes = candidateDeities.filter(d => getTraitValue(d, activeTrait) > 0.2);
+    if (genId !== this.currentGenerationId) return;
+
+    const edges = this.buildEdges(nodes, metric, threshold);
+    this.store.set(STATE_KEYS.GRAPH_DATA, { nodes, edges });
     this.store.set(
       STATE_KEYS.UI_STATUS,
-      `${matchingDeities.length} deities · ${edges.length} connections (Archetype: ${activeTrait})`,
+      `${nodes.length} deities · ${edges.length} connections (Archetype: ${activeTrait})`,
     );
   }
 
