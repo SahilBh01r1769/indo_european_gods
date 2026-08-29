@@ -1,0 +1,10 @@
+{
+  "name": "indo-european-myth-network",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "validate:data": "node scripts/validate-data.js",
+    "check": "npm run validate:data && npm test"
+  }
+}
