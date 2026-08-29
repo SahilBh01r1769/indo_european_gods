@@ -13,81 +13,111 @@ export class GraphControls {
   mount(container) {
     this.container = container;
     this.container.innerHTML = `
-      <div class="controls-bar">
-        <div class="control-group">
-          <button class="btn btn-sm btn-gold" id="surprise-btn" title="Random deity">✦ Surprise</button>
-          <button class="btn btn-sm btn-danger" id="clear-btn" title="Clear network">✕ Clear</button>
-        </div>
-
-        <div class="control-group">
-          <div class="tab-group" id="link-mode-tabs">
-            <button class="tab-btn" data-link="kin" id="link-kin" title="Show only the single closest deity">Kin</button>
-            <button class="tab-btn active" data-link="top5">Top 5</button>
-            <button class="tab-btn" data-link="top10">Top 10</button>
-            <button class="tab-btn" data-link="all">All</button>
-          </div>
-        </div>
-
-        <div class="control-group">
-          <div class="tab-group" id="metric-tabs">
-            <button class="tab-btn active" data-metric="cosine">Cosine</button>
-            <button class="tab-btn" data-metric="overlap">Overlap</button>
-          </div>
-        </div>
-
-        <div class="control-group slider-row">
-          <span class="slider-label">Threshold</span>
-          <input type="range" id="thresh-sl" min="0" max="100" value="35" />
-          <span class="slider-val" id="thresh-val">0.35</span>
-        </div>
-
-        <div class="control-group">
-          <span class="slider-label">Era</span>
-          <select id="era-select" class="btn btn-sm" title="Show traditions attested by this period">
-            <option value="all">All eras</option>
-            <option value="-2000">By 2000 BCE</option>
-            <option value="-1500">By 1500 BCE</option>
-            <option value="-800">By 800 BCE</option>
-            <option value="-100">By 100 BCE</option>
-            <option value="800">By 800 CE</option>
-            <option value="1200">By 1200 CE</option>
-          </select>
-        </div>
-
-        <div class="control-group">
-          <label class="toggle-row">
-            <span class="toggle-label">Cluster</span>
-            <div class="toggle"><input type="checkbox" id="cluster-cb" /><span class="toggle-track"></span></div>
-          </label>
-          <label class="toggle-row">
-            <span class="toggle-label">Labels</span>
-            <div class="toggle"><input type="checkbox" id="labels-cb" checked /><span class="toggle-track"></span></div>
-          </label>
-          <label class="toggle-row">
-            <span class="toggle-label">Expand</span>
-            <div class="toggle"><input type="checkbox" id="expand-cb" checked /><span class="toggle-track"></span></div>
-          </label>
-        </div>
-
-        <div class="control-group">
+      <div class="controls-bar" aria-label="Network controls">
+        <div class="control-quickbar">
+          <button class="btn btn-sm btn-gold control-primary" id="surprise-btn" title="Open a random deity">✦ Surprise</button>
           <button class="btn btn-sm" id="compare-btn" title="Compare two deities">⚖ Compare</button>
           <button class="btn btn-sm" id="path-btn" title="Find shortest similarity chain">↝ Path</button>
-          <button class="btn btn-sm" id="cognate-btn" title="Toggle cognate highlighting">Cognates</button>
         </div>
 
-        <div class="control-group">
-          <button class="btn btn-sm btn-icon" id="zoom-in-btn" title="Zoom in">+</button>
-          <button class="btn btn-sm btn-icon" id="zoom-out-btn" title="Zoom out">−</button>
-          <button class="btn btn-sm btn-icon" id="reset-zoom-btn" title="Reset zoom">⌂</button>
-          <button class="btn btn-sm" id="unpin-btn" title="Unpin all">Unpin</button>
-        </div>
+        <details class="control-section" open>
+          <summary>
+            <span>Network</span>
+            <span class="control-summary-note">relationships</span>
+          </summary>
+          <div class="control-section-body">
+            <div class="control-field">
+              <span class="control-field-label">Connections</span>
+              <div class="tab-group" id="link-mode-tabs">
+                <button class="tab-btn" data-link="kin" id="link-kin" title="Show only the single closest deity">Kin</button>
+                <button class="tab-btn active" data-link="top5">Top 5</button>
+                <button class="tab-btn" data-link="top10">Top 10</button>
+                <button class="tab-btn" data-link="all">All</button>
+              </div>
+            </div>
 
-        <div class="control-group">
-          <button class="btn btn-sm btn-ghost" id="export-json-btn" title="Export JSON">↓ JSON</button>
-          <button class="btn btn-sm btn-ghost" id="export-svg-btn" title="Export SVG">↓ SVG</button>
-          <button class="btn btn-sm btn-ghost" id="methodology-btn" title="How calculations work">? Methodology</button>
-        </div>
+            <div class="control-field">
+              <span class="control-field-label">Similarity</span>
+              <div class="tab-group" id="metric-tabs">
+                <button class="tab-btn active" data-metric="cosine">Cosine</button>
+                <button class="tab-btn" data-metric="overlap">Overlap</button>
+              </div>
+            </div>
+
+            <div class="control-field slider-row">
+              <div class="control-field-heading">
+                <span class="control-field-label">Minimum similarity</span>
+                <span class="slider-val" id="thresh-val">0.35</span>
+              </div>
+              <input type="range" id="thresh-sl" min="0" max="100" value="35" aria-label="Minimum similarity threshold" />
+            </div>
+
+            <label class="control-field control-select-field" for="era-select">
+              <span class="control-field-label">Historical horizon</span>
+              <select id="era-select" title="Show traditions attested by this period">
+                <option value="all">All recorded eras</option>
+                <option value="-2000">By 2000 BCE</option>
+                <option value="-1500">By 1500 BCE</option>
+                <option value="-800">By 800 BCE</option>
+                <option value="-100">By 100 BCE</option>
+                <option value="800">By 800 CE</option>
+                <option value="1200">By 1200 CE</option>
+              </select>
+            </label>
+          </div>
+        </details>
+
+        <details class="control-section">
+          <summary>
+            <span>Display</span>
+            <span class="control-summary-note">presentation</span>
+          </summary>
+          <div class="control-section-body">
+            <div class="control-switch-grid">
+              <label class="toggle-row">
+                <span class="toggle-label">Cluster traditions</span>
+                <span class="toggle"><input type="checkbox" id="cluster-cb" /><span class="toggle-track"></span></span>
+              </label>
+              <label class="toggle-row">
+                <span class="toggle-label">Show labels</span>
+                <span class="toggle"><input type="checkbox" id="labels-cb" checked /><span class="toggle-track"></span></span>
+              </label>
+              <label class="toggle-row">
+                <span class="toggle-label">Expand on click</span>
+                <span class="toggle"><input type="checkbox" id="expand-cb" checked /><span class="toggle-track"></span></span>
+              </label>
+            </div>
+
+            <button class="btn btn-sm control-wide" id="cognate-btn" title="Toggle linguistic cognate highlighting">Cognate links</button>
+
+            <div class="control-zoom-row" aria-label="Graph navigation">
+              <button class="btn btn-sm btn-icon" id="zoom-out-btn" title="Zoom out">−</button>
+              <button class="btn btn-sm control-reset" id="reset-zoom-btn" title="Reset zoom">Reset view</button>
+              <button class="btn btn-sm btn-icon" id="zoom-in-btn" title="Zoom in">+</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="control-section control-section-muted">
+          <summary>
+            <span>More</span>
+            <span class="control-summary-note">export & notes</span>
+          </summary>
+          <div class="control-section-body">
+            <div class="control-utility-grid">
+              <button class="btn btn-sm btn-ghost" id="unpin-btn" title="Unpin all nodes">Unpin all</button>
+              <button class="btn btn-sm btn-ghost" id="export-json-btn" title="Export JSON">↓ JSON</button>
+              <button class="btn btn-sm btn-ghost" id="export-svg-btn" title="Export SVG">↓ SVG</button>
+              <button class="btn btn-sm btn-ghost" id="methodology-btn" title="How calculations work">Methodology</button>
+            </div>
+            <button class="btn btn-sm btn-danger control-wide" id="clear-btn" title="Clear network">Clear network</button>
+          </div>
+        </details>
       </div>`;
+
+    if (window.matchMedia?.('(max-width: 820px)').matches) {
+      this.container.querySelector('.control-section[open]')?.removeAttribute('open');
+    }
 
     this.bindEvents();
     this._syncControls();

@@ -26,7 +26,15 @@ export class MapView {
 
   mount(container) {
     this.container = container;
-    this.container.innerHTML = '<div id="leaflet-map" style="height:100%;width:100%;"></div>';
+    this.container.innerHTML = `
+      <div class="map-stage">
+        <div id="leaflet-map" style="height:100%;width:100%;"></div>
+        <div class="map-context-card">
+          <div class="map-context-kicker">Cultural atlas</div>
+          <div class="map-context-title">Traditions in place</div>
+          <div class="map-context-copy">Approximate cultural centers, not deity-specific archaeological coordinates. Use the historical horizon in Network controls to change the time slice.</div>
+        </div>
+      </div>`;
   }
 
   setupSubscriptions() {
@@ -87,8 +95,6 @@ export class MapView {
       const index = pantheonIndex.get(d.pantheon) || 0;
       pantheonIndex.set(d.pantheon, index + 1);
 
-      // Small deterministic spiral around the cultural center so markers remain
-      // clickable without implying false precision over hundreds of kilometres.
       const angle = index * 2.399963229728653;
       const radius = 0.08 + 0.035 * Math.sqrt(index);
       const lat = baseLoc.lat + Math.sin(angle) * radius;

@@ -24,8 +24,6 @@ export class Router {
     ];
     writeKeys.forEach(key => this.store.subscribe(key, () => this.writeHash()));
 
-    // Subscriptions in App are registered before setup(), so restoring state here
-    // can safely trigger the correct view/component render on first load.
     this.readHash();
     this.renderView(this.store.get(STATE_KEYS.CURRENT_VIEW));
     this.renderTabs();
@@ -50,17 +48,9 @@ export class Router {
   readHash() {
     const p = this.parseHash();
 
-    if (p.view && this.views.includes(p.view)) {
-      this.store.set(STATE_KEYS.CURRENT_VIEW, p.view);
-    }
-
-    if (p.mode && this.linkModes.includes(p.mode)) {
-      this.store.set(STATE_KEYS.LINK_MODE, p.mode);
-    }
-
-    if (p.metric && this.metrics.includes(p.metric)) {
-      this.store.set(STATE_KEYS.SIMILARITY_METHOD, p.metric);
-    }
+    if (p.view && this.views.includes(p.view)) this.store.set(STATE_KEYS.CURRENT_VIEW, p.view);
+    if (p.mode && this.linkModes.includes(p.mode)) this.store.set(STATE_KEYS.LINK_MODE, p.mode);
+    if (p.metric && this.metrics.includes(p.metric)) this.store.set(STATE_KEYS.SIMILARITY_METHOD, p.metric);
 
     if (p.t) {
       const threshold = Number(p.t);
@@ -76,10 +66,7 @@ export class Router {
       this.store.set(STATE_KEYS.ERA_FILTER, null);
     }
 
-    if (p.deity) {
-      window.dispatchEvent(new CustomEvent('router:loadDeity', { detail: p.deity }));
-    }
-
+    if (p.deity) window.dispatchEvent(new CustomEvent('router:loadDeity', { detail: p.deity }));
     this.renderTabs();
   }
 
@@ -113,9 +100,17 @@ export class Router {
     if (!container) return;
 
     const current = this.store.get(STATE_KEYS.CURRENT_VIEW);
+    const meta = {
+      graph:      { label: 'Network', icon: '✦' },
+      matrix:     { label: 'Matrix', icon: '▦' },
+      archetypes: { label: 'Archetypes', icon: '◈' },
+      map:        { label: 'Atlas', icon: '⌖' },
+    };
+
     container.innerHTML = this.views.map(view => `
       <button class="header-tab ${view === current ? 'active' : ''}" data-view="${view}">
-        ${view.charAt(0).toUpperCase() + view.slice(1)}
+        <span class="header-tab-icon" aria-hidden="true">${meta[view]?.icon || '·'}</span>
+        <span>${meta[view]?.label || view}</span>
       </button>
     `).join('');
   }
