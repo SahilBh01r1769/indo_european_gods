@@ -30,16 +30,17 @@
   </div>
 
   <div id="app">
-    <!-- ── Header ─────────────────────────────────────────────── -->
     <header id="header">
-      <div class="header-logo"><span class="logo-icon">ᛝ</span><span>Indo-European Myth Network</span></div>
+      <div class="header-logo">
+        <i class="logo-icon" aria-hidden="true">ᛝ</i>
+        <span>Indo-European Myth Network</span>
+      </div>
       <div class="header-sep"></div>
       <div class="header-tabs" id="view-tabs"></div>
       <div class="header-spacer"></div>
       <div class="search-wrap" id="search-wrap"></div>
     </header>
 
-    <!-- ── Main grid: sidebar FIRST (290px), view-area SECOND (1fr) ── -->
     <div id="main">
       <aside id="sidebar">
         <div class="panel">
@@ -54,7 +55,6 @@
         </div>
       </aside>
 
-      <!-- position:relative — keeps .view absolute children contained -->
       <div id="view-area">
         <section id="graph-view" class="view active">
           <svg id="graph-svg"></svg>
@@ -96,7 +96,6 @@
     </div>
   </div>
 
-  <!-- ── Compare modal ─────────────────────────────────────────── -->
   <div id="compare-modal" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
@@ -119,9 +118,9 @@
     </div>
   </div>
 
-  <div id="toast"></div>
+  <div id="status-bar" aria-live="polite" style="position:fixed;left:306px;bottom:16px;z-index:11;pointer-events:none;font:10px var(--font-mono);color:var(--text-3);background:rgba(9,9,11,.72);border:1px solid var(--border-0);border-radius:var(--r-full);padding:5px 10px;backdrop-filter:blur(6px);"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <script type="module" src="./src/core/main.js"></script>
-
 </body>
 </html>
