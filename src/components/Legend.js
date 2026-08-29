@@ -18,28 +18,28 @@ export class Legend {
 
   render() {
     if (!this.container) return;
-    this.container.innerHTML = Object.entries(PANTHEON_COLORS).map(([p, c]) => `
-      <div class="legend-item" data-pantheon="${p}">
-        <span class="legend-dot" style="background:${c}"></span>
-        <span class="legend-name">${p}</span>
-      </div>`).join('');
 
-    this.container.querySelectorAll('.legend-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const pantheon = item.dataset.pantheon;
-        const { DEITIES } = this.store.get('deities') ? { DEITIES: this.store.get('deities') } : {};
-        // Load random deity from pantheon
-        this.loadFromPantheon(pantheon);
-      });
-    });
-  }
+    const comparative = new Set(['Egyptian', 'Mesopotamian']);
+    const entries = Object.entries(PANTHEON_COLORS);
+    const inherited = entries.filter(([name]) => !comparative.has(name));
+    const outgroups = entries.filter(([name]) => comparative.has(name));
 
-  loadFromPantheon(pantheon) {
-    const deities = this.store.get('deities') || [];
-    const matches = deities.filter(d => d.pantheon === pantheon);
-    if (matches.length) {
-      const random = matches[Math.floor(Math.random() * matches.length)];
-      this.generator.loadDeity(random.id, { resetGraph: true });
-    }
+    const renderItems = items => items.map(([pantheon, color]) => `
+      <span class="legend-item" title="${pantheon} tradition">
+        <span class="legend-dot" style="background:${color}"></span>
+        <span class="legend-name">${pantheon}</span>
+      </span>`).join('');
+
+    this.container.innerHTML = `
+      <div class="legend-group">
+        <span class="legend-group-title">Indo-European</span>
+        <div class="legend-items">${renderItems(inherited)}</div>
+      </div>
+      ${outgroups.length ? `
+        <div class="legend-divider" aria-hidden="true"></div>
+        <div class="legend-group legend-group-secondary">
+          <span class="legend-group-title">Comparative</span>
+          <div class="legend-items">${renderItems(outgroups)}</div>
+        </div>` : ''}`;
   }
 }
