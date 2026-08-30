@@ -1,148 +1,51 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
-  <title>Mythos Network — Comparative Mythology Atlas</title>
-  <meta name="description" content="Explore recurring archetypes, cognates, and cultural parallels across Indo-European mythology in an interactive visual atlas." />
-
+  <meta name="theme-color" content="#171d26" />
+  <title>Mythos Atlas — Comparative Mythology</title>
+  <meta name="description" content="An interactive museum of comparative mythology. Trace divine archetypes, cultural parallels, names and narratives across ancient traditions." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Greek:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="styles/v2.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-
-  <link rel="stylesheet" href="styles/base.css" />
-  <link rel="stylesheet" href="styles/layout.css" />
-  <link rel="stylesheet" href="styles/components.css" />
-  <link rel="stylesheet" href="styles/graph.css" />
-  <link rel="stylesheet" href="styles/views.css" />
-  <link rel="stylesheet" href="styles/search.css" />
-  <link rel="stylesheet" href="styles/polish.css" />
-  <link rel="stylesheet" href="styles/readability.css" />
 </head>
 <body>
-
-  <div id="loader">
-    <div class="loader-inner">
-      <span class="loader-rune">☽</span>
-      <div class="loader-text">Opening the atlas…</div>
-    </div>
-  </div>
-
-  <div id="app">
-    <header id="header">
-      <div class="header-logo" aria-label="Mythos Network">
-        <span class="logo-mark" aria-hidden="true">ᛝ</span>
-        <span class="brand-lockup">
-          <strong class="brand-title">Mythos Network</strong>
-          <small class="brand-subtitle">Comparative mythology atlas</small>
-        </span>
+  <div id="app-shell">
+    <header class="site-header">
+      <a class="brand" href="#explore" data-nav="explore" aria-label="Mythos Atlas home">
+        <span class="brand-seal" aria-hidden="true">ᛝ</span>
+        <span><strong>Mythos Atlas</strong><small>Comparative mythology museum</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Primary navigation">
+        <button data-nav="explore" class="nav-link active">Explore</button>
+        <button data-nav="connections" class="nav-link">Connections</button>
+        <button data-nav="archetypes" class="nav-link">Archetypes</button>
+        <button data-nav="atlas" class="nav-link">Atlas</button>
+      </nav>
+      <div class="global-search">
+        <span aria-hidden="true">⌕</span>
+        <input id="global-search" autocomplete="off" placeholder="Search deity, domain, tradition…" aria-label="Search mythology atlas" />
+        <div id="search-results" class="search-results" hidden></div>
       </div>
-      <div class="header-sep"></div>
-      <div class="header-tabs" id="view-tabs"></div>
-      <div class="header-spacer"></div>
-      <div class="search-wrap" id="search-wrap"></div>
     </header>
 
-    <div id="main">
-      <aside id="sidebar">
-        <div class="panel">
-          <div class="sidebar-tabs">
-            <button class="sidebar-tab active" id="stab-info" data-tab="info">Dossier</button>
-            <button class="sidebar-tab" id="stab-tours" data-tab="tours">Guided Tours</button>
-          </div>
-        </div>
-        <div id="sidebar-scroll">
-          <div id="stab-info-content"></div>
-          <div id="stab-tours-content" style="display:none"></div>
-        </div>
-      </aside>
-
-      <div id="view-area">
-        <section id="graph-view" class="view active">
-          <svg id="graph-svg"></svg>
-
-          <div id="empty-state">
-            <div class="empty-hero">
-              <div class="empty-kicker">Comparative mythology atlas</div>
-              <div class="empty-rune" aria-hidden="true">ᛝ</div>
-              <div class="empty-title">Trace the threads of myth</div>
-              <div class="empty-sub">Begin with one deity. The network reveals recurring archetypes, cultural parallels, linguistic cognates, and unexpected echoes across traditions.</div>
-
-              <div class="empty-pair-grid" aria-label="Suggested starting points">
-                <button class="empty-tag empty-pair" data-deity="Apollo">
-                  <span class="empty-pair-names">Apollo ↔ Rudra</span>
-                  <span class="empty-pair-meta">arrows · healing · liminality</span>
-                </button>
-                <button class="empty-tag empty-pair" data-deity="Thor">
-                  <span class="empty-pair-names">Thor ↔ Indra</span>
-                  <span class="empty-pair-meta">storm · combat · serpent-slayer</span>
-                </button>
-                <button class="empty-tag empty-pair" data-deity="Lugh">
-                  <span class="empty-pair-names">Lugh ↔ Mithra</span>
-                  <span class="empty-pair-meta">sovereignty · skill · order</span>
-                </button>
-              </div>
-
-              <div class="empty-start-label">Or open a dossier</div>
-              <div class="empty-tags">
-                <button class="empty-tag" data-deity="Zeus">Zeus</button>
-                <button class="empty-tag" data-deity="Odin">Odin</button>
-                <button class="empty-tag" data-deity="Indra">Indra</button>
-                <button class="empty-tag" data-deity="Apollo">Apollo</button>
-                <button class="empty-tag" data-deity="Ishtar">Ishtar</button>
-                <button class="empty-tag" data-deity="Ra">Ra</button>
-              </div>
-            </div>
-          </div>
-
-          <div id="graph-controls"></div>
-
-          <div id="minimap">
-            <canvas id="minimap-canvas" width="180" height="120"></canvas>
-            <div class="minimap-label">OVERVIEW</div>
-          </div>
-
-          <div id="path-strip" style="display:none;">
-            <span id="path-strip-text"></span>
-            <button id="path-strip-close" class="btn btn-sm btn-ghost">✕</button>
-          </div>
-        </section>
-
-        <section id="matrix-view" class="view"></section>
-        <section id="archetypes-view" class="view"></section>
-        <section id="map-view" class="view"></section>
-      </div>
-    </div>
+    <main id="main-view" tabindex="-1"></main>
   </div>
 
-  <div id="compare-modal" class="modal-overlay">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div>
-          <div class="modal-title">Deity Comparison</div>
-          <div class="modal-subtitle">Side-by-side trait profile with similarity breakdown</div>
-        </div>
-        <button class="btn btn-sm btn-ghost" id="compare-close">✕</button>
-      </div>
-      <div id="compare-content"></div>
-    </div>
-  </div>
+  <aside id="dossier" class="dossier" aria-label="Deity dossier" aria-hidden="true"></aside>
 
-  <div id="surprising-panel" style="display:none;"></div>
+  <dialog id="compare-dialog" class="compare-dialog">
+    <div id="compare-content"></div>
+  </dialog>
 
-  <div id="loading-indicator" style="display:none;position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;">
-    <div style="display:flex;align-items:center;gap:10px;background:var(--bg-4);border:1px solid var(--border-2);border-radius:var(--r-full);padding:7px 18px;box-shadow:var(--shadow-lg);">
-      <div style="width:14px;height:14px;border:2px solid var(--text-3);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;"></div>
-      <span style="font-size:12px;color:var(--text-1);">Tracing connections…</span>
-    </div>
-  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <div id="status-bar" aria-live="polite" style="display:none;position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:11;pointer-events:none;font:10px var(--font-mono);color:var(--text-3);background:rgba(9,9,11,.72);border:1px solid var(--border-0);border-radius:var(--r-full);padding:5px 10px;backdrop-filter:blur(6px);"></div>
-  <div id="toast" role="status" aria-live="polite"></div>
-
-  <script type="module" src="./src/core/main.js"></script>
+  <script type="module" src="src/v2/app.js"></script>
 </body>
 </html>
