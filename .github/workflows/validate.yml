@@ -2,7 +2,7 @@ name: Validate Myth Network
 
 on:
   push:
-    branches: [ master, 'v3/**' ]
+    branches: [ master, 'v3/**', 'fix/**' ]
   pull_request:
     branches: [ master ]
   workflow_dispatch:
@@ -31,5 +31,6 @@ jobs:
           node --check src/v3/model.js
           node --check src/v3/state.js
           node --check src/v3/graph-runtime.js
+          node --check src/v3/graph-stable.js
           node --check src/v3/graph.js
           node --check src/v3/app.js

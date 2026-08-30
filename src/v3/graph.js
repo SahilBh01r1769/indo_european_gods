@@ -1,1 +1,1 @@
-export { MythGraph } from './graph-runtime.js';
+export { MythGraph } from './graph-stable.js';
