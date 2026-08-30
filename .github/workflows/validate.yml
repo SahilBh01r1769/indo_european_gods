@@ -2,7 +2,7 @@ name: Validate Myth Network
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, rebuild/mythos-atlas-v2 ]
   pull_request:
     branches: [ master ]
   workflow_dispatch:
@@ -24,3 +24,11 @@ jobs:
 
       - name: Validate data and core math
         run: npm run check
+
+      - name: Validate v2 module syntax
+        run: |
+          node --check src/v2/config.js
+          node --check src/v2/model.js
+          node --check src/v2/network.js
+          node --check src/v2/atlas.js
+          node --check src/v2/app.js
