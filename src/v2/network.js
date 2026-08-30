@@ -6,7 +6,6 @@ export function renderNetwork(container,{centerId='Thor',horizon=1200,onSelect,o
   const center = deityById(centerId) || deityById('Thor');
   const relationships = connectionsFor(center,{horizon,limit:14,crossCulture:false});
   const nodes = [center,...relationships.map(r=>r.b)].map((d,i)=>({...d,isCenter:i===0}));
-  const nodeMap = new Map(nodes.map(n=>[n.id,n]));
   const links = relationships.map(r=>({source:center.id,target:r.b.id,relation:r}));
 
   for(let i=1;i<nodes.length;i++){
@@ -17,7 +16,7 @@ export function renderNetwork(container,{centerId='Thor',horizon=1200,onSelect,o
     }
   }
 
-  container.innerHTML = `<div class="network-toolbar"><div><span class="eyebrow">Relationship view</span><strong>${center.id}</strong><small>${center.pantheon} · ${relationships.length} visible relationships</small></div><div class="edge-key"><span><i class="edge thematic"></i>Thematic</span><span><i class="edge curated"></i>Curated evidence</span></div></div><svg class="network-svg" role="img" aria-label="Relationship network centered on ${center.id}"></svg>`;
+  container.innerHTML = `<div class="network-toolbar"><div><span class="eyebrow">Follow the connections</span><strong>${center.id}</strong><small>${center.pantheon} · ${relationships.length} nearby figures</small></div><div class="edge-key"><span><i class="edge thematic"></i>model echo</span><span><i class="edge curated"></i>evidence trail</span></div></div><svg class="network-svg" role="img" aria-label="Relationship network centered on ${center.id}"></svg>`;
   const svg = d3.select(container).select('svg');
   const width = Math.max(container.clientWidth,720); const height = Math.max(container.clientHeight-74,540);
   svg.attr('viewBox',`0 0 ${width} ${height}`);
@@ -25,7 +24,7 @@ export function renderNetwork(container,{centerId='Thor',horizon=1200,onSelect,o
   svg.call(d3.zoom().scaleExtent([.55,2.2]).on('zoom',e=>root.attr('transform',e.transform)));
 
   const link = root.append('g').attr('class','network-links').selectAll('line').data(links).join('line')
-    .attr('class',d=>`network-link ${d.relation.curated?'is-curated':'is-thematic'} ${d.secondary?'secondary':''}`)
+    .attr('class',d=>`network-link ${d.relation.curated?'is-curated':'is-thematic'} kind-${d.relation.kind} ${d.secondary?'secondary':''}`)
     .attr('stroke-width',d=>1.2 + d.relation.score*2.1)
     .on('click',(e,d)=>{ e.stopPropagation(); onEdge?.(d.relation); });
 
