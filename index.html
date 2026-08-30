@@ -3,51 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <meta name="theme-color" content="#171d26" />
-  <title>Mythos Atlas — Comparative Mythology</title>
-  <meta name="description" content="An interactive museum of comparative mythology. Trace divine archetypes, cultural parallels, names and narratives across ancient traditions." />
+  <meta name="color-scheme" content="light" />
+  <meta name="theme-color" content="#faf7f1" />
+  <title>Mythos — Interactive Comparative Mythology</title>
+  <meta name="description" content="Uncover hidden connections between gods, myths, names and archetypes across ancient cultures. Build a mythology network as you explore." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles/v2.css" />
-  <link rel="stylesheet" href="styles/v2-curiosity.css" />
-  <link rel="stylesheet" href="styles/v2-hardening.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/v3.css" />
+  <link rel="stylesheet" href="styles/v3-refinement.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
-  <div id="app-shell">
-    <header class="site-header">
-      <a class="brand" href="#explore" data-nav="explore" aria-label="Mythos Atlas home">
-        <span class="brand-seal" aria-hidden="true">ᛝ</span>
-        <span><strong>Mythos Atlas</strong><small>Comparative mythology museum</small></span>
-      </a>
-      <nav class="primary-nav" aria-label="Primary navigation">
-        <button data-nav="explore" class="nav-link active">Explore</button>
-        <button data-nav="connections" class="nav-link">Connections</button>
-        <button data-nav="archetypes" class="nav-link">Archetypes</button>
-        <button data-nav="atlas" class="nav-link">Atlas</button>
-      </nav>
-      <div class="global-search">
-        <span aria-hidden="true">⌕</span>
-        <input id="global-search" autocomplete="off" placeholder="Try “thunder”, “plague”, “underworld”…" aria-label="Search mythology atlas" />
-        <div id="search-results" class="search-results" hidden></div>
-      </div>
-    </header>
-
-    <main id="main-view" tabindex="-1"></main>
-  </div>
-
-  <aside id="dossier" class="dossier" aria-label="Deity dossier" aria-hidden="true"></aside>
-
-  <dialog id="compare-dialog" class="compare-dialog" aria-label="Mythology comparison">
-    <div id="compare-content"></div>
-  </dialog>
-
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-  <script type="module" src="src/v2/app.js"></script>
+  <div id="app"></div>
+  <noscript>Mythos needs JavaScript enabled to reveal and explore the mythology network.</noscript>
+  <script type="module" src="src/v3/app.js"></script>
 </body>
 </html>

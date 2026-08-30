@@ -1,0 +1,55 @@
+/* Final Luminous Salon refinement.
+   The legacy dataset contains deliberately vivid pantheon colors. V3 keeps
+   those identifiers as data, but visually treats them as occasional jewel
+   accents rather than neon interface chrome. */
+
+.deity-medallion,
+.journey-dot,
+.story-thread span,
+.graph-node-deity {
+  filter: saturate(.62) brightness(.88);
+}
+
+.start-deity-card:hover .deity-medallion,
+.graph-node-deity.is-selected,
+.collection-card:hover .deity-medallion {
+  filter: saturate(.74) brightness(.9);
+}
+
+.graph-node-clue {
+  filter: none;
+}
+
+.graph-stage {
+  background-color: #fbf8f2;
+}
+
+.primary-button {
+  background: #31557c;
+  box-shadow: 0 5px 14px rgba(49, 85, 124, .11);
+}
+
+.primary-button:hover {
+  background: #294a6e;
+}
+
+/* Keep colour concentrated in mythology, not in surrounding interface. */
+.topbar,
+.journey-panel,
+.context-panel,
+.modebar,
+.overlay-card,
+.story-card,
+.collection-card,
+.start-archetype-card {
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

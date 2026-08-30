@@ -1,187 +1,135 @@
-# 🏛️ Mythos Network — Indo-European Gods
+# Mythos — Interactive Comparative Mythology
 
-An interactive knowledge graph for exploring **mythological, functional and linguistic connections** between deities across Indo-European traditions.
+**Mythos** is a zero-build interactive exploration of mythological connections across ancient traditions.
 
-Rather than treating mythology as a family tree, the project represents each deity as a **16-dimensional curated trait vector** and compares those vectors computationally. This makes it possible to explore questions such as:
+The central experience is not an encyclopedia page or a pre-rendered knowledge graph. The network begins small. You choose a deity or an archetype, follow a mystery clue, reveal another figure, and gradually build a persistent map of the paths you decided to investigate.
 
-- Which storm-warrior figures have the closest functional profiles?
-- How similar are two pantheons on average?
-- Which deities share an attested Proto-Indo-European cognate relationship?
-- What is the shortest similarity-chain between two figures?
-- Which archetypal roles recur across otherwise distant traditions?
+Live site: https://sahilbh01r1769.github.io/indo_european_gods/
 
-The application is deliberately **zero-build and framework-free**: plain ES modules, D3.js and Leaflet. The optional Node tooling is only for validation/tests.
+## What the project is trying to do
 
----
+Comparative mythology becomes more interesting when the visitor can discover the pattern rather than being handed a wall of matches.
 
-## What is in the dataset?
+A typical journey might begin with **Thor**, reveal a storm-warrior clue leading to **Indra**, continue toward **Perun**, and later expose a completely different kind of connection such as the linguistic relationship between **Zeus** and **Dyaus**.
 
-The main Indo-European traditions represented are **Greek, Vedic, Roman, Norse, Celtic, Slavic and Iranian**.
+The interface deliberately distinguishes these relationships. A structural parallel is not presented as linguistic descent, and a model-generated thematic echo is not presented as historical evidence.
 
-**Egyptian and Mesopotamian material is included as a comparative outgroup**, not because those traditions are Indo-European. Their presence makes it possible to distinguish specifically Indo-European continuities from broader cross-cultural mythological patterns.
+## Main experience
 
-Trait values are **curated heuristic weights informed by comparative-mythology sources**. They should be read as a computational model for exploration, not as measurements directly reported by the cited scholars.
+### Discover
 
----
+The primary view is a persistent D3 network.
 
-## Features
+- Start with a deity or an archetype.
+- Selected figures expose a small number of mystery clues rather than every possible neighbour.
+- Revealing a clue adds the deity and connection to the current journey.
+- Previous discoveries remain visible, so the graph becomes a record of the visitor's curiosity.
+- The same discovered network can be viewed in **Network**, **Time**, or **Geography** mode.
+- A journey panel tracks discovered figures and recent threads.
+- A context panel explains the currently selected figure, clue, or relationship.
 
-### Graph view — D3.js
+### Stories
 
-- Force-directed similarity network
-- Cosine similarity or weighted overlap
-- Kin / Top 5 / Top 10 / All connection modes
-- Similarity threshold control
-- Historical attestation cutoff
-- Optional pantheon clustering
-- Node pinning, drag, zoom/pan and minimap
-- Cognate highlighting
-- Compare mode and shortest similarity-chain mode
-- Shareable URL state
+Guided stories provide approachable entry points such as:
 
-### Map view — Leaflet
+- The Thunderer and the Serpent
+- The Archer Who Heals
+- Names of the Daylight Sky
+- Guides Beyond the Last Boundary
+- Fire That Carries a Message
 
-- Dark CARTO basemap matching the main interface
-- Approximate cultural centers for each tradition
-- Deterministic marker spreading to avoid overlap without implying false geographic precision
-- Synchronized historical cutoff
-- Clicking a marker opens that deity in the graph
+Story steps reveal directly into the same persistent graph. At any point the visitor can stop following the curated route and explore freely.
 
-> Map coordinates are visualization anchors for traditions, **not deity-specific archaeological coordinates**.
+### Collection
 
-### Matrix view
+The collection is the reference layer rather than the centre of the product.
 
-- Average pairwise similarity between traditions
-- Top deity pairs behind each matrix cell
-- CSV export
+It supports:
 
-### Archetype explorer
+- deity search
+- tradition filtering
+- dossier overlays
+- archetype entry points
+- revealing a chosen figure into the current graph
 
-- Browse the 16 canonical traits
-- See their strongest representatives and cultural spread
-- Open an archetype directly as a graph
+### Comparison
 
-### Guided tours
+Two or three discovered figures can be compared without leaving the exploration.
 
-Curated, deterministic subgraphs with narrative steps for selected mythological patterns. Tour membership is explicit rather than being expanded by the normal Top-N graph behavior.
+Evidence type and qualitative interpretation are shown first. Numeric model overlap is deliberately secondary because the percentage represents overlap in manually curated trait weights — not historical confidence, ancestry probability, or scholarly consensus.
 
-### Search
+## Evidence hierarchy
 
-- Prefix autocomplete over names, epithets, pantheons and strong traits
-- Fuzzy fallback for near-matches
-- Keyboard navigation
-- `/` or `Ctrl/Cmd + K` to focus search
+Mythos uses separate relationship categories:
 
-### Export
+1. **Linguistic inheritance** — historical linguistic or inherited divine-name evidence.
+2. **Historical contact / fusion** — documented identification, reinterpretation, transmission, or contact.
+3. **Structural comparison** — strong resemblance in mythic role, narrative structure, or ritual function.
+4. **Cross-cultural parallel** — a useful comparison without a claim of shared origin.
+5. **Speculative curiosity** — a deliberately cautious, loose comparison.
+6. **Model-only thematic echo** — a connection suggested only by the curated trait model.
 
-- Graph snapshot as JSON
-- Current graph as SVG
-- Pantheon matrix as CSV
+This hierarchy is part of the interface, not merely a methodology note.
 
----
+## Visual direction
 
-## Similarity model
+The v3 interface uses a **Luminous Salon** design system:
 
-Each deity maps onto the same 16 canonical dimensions, including:
+- warm ivory, parchment, pale stone, smoke blue, graphite, and soft brass form the quiet interface shell;
+- deity medallions and newly revealed nodes provide occasional jewel-toned accents;
+- typography and spacing carry most of the visual hierarchy;
+- motion is reserved for reveal, focus, and continuity rather than game-like effects.
 
-- archer
-- healer
-- disease sender
-- storm god
-- wilderness
-- liminal outsider
-- ecstasy / madness
-- ascetic / wisdom
-- solar
-- war / victory
-- trickster
-- smith / craft
-- sea / water
-- death / underworld
-- fertility
-- fire
+The intent is a refined digital exhibit that still feels magical because of what the user uncovers, not because the interface behaves like a fantasy game HUD.
 
-The application supports two metrics.
+## Dataset
 
-### Cosine similarity
+The current dataset contains **67 deities**, **16 canonical trait dimensions**, and **9 traditions**.
 
-```text
-cos(θ) = (A · B) / (|A| × |B|)
-```
+The principal Indo-European traditions represented include Greek, Vedic, Roman, Norse, Celtic, Slavic, and Iranian material. Egyptian and Mesopotamian figures are included as comparative outgroups; their inclusion does not imply that those traditions are Indo-European.
 
-This emphasizes the overall *shape* of two trait profiles.
+Trait values are curated heuristic weights used for exploration. They are not measurements reported by the cited scholars.
 
-### Weighted overlap
-
-```text
-Σ min(Ai, Bi) / Σ max(Ai, Bi)
-```
-
-This is more sensitive to agreement in the actual trait strengths.
-
-All graph, comparison, matrix, path, export and Web Worker calculations use the **same canonical similarity module** so the results cannot drift between features.
-
----
+The reusable data and similarity layers remain under `src/data/` and `src/utils/`.
 
 ## Project structure
 
 ```text
 index.html
-package.json                 # optional Node validation/test scripts
-scripts/
-  validate-data.js           # dataset/schema sanity checks
-tests/
-  similarity.test.js         # core similarity regression tests
+package.json
+
 src/
-  core/
-    main.js                  # boot
-    App.js                   # composition + global wiring
-    Generator.js             # graph generation/orchestration
-    Router.js                # URL hash state
   data/
-    deities.js               # deity records + canonical trait metadata
-    cognates.js              # linguistic cognate pairs
-    tours.js                 # guided-tour definitions
-    citations.js             # bibliography + per-deity references
+    deities.js              # deity records + trait metadata
+    cognates.js             # curated relationship evidence
+    citations.js            # bibliography and references
+    tours.js                # retained historical tour data
+
   utils/
-    similarity.js            # canonical math/path/matrix engine
-    store.js                 # lightweight pub/sub store
-    trie.js                  # search index
-    workerClient.js          # similarity worker client
-    export.js                # JSON/SVG/CSV export
-  workers/
-    similarityWorker.js      # module worker reusing similarity.js
-  views/
-    GraphView.js
-    MatrixView.js
-    ArchetypesView.js
-    MapView.js
-  components/
-    Sidebar.js
-    SearchBar.js
-    GraphControls.js
-    CompareModal.js
-    MethodologyModal.js
-    Legend.js
-    PathStrip.js
-    Surprising.js
-    Tours.js
-  ui/
-    Feedback.js
+    similarity.js           # canonical similarity calculations
+
+  v3/
+    config.js               # starts, archetypes, stories, evidence metadata
+    model.js                # discovery candidates, relationship model, search, compare
+    state.js                # persistent journey state
+    graph.js                # Network / Time / Geography renderer
+    app.js                  # Discover, Stories, Collection, overlays and routing
+
 styles/
-  base.css
-  layout.css
-  components.css
-  graph.css
-  views.css
-  search.css
+  v3.css                    # Luminous Salon design system
+  v3-refinement.css         # final restrained jewel-accent treatment
+
+tests/
+  similarity.test.js
+  v3.test.js
+
+scripts/
+  validate-data.js
 ```
 
----
+## Running locally
 
-## Run locally
-
-Because the application uses ES modules and a Web Worker, serve it over HTTP rather than opening `index.html` with `file://`.
+The application is framework-free and does not require a build step. Because it uses ES modules, serve the repository over HTTP:
 
 ```bash
 python3 -m http.server 8000
@@ -193,44 +141,28 @@ Then open:
 http://localhost:8000
 ```
 
-No install or build step is required to run the application.
+D3 is loaded from a CDN by `index.html`.
 
----
+## Validation
 
-## Validation and tests
-
-Node 20+ can run the optional checks with no third-party dependencies:
+Run the complete data and interaction test suite with:
 
 ```bash
 npm run check
 ```
 
-This validates the deity dataset and runs regression tests for the core similarity model. Pull requests to `master` run the same checks in GitHub Actions.
-
----
+The validation suite currently checks the dataset, core similarity behaviour, evidence categorisation, mystery connection generation, persistent graph growth, archetype membership, guided-story reveals, and comparison output. GitHub Actions also performs syntax checks on every v3 module.
 
 ## Sources and interpretation
 
-The project draws on comparative mythology and Indo-European studies including M. L. West, J. P. Mallory & D. Q. Adams, Calvert Watkins, Georges Dumézil and tradition-specific references. See `src/data/citations.js` for the bibliography and per-deity references.
+The project draws on comparative mythology, Indo-European studies, and tradition-specific sources. Bibliographic material and per-deity references are retained in `src/data/citations.js`.
 
-The project deliberately separates two kinds of relationship:
+Mythos is an exploratory hobby project. It is designed to make relationships inspectable and interesting while keeping the difference between historical evidence and comparative resemblance visible to the visitor.
 
-1. **Computational similarity** — produced by the curated trait-vector model.
-2. **Linguistic cognacy** — explicitly recorded only where a historical/etymological relationship is asserted in the cognates dataset.
+## Branches
 
-Functional similarity alone does **not** imply common linguistic descent.
+- `master` — live GitHub Pages deployment.
+- `v3/luminous-discovery` — current interactive discovery source branch.
+- `legacy/museum-atlas-v1` — frozen historical version.
 
----
-
-## Roadmap
-
-Possible future directions:
-
-- Split the large Sidebar renderer into smaller context-specific panels
-- Move pantheon metadata/colors/locations into one canonical configuration object
-- Improve accessibility and mobile control density
-- Replace shortest-hop BFS with an optional weighted conceptual-distance path
-- Improve the “surprising connection” score relative to pantheon baselines
-- Add confidence/provenance metadata to individual trait weights
-- Expand Baltic, Armenian and Anatolian/Hittite material
-- Community data submissions through reviewed pull requests
+The earlier v2 museum-style interface is obsolete after the v3 rebuild.

@@ -2,7 +2,7 @@ name: Validate Myth Network
 
 on:
   push:
-    branches: [ master, 'v2/**' ]
+    branches: [ master, 'v3/**' ]
   pull_request:
     branches: [ master ]
   workflow_dispatch:
@@ -22,14 +22,14 @@ jobs:
         with:
           node-version: 20
 
-      - name: Validate data and core math
+      - name: Validate data and interaction logic
         run: npm run check
 
-      - name: Validate v2 module syntax
+      - name: Validate v3 module syntax
         run: |
-          node --check src/v2/config.js
-          node --check src/v2/model.js
-          node --check src/v2/router.js
-          node --check src/v2/network.js
-          node --check src/v2/atlas.js
-          node --check src/v2/app.js
+          node --check src/v3/config.js
+          node --check src/v3/model.js
+          node --check src/v3/state.js
+          node --check src/v3/graph-runtime.js
+          node --check src/v3/graph.js
+          node --check src/v3/app.js
