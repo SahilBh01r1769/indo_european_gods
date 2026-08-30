@@ -1,4 +1,4 @@
-import { deityById, connectionsFor } from './model.js';
+import { deityById, connectionsFor, relation } from './model.js';
 import { TRADITIONS } from './config.js';
 
 export function renderNetwork(container,{centerId='Thor',horizon=1200,onSelect,onCompare,onEdge}={}){
@@ -10,31 +10,35 @@ export function renderNetwork(container,{centerId='Thor',horizon=1200,onSelect,o
 
   for(let i=1;i<nodes.length;i++){
     for(let j=i+1;j<nodes.length;j++){
-      const a=nodes[i],b=nodes[j];
-      const extra=connectionsFor(a,{horizon,limit:7}).find(r=>r.b.id===b.id);
-      if(extra && (extra.curated || extra.score>.74)) links.push({source:a.id,target:b.id,relation:extra,secondary:true});
+      const extra=relation(nodes[i],nodes[j]);
+      if(extra.curated || extra.score>.74) links.push({source:nodes[i].id,target:nodes[j].id,relation:extra,secondary:true});
     }
   }
 
-  container.innerHTML = `<div class="network-toolbar"><div><span class="eyebrow">Follow the connections</span><strong>${center.id}</strong><small>${center.pantheon} · ${relationships.length} nearby figures</small></div><div class="edge-key"><span><i class="edge thematic"></i>model echo</span><span><i class="edge curated"></i>evidence trail</span></div></div><svg class="network-svg" role="img" aria-label="Relationship network centered on ${center.id}"></svg>`;
+  container.innerHTML = `<div class="network-toolbar"><div><span class="eyebrow">Follow the connections</span><strong>${center.id}</strong><small>${center.pantheon} · ${relationships.length} nearby figures</small></div><div class="network-toolbar-actions"><div class="edge-key"><span><i class="edge thematic"></i>model echo</span><span><i class="edge curated"></i>evidence trail</span></div><button class="viz-fullscreen-button" data-viz-fullscreen aria-label="Toggle full-screen network">Full view</button></div></div><svg class="network-svg" role="img" aria-label="Relationship network centered on ${center.id}"></svg>`;
   const svg = d3.select(container).select('svg');
   const width = Math.max(container.clientWidth,720); const height = Math.max(container.clientHeight-74,540);
   svg.attr('viewBox',`0 0 ${width} ${height}`);
   const root = svg.append('g');
   svg.call(d3.zoom().scaleExtent([.55,2.2]).on('zoom',e=>root.attr('transform',e.transform)));
 
+  const hitLink = root.append('g').attr('class','network-link-hits').selectAll('line').data(links).join('line')
+    .attr('stroke','transparent').attr('stroke-width',18).style('pointer-events','stroke').style('cursor','pointer')
+    .on('click',(e,d)=>{e.stopPropagation();onEdge?.(d.relation);});
+
   const link = root.append('g').attr('class','network-links').selectAll('line').data(links).join('line')
     .attr('class',d=>`network-link ${d.relation.curated?'is-curated':'is-thematic'} kind-${d.relation.kind} ${d.secondary?'secondary':''}`)
-    .attr('stroke-width',d=>1.2 + d.relation.score*2.1)
-    .on('click',(e,d)=>{ e.stopPropagation(); onEdge?.(d.relation); });
+    .attr('stroke-width',d=>1.4 + d.relation.score*2.2)
+    .style('pointer-events','none');
 
   const node = root.append('g').selectAll('g').data(nodes).join('g').attr('class',d=>`network-node ${d.isCenter?'center':''}`).style('cursor','pointer')
-    .on('click',(e,d)=>{ e.stopPropagation(); onSelect?.(d.id); })
-    .on('dblclick',(e,d)=>{ e.preventDefault(); onCompare?.(center.id,d.id); });
+    .on('click',(e,d)=>{e.stopPropagation();onSelect?.(d.id);})
+    .on('dblclick',(e,d)=>{e.preventDefault();onCompare?.(center.id,d.id);});
 
+  node.append('circle').attr('class','node-hit').attr('r',d=>d.isCenter?34:26).attr('fill','transparent');
   node.append('circle').attr('r',d=>d.isCenter?22:13).attr('fill',d=>TRADITIONS[d.pantheon]?.color||'#aaa').attr('stroke',d=>d.isCenter?'#f1cf89':'rgba(255,255,255,.45)').attr('stroke-width',d=>d.isCenter?3:1.2);
   node.append('text').attr('class','network-label').attr('y',d=>d.isCenter?38:28).attr('text-anchor','middle').text(d=>d.id);
-  node.append('title').text(d=>`${d.id} · ${d.pantheon}\nClick for dossier · Double click to compare`);
+  node.attr('aria-label',d=>`${d.id}, ${d.pantheon}. Tap to open dossier.`);
 
   const simulation=d3.forceSimulation(nodes)
     .force('link',d3.forceLink(links).id(d=>d.id).distance(d=>d.secondary?135:190).strength(d=>d.secondary?.18:.42))
@@ -43,6 +47,7 @@ export function renderNetwork(container,{centerId='Thor',horizon=1200,onSelect,o
     .force('collision',d3.forceCollide().radius(d=>d.isCenter?58:42));
   simulation.on('tick',()=>{
     link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    hitLink.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
     node.attr('transform',d=>`translate(${d.x},${d.y})`);
   });
   return ()=>simulation.stop();

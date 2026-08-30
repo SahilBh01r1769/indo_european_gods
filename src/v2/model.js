@@ -80,16 +80,23 @@ export function relation(a,b){
   };
 }
 
+function evidenceRank(r){
+  if(!r.curated) return 0;
+  if(r.kind==='linguistic') return 6;
+  if(r.kind==='historical') return 5;
+  if(r.kind==='structural') return 4;
+  if(r.kind==='comparative') return 3;
+  if(r.kind==='speculative') return 2;
+  return 1;
+}
+
 export function connectionsFor(deity,{horizon=1200,limit=12,crossCulture=false}={}){
   return deitiesAt(horizon)
     .filter(d => d.id !== deity.id)
     .filter(d => !crossCulture || d.pantheon !== deity.pantheon)
     .map(d => relation(deity,d))
     .filter(r => r.score >= .22 || r.curated)
-    .sort((x,y) => {
-      const bonus = r => r.curated ? .18 : 0;
-      return (y.score+bonus(y))-(x.score+bonus(x));
-    })
+    .sort((x,y) => evidenceRank(y)-evidenceRank(x) || y.score-x.score || x.b.id.localeCompare(y.b.id))
     .slice(0,limit);
 }
 
@@ -109,16 +116,30 @@ export function searchDeities(query, limit=9){
 
 export function archetypeMembers(archetype, horizon=1200, limit=10){
   return deitiesAt(horizon).map(d => {
-    const values = archetype.traits.map(t => getTraitValue(d,t));
-    const score = values.reduce((a,b)=>a+b,0) / Math.max(values.length,1);
-    return {deity:d,score};
-  }).filter(x=>x.score>.22).sort((a,b)=>b.score-a.score).slice(0,limit);
+    const breakdown=archetype.traits.map(name=>({name,value:getTraitValue(d,name)}));
+    const values=breakdown.map(x=>x.value);
+    const score=values.reduce((a,b)=>a+b,0)/Math.max(values.length,1);
+    const peak=Math.max(...values,0);
+    const coverage=values.filter(v=>v>=.4).length/Math.max(values.length,1);
+    return {deity:d,score,peak,coverage,breakdown};
+  }).filter(x=>x.peak>.22).sort((a,b)=>b.score-a.score || b.peak-a.peak).slice(0,limit);
 }
 
 export function compareDeities(a,b){
   const rel = relation(a,b);
   const traits = TRAITS.map(name => ({name,a:getTraitValue(a,name),b:getTraitValue(b,name)})).filter(x=>x.a>.15 || x.b>.15).sort((x,y)=>Math.max(y.a,y.b)-Math.max(x.a,x.b));
   return {rel,traits};
+}
+
+export function compareMany(ids){
+  const deities=ids.map(deityById).filter(Boolean).slice(0,3);
+  const traits=TRAITS.map(name=>{
+    const values=deities.map(d=>({id:d.id,value:getTraitValue(d,name)}));
+    return {name,values,peak:Math.max(...values.map(x=>x.value),0)};
+  }).filter(row=>row.peak>.15).sort((a,b)=>b.peak-a.peak);
+  const pairs=[];
+  for(let i=0;i<deities.length;i++) for(let j=i+1;j<deities.length;j++) pairs.push(relation(deities[i],deities[j]));
+  return {deities,traits,pairs};
 }
 
 export function curatedFor(id){ return COGNATE_PAIRS.filter(p=>p.a===id || p.b===id); }
