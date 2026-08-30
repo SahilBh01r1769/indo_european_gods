@@ -30,5 +30,6 @@ jobs:
           node --check src/v3/config.js
           node --check src/v3/model.js
           node --check src/v3/state.js
+          node --check src/v3/graph-runtime.js
           node --check src/v3/graph.js
           node --check src/v3/app.js
