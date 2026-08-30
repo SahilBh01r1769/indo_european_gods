@@ -12,6 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="styles/v2.css" />
+  <link rel="stylesheet" href="styles/v2-curiosity.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
@@ -30,7 +31,7 @@
       </nav>
       <div class="global-search">
         <span aria-hidden="true">⌕</span>
-        <input id="global-search" autocomplete="off" placeholder="Search deity, domain, tradition…" aria-label="Search mythology atlas" />
+        <input id="global-search" autocomplete="off" placeholder="Try “thunder”, “plague”, “underworld”…" aria-label="Search mythology atlas" />
         <div id="search-results" class="search-results" hidden></div>
       </div>
     </header>
@@ -40,7 +41,7 @@
 
   <aside id="dossier" class="dossier" aria-label="Deity dossier" aria-hidden="true"></aside>
 
-  <dialog id="compare-dialog" class="compare-dialog">
+  <dialog id="compare-dialog" class="compare-dialog" aria-label="Mythology comparison">
     <div id="compare-content"></div>
   </dialog>
 

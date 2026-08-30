@@ -1,10 +1,26 @@
 import { DEITIES, TRAITS, getTraitValue } from '../data/deities.js';
 import { COGNATE_PAIRS, getCognate } from '../data/cognates.js';
 import { computeSimilarity, sharedTraits } from '../utils/similarity.js';
+import { TRADITIONS } from './config.js';
 
 export { DEITIES, TRAITS };
 
 const BY_ID = new Map(DEITIES.map(d => [d.id, d]));
+const pairKey=(a,b)=>[a,b].sort().join('--');
+
+// A few older notes in the research dataset are intentionally displayed more
+// cautiously in v2. The raw research file is preserved; the product layer
+// distinguishes strong evidence from entertaining structural comparison.
+const DISPLAY_OVERRIDES = new Map([
+  [pairKey('Indra','Marduk'), { confidence:'comparative', note:'Both stories feature a divine champion defeating a chaos monster and establishing or restoring order. This is a cross-cultural combat-myth comparison, not evidence that Mesopotamian Marduk descends from a Proto-Indo-European deity.' }],
+  [pairKey('Apophis','Indra'), { confidence:'comparative', note:'The serpent-combat pattern is visually striking across these traditions, but Egyptian Apophis is not an Indo-European inheritance. Treat this as a cross-cultural motif comparison.' }],
+  [pairKey('Apophis','Thor'), { confidence:'comparative', note:'Thor and the Egyptian chaos-serpent complex both place serpentine monsters inside cosmic conflict. The resemblance is structural, not a claim of common ancestry.' }],
+  [pairKey('Mithra','Surya'), { confidence:'comparative', note:'Both are associated with solar visibility and cosmic oversight, but Mithra’s direct Vedic name-cognate is Mitra, not Surya. This pair is thematic rather than etymological.' }],
+  [pairKey('Yama','Hades'), { confidence:'comparative', note:'Both are useful underworld comparisons, but their roles differ: Yama is the first mortal to travel the road of death and later a judge; Hades is an underworld sovereign. Similar function does not establish a shared deity.' }],
+  [pairKey('Odin','Varuna'), { confidence:'strong', note:'A classic structural comparison of sovereign figures associated with magic, knowledge, oaths and binding power. It is influential in comparative mythology, but remains an interpretive reconstruction rather than a direct name cognate.' }],
+  [pairKey('Ishtar','Freya'), { confidence:'comparative', note:'Both combine love or fertility with warfare and associations with the dead. The parallel is provocative, but it is cross-cultural and should not be read as a demonstrated genealogical relationship.' }],
+  [pairKey('Ra','Apollo'), { confidence:'comparative', note:'Both can participate in later solar and ordering symbolism, but Apollo’s solar identity is historically complex. This is a thematic comparison, not evidence of Egyptian–Greek divine ancestry.' }],
+]);
 
 export function deityById(id){ return BY_ID.get(id) || null; }
 export function yearLabel(year){ if(year < 0) return `${Math.abs(year)} BCE`; if(year === 0) return 'c. 1 CE'; return `${year} CE`; }
@@ -15,24 +31,52 @@ export function topTraits(deity, limit=5){
   return TRAITS.map(t => ({name:t, value:getTraitValue(deity,t)})).filter(x=>x.value>0).sort((a,b)=>b.value-a.value).slice(0,limit);
 }
 
-function relationKind(curated){
+export function strengthLabel(score){
+  if(score >= .78) return 'strong fit';
+  if(score >= .58) return 'clear fit';
+  if(score >= .38) return 'some overlap';
+  return 'loose echo';
+}
+
+function cleanCurated(a,b,curated){
   if(!curated) return null;
+  const override=DISPLAY_OVERRIDES.get(pairKey(a.id,b.id));
+  return override ? {...curated,...override} : curated;
+}
+
+function relationKind(a,b,curated){
+  if(!curated) return 'computed';
   const note = `${curated.note || ''}`.toLowerCase();
-  const linguistic = /(etymolog|direct.*cognate|name cognate|reflex|pie \*|derived from|from \*)/.test(note);
+  if(/interpretatio|fusion|fused|hellenistic|derived from iranian|historical contact/.test(note)) return 'historical';
+  const linguistic = /(direct.*cognate|etymological cognate|name cognate|direct reflex|reflexes of pie|from pie \*|pie \*.*name)/.test(note);
   if(linguistic) return 'linguistic';
-  if(/interpretatio|fusion|derived from iranian/.test(note)) return 'historical';
-  return 'curated';
+  const groupA=TRADITIONS[a.pantheon]?.group;
+  const groupB=TRADITIONS[b.pantheon]?.group;
+  if(groupA !== groupB && (groupA==='Comparative' || groupB==='Comparative')) return 'comparative';
+  if(curated.confidence==='proposed') return 'speculative';
+  return 'structural';
+}
+
+export function evidenceLabel(kind){
+  return ({
+    linguistic:'Linguistic inheritance',
+    historical:'Historical contact / fusion',
+    structural:'Structural comparison',
+    comparative:'Cross-cultural parallel',
+    speculative:'Speculative curiosity',
+    computed:'Computed thematic echo',
+  })[kind] || 'Comparison';
 }
 
 export function relation(a,b){
   const score = computeSimilarity(a,b);
   const shared = sharedTraits(a,b,.4);
-  const curated = getCognate(a.id,b.id);
-  const kind = relationKind(curated);
-  const confidence = curated?.confidence || (score >= .78 ? 'strong' : score >= .58 ? 'moderate' : 'exploratory');
+  const curated = cleanCurated(a,b,getCognate(a.id,b.id));
+  const kind = relationKind(a,b,curated);
+  const confidence = curated?.confidence || 'model only';
   return {
     a,b,score,shared,curated,kind,confidence,
-    thematicLabel: score >= .78 ? 'Strong thematic parallel' : score >= .58 ? 'Moderate thematic parallel' : 'Loose thematic parallel',
+    thematicLabel: score >= .78 ? 'Strong thematic overlap' : score >= .58 ? 'Moderate thematic overlap' : 'Loose thematic overlap',
   };
 }
 
