@@ -264,10 +264,7 @@ export function deityAccent(deity) {
 
 export function deityGlyph(deity) {
   if (!deity) return "·";
-  // Compact labels need to remain legible even when a visitor's device lacks
-  // fonts for an entry's original writing system. The full script is retained
-  // in the context panel and dossier.
-  return deity.id.slice(0, 2).toUpperCase();
+  return `${deity.originalScript || deity.id}`.trim();
 }
 
 export function eraLabel(era) {

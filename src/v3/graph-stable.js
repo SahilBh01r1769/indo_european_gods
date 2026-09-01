@@ -1,5 +1,5 @@
 import { MythGraph as RuntimeGraph } from "./graph-runtime.js";
-import { deityAccent, deityGlyph } from "./model.js";
+import { deityAccent, deityGlyph, getDeity } from "./model.js";
 import { availableClues } from "./state.js";
 
 const edgeClass = (kind) => `edge-kind-${kind || "model"}`;
@@ -29,6 +29,7 @@ export class MythGraph extends RuntimeGraph {
     this.resizeFrame = null;
     this.lastObservedSize = this.dimensions();
     this.pendingReveal = null;
+    this.animatedRevealId = null;
 
     const scheduleResize = () => {
       const next = this.dimensions();
@@ -64,8 +65,15 @@ export class MythGraph extends RuntimeGraph {
     this.clearDecoration();
     this.simulation?.stop();
 
-    const reveal = this.pendingReveal;
-    const clues = availableClues(state.selectedNode);
+    const revealId = state.lastReveal?.edgeId;
+    const reveal =
+      this.pendingReveal ||
+      (revealId && revealId !== this.animatedRevealId
+        ? state.lastReveal
+        : null);
+    const clues = state.activeStory ? [] : availableClues(state.selectedNode);
+    const compactLayout = width < 520;
+    const previousPositions = new Map(this.networkPositions);
     const deityNodes = discovered.map((deity) => ({
       type: "deity",
       id: deity.id,
@@ -98,8 +106,12 @@ export class MythGraph extends RuntimeGraph {
         return;
       }
       if (reveal && node.id === reveal.target) {
-        node.x = reveal.x;
-        node.y = reveal.y;
+        const sourcePosition =
+          this.networkPositions.get(reveal.from) ||
+          this.positions.get(reveal.from) ||
+          anchor;
+        node.x = sourcePosition.x;
+        node.y = sourcePosition.y;
         return;
       }
       if (node.id === state.selectedNode) {
@@ -182,6 +194,7 @@ export class MythGraph extends RuntimeGraph {
     const entered = nodeSelection
       .enter()
       .append("g")
+      .style("opacity", 0)
       .attr("tabindex", 0)
       .attr("role", "button")
       .on("click", (_, node) => {
@@ -254,9 +267,9 @@ export class MythGraph extends RuntimeGraph {
       .attr("r", (node) =>
         node.type === "deity"
           ? node.deity.id === state.selectedNode
-            ? 37
-            : 31
-          : 29,
+            ? 52
+            : 45
+          : 31,
       )
       .style("stroke", (node) =>
         node.type === "deity" ? deityAccent(node.deity) : "#aa9877",
@@ -264,7 +277,12 @@ export class MythGraph extends RuntimeGraph {
 
     nodesMerged
       .select(".node-disc")
-      .attr("r", (node) => (node.type === "deity" ? 24 : 21))
+      .attr("r", (node) => (node.type === "deity" ? 36 : 24))
+      .style("fill", (node) =>
+        node.type === "deity"
+          ? `color-mix(in srgb, ${deityAccent(node.deity)} 12%, #fffaf0)`
+          : "#fbf3e6",
+      )
       .style("stroke", (node) =>
         node.type === "deity" ? deityAccent(node.deity) : "#918575",
       );
@@ -274,20 +292,31 @@ export class MythGraph extends RuntimeGraph {
       .style("fill", (node) =>
         node.type === "deity" ? deityAccent(node.deity) : "#625b52",
       )
+      .style("font-size", (node) => {
+        if (node.type !== "deity") return "19px";
+        const length = [...deityGlyph(node.deity)].length;
+        if (length > 10) return "8px";
+        if (length > 7) return "10px";
+        if (length > 5) return "12px";
+        if (length > 3) return "15px";
+        return "20px";
+      })
       .text((node) => (node.type === "deity" ? deityGlyph(node.deity) : "?"));
 
     nodesMerged
       .select(".node-name")
-      .attr("y", (node) => (node.type === "deity" ? 50 : 48))
+      .attr("y", (node) => (node.type === "deity" ? 62 : 53))
       .text((node) =>
-        node.type === "deity" ? node.deity.id : node.clue.label,
+        node.type === "deity"
+          ? node.deity.id
+          : `${getDeity(node.clue.target)?.pantheon || "Hidden"} clue`,
       );
 
     nodesMerged
       .select(".node-meta")
-      .attr("y", (node) => (node.type === "deity" ? 66 : 63))
+      .attr("y", (node) => (node.type === "deity" ? 79 : 69))
       .text((node) =>
-        node.type === "deity" ? node.deity.pantheon : node.clue.hint,
+        node.type === "deity" ? node.deity.pantheon : "Select to reveal",
       );
 
     const layoutKey = [
@@ -307,17 +336,17 @@ export class MythGraph extends RuntimeGraph {
       const selectedNode = deityNodes.find(
         (node) => node.id === state.selectedNode,
       );
-      const revealedNode = reveal
-        ? deityNodes.find((node) => node.id === reveal.target)
-        : null;
-
       if (selectedNode) {
-        selectedNode.fx = clamp(anchor.x, 86, width - 86);
-        selectedNode.fy = clamp(anchor.y, 86, height - 92);
-      }
-      if (revealedNode) {
-        revealedNode.fx = clamp(reveal.x, 82, width - 82);
-        revealedNode.fy = clamp(reveal.y, 84, height - 88);
+        selectedNode.fx = clamp(
+          anchor.x,
+          compactLayout ? 72 : 116,
+          width - (compactLayout ? 72 : 116),
+        );
+        selectedNode.fy = clamp(
+          anchor.y,
+          compactLayout ? 82 : 118,
+          height - (compactLayout ? 94 : 124),
+        );
       }
 
       this.simulation = d3
@@ -327,25 +356,44 @@ export class MythGraph extends RuntimeGraph {
           d3
             .forceLink(links)
             .id((node) => node.id)
-            .distance((link) => (link.type === "clue" ? 132 : 166))
-            .strength((link) => (link.type === "clue" ? 0.66 : 0.34)),
+            .distance((link) =>
+              compactLayout
+                ? link.type === "clue"
+                  ? 138
+                  : 162
+                : link.type === "clue"
+                  ? 184
+                  : 208,
+            )
+            .strength((link) => (link.type === "clue" ? 0.58 : 0.28)),
         )
         .force(
           "charge",
           d3
             .forceManyBody()
-            .strength((node) => (node.type === "clue" ? -330 : -470)),
+            .strength((node) => (node.type === "clue" ? -620 : -880)),
         )
         .force("center", d3.forceCenter(width * 0.52, height * 0.48))
         .force(
           "collision",
-          d3.forceCollide().radius((node) => (node.type === "clue" ? 74 : 84)),
+          d3
+            .forceCollide()
+            .radius((node) =>
+              compactLayout
+                ? node.type === "clue"
+                  ? 64
+                  : 84
+                : node.type === "clue"
+                  ? 82
+                  : 108,
+            ),
         )
-        .alpha(0.58)
-        .alphaDecay(0.085)
+        .alpha(0.82)
+        .alphaDecay(0.055)
         .stop();
 
-      for (let i = 0; i < 72; i++) this.simulation.tick();
+      for (let i = 0; i < (compactLayout ? 220 : 150); i++)
+        this.simulation.tick();
 
       if (selectedNode) {
         selectedNode.x = selectedNode.fx;
@@ -353,23 +401,44 @@ export class MythGraph extends RuntimeGraph {
         selectedNode.fx = null;
         selectedNode.fy = null;
       }
-      if (revealedNode) {
-        revealedNode.x = revealedNode.fx;
-        revealedNode.y = revealedNode.fy;
-        revealedNode.fx = null;
-        revealedNode.fy = null;
-      }
 
+      if (state.activeStory && compactLayout) {
+        const storyLayouts = {
+          1: [[0.5, 0.48]],
+          2: [
+            [0.28, 0.48],
+            [0.72, 0.48],
+          ],
+          3: [
+            [0.28, 0.3],
+            [0.72, 0.3],
+            [0.5, 0.7],
+          ],
+          4: [
+            [0.28, 0.29],
+            [0.72, 0.29],
+            [0.28, 0.68],
+            [0.72, 0.68],
+          ],
+        };
+        const positions = storyLayouts[Math.min(deityNodes.length, 4)];
+        if (positions) {
+          deityNodes.forEach((node, index) => {
+            node.x = width * positions[index][0];
+            node.y = height * positions[index][1];
+          });
+        }
+      }
       nodes.forEach((node) => {
         node.x = clamp(
           Number.isFinite(node.x) ? node.x : width / 2,
-          82,
-          width - 82,
+          compactLayout ? 66 : 112,
+          width - (compactLayout ? 66 : 112),
         );
         node.y = clamp(
           Number.isFinite(node.y) ? node.y : height / 2,
-          84,
-          height - 88,
+          compactLayout ? 72 : 112,
+          height - (compactLayout ? 88 : 120),
         );
         this.networkPositions.set(node.id, { x: node.x, y: node.y });
         if (node.type === "deity")
@@ -379,8 +448,16 @@ export class MythGraph extends RuntimeGraph {
     } else {
       nodes.forEach((node) => {
         const remembered = this.networkPositions.get(node.id);
-        node.x = clamp(remembered.x, 82, width - 82);
-        node.y = clamp(remembered.y, 84, height - 88);
+        node.x = clamp(
+          remembered.x,
+          compactLayout ? 66 : 112,
+          width - (compactLayout ? 66 : 112),
+        );
+        node.y = clamp(
+          remembered.y,
+          compactLayout ? 72 : 112,
+          height - (compactLayout ? 88 : 120),
+        );
       });
     }
 
@@ -422,72 +499,68 @@ export class MythGraph extends RuntimeGraph {
       nodesMerged.attr("transform", (node) => `translate(${node.x},${node.y})`);
     };
 
-    place();
-
     const reduceMotion = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)",
     )?.matches;
-    if (reveal) {
-      const revealedNode = nodes.find((node) => node.id === reveal.target);
-      const revealedRelation = links.find(
-        (link) =>
-          link.type === "revealed" &&
-          link.source &&
-          link.target &&
-          (typeof link.source === "object" ? link.source.id : link.source) ===
-            reveal.from &&
-          (typeof link.target === "object" ? link.target.id : link.target) ===
-            reveal.target,
-      );
+    if (reduceMotion) {
+      entered.style("opacity", 1);
+      place();
+    } else {
+      const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+      const idOf = (endpoint) =>
+        typeof endpoint === "object" ? endpoint.id : endpoint;
+      const finalPoint = (endpoint) => nodeMap.get(idOf(endpoint));
+      const oldPoint = (endpoint) =>
+        previousPositions.get(idOf(endpoint)) || finalPoint(endpoint);
+      const revealSource = reveal
+        ? previousPositions.get(reveal.from) || finalPoint(reveal.from)
+        : null;
+      const motion = d3
+        .transition()
+        .duration(reveal ? 860 : 560)
+        .ease(d3.easeCubicInOut);
 
-      if (revealedNode && !reduceMotion) {
-        const targetSelection = nodesMerged.filter(
-          (node) => node.id === reveal.target,
-        );
-        targetSelection
-          .interrupt()
-          .style("opacity", 0.08)
-          .attr(
-            "transform",
-            `translate(${revealedNode.x},${revealedNode.y}) scale(.28)`,
-          )
-          .transition()
-          .duration(520)
-          .ease(d3.easeCubicOut)
-          .style("opacity", 1)
-          .attr(
-            "transform",
-            `translate(${revealedNode.x},${revealedNode.y}) scale(1)`,
-          );
-      }
+      entered.attr("transform", (node) => {
+        const start =
+          reveal && node.id === reveal.target
+            ? revealSource
+            : previousPositions.get(node.id) || node;
+        const scale = reveal && node.id === reveal.target ? " scale(.42)" : "";
+        return `translate(${start?.x ?? node.x},${start?.y ?? node.y})${scale}`;
+      });
 
-      if (revealedRelation && !reduceMotion) {
-        const source =
-          typeof revealedRelation.source === "object"
-            ? revealedRelation.source
-            : nodes.find((node) => node.id === reveal.from);
-        const target =
-          typeof revealedRelation.target === "object"
-            ? revealedRelation.target
-            : nodes.find((node) => node.id === reveal.target);
-        edgeEntered
-          .filter((link) => link.id === revealedRelation.id)
-          .interrupt()
-          .attr("x1", source?.x ?? reveal.x)
-          .attr("y1", source?.y ?? reveal.y)
-          .attr("x2", source?.x ?? reveal.x)
-          .attr("y2", source?.y ?? reveal.y)
-          .style("opacity", 0.15)
-          .transition()
-          .duration(540)
-          .ease(d3.easeCubicOut)
-          .attr("x2", target?.x ?? reveal.x)
-          .attr("y2", target?.y ?? reveal.y)
-          .style("opacity", null);
-      }
+      edgeEntered
+        .attr("x1", (link) => oldPoint(link.source)?.x ?? 0)
+        .attr("y1", (link) => oldPoint(link.source)?.y ?? 0)
+        .attr("x2", (link) =>
+          reveal && idOf(link.target) === reveal.target
+            ? (revealSource?.x ?? 0)
+            : (oldPoint(link.target)?.x ?? 0),
+        )
+        .attr("y2", (link) =>
+          reveal && idOf(link.target) === reveal.target
+            ? (revealSource?.y ?? 0)
+            : (oldPoint(link.target)?.y ?? 0),
+        )
+        .style("opacity", 0);
 
-      this.pendingReveal = null;
+      nodesMerged
+        .interrupt()
+        .transition(motion)
+        .style("opacity", 1)
+        .attr("transform", (node) => `translate(${node.x},${node.y}) scale(1)`);
+      edgesMerged
+        .interrupt()
+        .transition(motion)
+        .style("opacity", null)
+        .attr("x1", (link) => finalPoint(link.source)?.x ?? 0)
+        .attr("y1", (link) => finalPoint(link.source)?.y ?? 0)
+        .attr("x2", (link) => finalPoint(link.target)?.x ?? 0)
+        .attr("y2", (link) => finalPoint(link.target)?.y ?? 0);
     }
+
+    if (revealId) this.animatedRevealId = revealId;
+    this.pendingReveal = null;
 
     nodesMerged.call(
       d3
@@ -496,8 +569,8 @@ export class MythGraph extends RuntimeGraph {
           event.sourceEvent?.stopPropagation();
         })
         .on("drag", (event, node) => {
-          node.x = clamp(event.x, 82, width - 82);
-          node.y = clamp(event.y, 84, height - 88);
+          node.x = clamp(event.x, 112, width - 112);
+          node.y = clamp(event.y, 112, height - 120);
           this.networkPositions.set(node.id, { x: node.x, y: node.y });
           if (node.type === "deity")
             this.positions.set(node.id, { x: node.x, y: node.y });
@@ -505,7 +578,7 @@ export class MythGraph extends RuntimeGraph {
         }),
     );
 
-    if (discovered.length && clues.length === 0) {
+    if (discovered.length && clues.length === 0 && !state.activeStory) {
       this.decor
         .append("text")
         .attr("class", "graph-empty-note")

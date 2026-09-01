@@ -41,10 +41,82 @@ test("dossier exposes citations and returns focus on close", async ({
   await dossierButton.click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByText("Sources for this dossier")).toBeVisible();
+  await expect(dialog.getByText("Sources and further reading")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
   await expect(dossierButton).toBeFocused();
+});
+
+test("guided stories reveal their route automatically without mystery nodes", async ({
+  page,
+}) => {
+  await page.getByRole("link", { name: "Stories" }).first().click();
+  await page.getByRole("button", { name: "Begin journey" }).first().click();
+
+  await expect(page).toHaveURL(/#discover/);
+  await expect(page.locator(".graph-node-clue")).toHaveCount(0);
+  await expect(page.locator(".journey-count strong")).toHaveText("4", {
+    timeout: 12_000,
+  });
+  await expect(page.locator(".story-complete")).toBeVisible();
+  await expect(page.locator(".graph-node-clue")).toHaveCount(0);
+
+  const overlappingPairs = await page
+    .locator(".graph-node-deity")
+    .evaluateAll((elements) => {
+      const boxes = elements.map((element) => ({
+        name: element.getAttribute("aria-label"),
+        box: element.getBoundingClientRect(),
+      }));
+      return boxes.flatMap((left, index) =>
+        boxes.slice(index + 1).flatMap((right) => {
+          const separated =
+            left.box.right < right.box.left ||
+            right.box.right < left.box.left ||
+            left.box.bottom < right.box.top ||
+            right.box.bottom < left.box.top;
+          return separated ? [] : [[left.name, right.name]];
+        }),
+      );
+    });
+  expect(overlappingPairs).toEqual([]);
+});
+
+test("native-language names occupy deity nodes", async ({ page }) => {
+  await page.getByRole("button", { name: /Thor/ }).first().click();
+  await expect(
+    page.locator(".graph-node-deity .node-glyph").first(),
+  ).toHaveText("Þórr");
+});
+
+test("geography renders a visible fixed map and methodology is legible", async ({
+  page,
+}, testInfo) => {
+  await page.getByRole("button", { name: /Thor/ }).first().click();
+  await page.getByRole("button", { name: "Geography" }).click();
+  await expect(page.locator(".geo-land")).toHaveCount(3);
+
+  const node = page.locator(".graph-node-deity").first();
+  const before = await node.getAttribute("transform");
+  const box = await node.boundingBox();
+  if (box) {
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 120, box.y + box.height / 2);
+    await page.mouse.up();
+  }
+  await expect(node).toHaveAttribute("transform", before);
+
+  if (!testInfo.project.name.startsWith("mobile")) {
+    await page.getByRole("button", { name: "Methodology" }).click();
+    const bodySize = await page
+      .locator(".about-overlay .evidence-grid article p")
+      .first()
+      .evaluate((element) =>
+        Number.parseFloat(getComputedStyle(element).fontSize),
+      );
+    expect(bodySize).toBeGreaterThanOrEqual(15);
+  }
 });
 
 test("mobile navigation keeps every primary view reachable", async ({
