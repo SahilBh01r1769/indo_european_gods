@@ -1,21 +1,12 @@
 import { archetypeById, candidateConnections, getDeity, getStory, relationBetween } from './model.js';
 
-const STORAGE_KEY = 'mythos-v3-journey';
 const listeners = new Set();
 const blank = () => ({ started:false, startType:null, startId:null, discoveredNodes:[], discoveredEdges:[], selectedNode:null, selectedEdge:null, mode:'network', era:1400, compare:[], history:[], activeStory:null, archetypeStart:null });
 
-function load() {
-  if (typeof localStorage === 'undefined') return blank();
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (!saved || !Array.isArray(saved.discoveredNodes) || !Array.isArray(saved.discoveredEdges)) return blank();
-    return { ...blank(), ...saved, compare:(saved.compare || []).slice(0,3) };
-  } catch { return blank(); }
-}
-
-let state = load();
-function persist(){ if(typeof localStorage==='undefined') return; try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch{} }
-function publish(){ persist(); for(const listener of listeners) listener(getState()); }
+// Journeys deliberately live only for the lifetime of the current page.
+// A browser refresh or fresh visit starts at Home instead of restoring an old graph.
+let state = blank();
+function publish(){ for(const listener of listeners) listener(getState()); }
 function step(type,payload={}){ state.history=[...state.history,{type,at:Date.now(),...payload}].slice(-80); }
 
 export function getState(){ return {...state,discoveredNodes:[...state.discoveredNodes],discoveredEdges:state.discoveredEdges.map(e=>({...e})),compare:[...state.compare],history:[...state.history]}; }
@@ -54,14 +45,21 @@ export function availableClues(id=state.selectedNode){
   if(!id) return [];
   return candidateConnections(id,state.discoveredNodes,4).filter(clue=>!state.discoveredEdges.some(edge=>edge.id===clue.relation.id));
 }
-export function revealClue(clue){ if(!clue?.from||!clue?.target) return null; return revealDirect(clue.from,clue.target); }
+
+// Mystery reveals expand around the figure the visitor is investigating.
+// The newly revealed deity appears in the graph, but focus remains on the current deity.
+export function revealClue(clue,{selectTarget=false}={}){
+  if(!clue?.from||!clue?.target) return null;
+  return revealDirect(clue.from,clue.target,{select:selectTarget});
+}
 
 export function revealDirect(from,target,{select=true,silent=false}={}){
   const a=getDeity(from), b=getDeity(target); if(!a||!b) return null; const relation=relationBetween(a,b); if(!relation) return null;
   if(!state.discoveredNodes.includes(a.id)) state.discoveredNodes.push(a.id);
   const newlyDiscovered=!state.discoveredNodes.includes(b.id); if(newlyDiscovered) state.discoveredNodes.push(b.id);
   if(!state.discoveredEdges.some(edge=>edge.id===relation.id)) state.discoveredEdges.push(relation);
-  state.selectedNode=select?b.id:state.selectedNode; state.selectedEdge=relation.id;
+  if(select) state.selectedNode=b.id;
+  state.selectedEdge=relation.id;
   step('reveal',{from:a.id,target:b.id,kind:relation.kind}); if(!silent) publish(); return {deity:b,relation,newlyDiscovered};
 }
 
