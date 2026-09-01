@@ -4,20 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light" />
-  <meta name="theme-color" content="#f4f0e9" />
-  <title>Mythos — Interactive Comparative Mythology</title>
-  <meta name="description" content="Uncover hidden connections between gods, myths, names and archetypes across ancient cultures. Build a mythology network as you explore." />
+  <meta name="theme-color" content="#f1eee8" />
+  <title>Mythos | Interactive Comparative Mythology</title>
+  <meta name="description" content="Uncover connections between gods, myths, names and archetypes across ancient cultures. Build a mythology network as you explore." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/v3.css" />
   <link rel="stylesheet" href="styles/v3-refinement.css" />
   <link rel="stylesheet" href="styles/v3-stability.css" />
+  <link rel="stylesheet" href="styles/ui-audit.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="app">
+    <div class="initial-skeleton" aria-label="Loading Mythos">
+      <div class="skeleton-line wide"></div>
+      <div class="skeleton-line"></div>
+      <div class="skeleton-block"></div>
+    </div>
+  </div>
   <noscript>Mythos needs JavaScript enabled to reveal and explore the mythology network.</noscript>
   <script type="module" src="src/v3/app.js"></script>
+  <script src="src/v3/ui-cleanup.js"></script>
 </body>
 </html>
