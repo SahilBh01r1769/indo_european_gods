@@ -4,7 +4,13 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
+    "test:e2e": "playwright test",
     "validate:data": "node scripts/validate-data.js",
-    "check": "npm run validate:data && npm test"
+    "check": "npm run validate:data && npm test",
+    "serve": "python3 -m http.server 4173 --bind 127.0.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "d3": "^7.9.0"
   }
 }

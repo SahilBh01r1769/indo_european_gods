@@ -1,168 +1,103 @@
 # Mythos — Interactive Comparative Mythology
 
-**Mythos** is a zero-build interactive exploration of mythological connections across ancient traditions.
+[Mythos](https://sahilbh01r1769.github.io/indo_european_gods/) is a zero-build digital humanities project for exploring connections among mythological figures. A visitor starts with one figure or recurring pattern, follows a limited set of clues, and builds a personal network instead of receiving an undifferentiated wall of matches.
 
-The central experience is not an encyclopedia page or a pre-rendered knowledge graph. The network begins small. You choose a deity or an archetype, follow a mystery clue, reveal another figure, and gradually build a persistent map of the paths you decided to investigate.
+The interface distinguishes historical and linguistic evidence from structural comparison, cross-cultural resemblance, speculation, and similarity produced only by the site's hand-curated trait model.
 
-Live site: https://sahilbh01r1769.github.io/indo_european_gods/
+## The experience
 
-## What the project is trying to do
+### Home and Discover
 
-Comparative mythology becomes more interesting when the visitor can discover the pattern rather than being handed a wall of matches.
+- The home page explains the premise and shows the visual grammar before asking for a commitment.
+- Discover begins with a deity or archetype and reveals one inspectable thread at a time.
+- Every reveal selects the new figure, explains the relationship, and remains in the visitor's journey.
+- Network, chronological, and approximate cultural-region views show the same discoveries from different angles.
+- Journeys persist in local storage and can be shared through a compact URL snapshot.
+- Curated relationships and model-only echoes use visibly different line treatments and labels.
 
-A typical journey might begin with **Thor**, reveal a storm-warrior clue leading to **Indra**, continue toward **Perun**, and later expose a completely different kind of connection such as the linguistic relationship between **Zeus** and **Dyaus**.
+### Stories, Collection, and comparison
 
-The interface deliberately distinguishes these relationships. A structural parallel is not presented as linguistic descent, and a model-generated thematic echo is not presented as historical evidence.
+- Six guided stories provide narrative entry points while writing into the same exploration state.
+- The collection supports search, tradition filtering, sorting, result counts, and cited dossiers.
+- Dossiers show source notes when references exist and an explicit caution when they do not.
+- Two or three figures can be compared without losing the graph. Qualitative evidence appears before the trait-overlap score.
 
-## Main experience
+## Evidence vocabulary
 
-### Discover
+| Type                        | Meaning in Mythos                                                                 |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| Linguistic inheritance      | A relationship grounded in historical linguistics or inherited naming             |
+| Historical contact / fusion | Documented contact, identification, transmission, or reinterpretation             |
+| Structural comparison       | A strong likeness in role, narrative, or ritual structure without a descent claim |
+| Cross-cultural parallel     | A useful resemblance that is not evidence of shared origin                        |
+| Speculative curiosity       | A deliberately tentative connection with limited support                          |
+| Model-only thematic echo    | Similarity produced by manually assigned trait weights, not historical evidence   |
 
-The primary view is a persistent D3 network.
-
-- Start with a deity or an archetype.
-- Selected figures expose a small number of mystery clues rather than every possible neighbour.
-- Revealing a clue adds the deity and connection to the current journey.
-- Previous discoveries remain visible, so the graph becomes a record of the visitor's curiosity.
-- The same discovered network can be viewed in **Network**, **Time**, or **Geography** mode.
-- A journey panel tracks discovered figures and recent threads.
-- A context panel explains the currently selected figure, clue, or relationship.
-
-### Stories
-
-Guided stories provide approachable entry points such as:
-
-- The Thunderer and the Serpent
-- The Archer Who Heals
-- Names of the Daylight Sky
-- Guides Beyond the Last Boundary
-- Fire That Carries a Message
-
-Story steps reveal directly into the same persistent graph. At any point the visitor can stop following the curated route and explore freely.
-
-### Collection
-
-The collection is the reference layer rather than the centre of the product.
-
-It supports:
-
-- deity search
-- tradition filtering
-- dossier overlays
-- archetype entry points
-- revealing a chosen figure into the current graph
-
-### Comparison
-
-Two or three discovered figures can be compared without leaving the exploration.
-
-Evidence type and qualitative interpretation are shown first. Numeric model overlap is deliberately secondary because the percentage represents overlap in manually curated trait weights — not historical confidence, ancestry probability, or scholarly consensus.
-
-## Evidence hierarchy
-
-Mythos uses separate relationship categories:
-
-1. **Linguistic inheritance** — historical linguistic or inherited divine-name evidence.
-2. **Historical contact / fusion** — documented identification, reinterpretation, transmission, or contact.
-3. **Structural comparison** — strong resemblance in mythic role, narrative structure, or ritual function.
-4. **Cross-cultural parallel** — a useful comparison without a claim of shared origin.
-5. **Speculative curiosity** — a deliberately cautious, loose comparison.
-6. **Model-only thematic echo** — a connection suggested only by the curated trait model.
-
-This hierarchy is part of the interface, not merely a methodology note.
+Egyptian and Mesopotamian figures are comparative outgroups. Their presence does not imply that those traditions are Indo-European. The geography view shows approximate cultural regions, not historical borders.
 
 ## Visual direction
 
-The v3 interface uses a **Luminous Salon** design system:
+The interface uses an editorial-atlas system: warm paper, ink, restrained mineral pigments, fine cartographic rules, and serif display typography. Colour is semantic—traditions and evidence types carry it—rather than decorative. Components use squared editorial geometry, modest motion, and ordinary language instead of glass panels, oversized pills, gradients, or promotional copy associated with generic generated interfaces.
 
-- warm ivory, parchment, pale stone, smoke blue, graphite, and soft brass form the quiet interface shell;
-- deity medallions and newly revealed nodes provide occasional jewel-toned accents;
-- typography and spacing carry most of the visual hierarchy;
-- motion is reserved for reveal, focus, and continuity rather than game-like effects.
+The UI includes keyboard-operable graph nodes, visible focus states, a skip link, dialog focus trapping and restoration, reduced-motion support, and a persistent mobile navigation bar.
 
-The intent is a refined digital exhibit that still feels magical because of what the user uncovers, not because the interface behaves like a fantasy game HUD.
+## Data and architecture
 
-## Dataset
-
-The current dataset contains **67 deities**, **16 canonical trait dimensions**, and **9 traditions**.
-
-The principal Indo-European traditions represented include Greek, Vedic, Roman, Norse, Celtic, Slavic, and Iranian material. Egyptian and Mesopotamian figures are included as comparative outgroups; their inclusion does not imply that those traditions are Indo-European.
-
-Trait values are curated heuristic weights used for exploration. They are not measurements reported by the cited scholars.
-
-The reusable data and similarity layers remain under `src/data/` and `src/utils/`.
-
-## Project structure
+The dataset currently contains 67 figures, 16 canonical trait dimensions, 51 curated relationships, 10 bibliography records, and 9 represented traditions. Trait weights are editorial heuristics for exploration; they are not scholarly measurements or confidence values.
 
 ```text
 index.html
-package.json
+vendor/d3.min.js             # pinned D3 7.9 runtime; no CDN dependency
 
 src/
   data/
-    deities.js              # deity records + trait metadata
-    cognates.js             # curated relationship evidence
-    citations.js            # bibliography and references
-    tours.js                # retained historical tour data
-
+    deities.js               # figures, traditions, symbols, eras, traits
+    cognates.js              # curated relationship records and source notes
+    citations.js             # bibliography and per-figure citations
   utils/
-    similarity.js           # canonical similarity calculations
-
+    similarity.js            # canonical trait calculations
   v3/
-    config.js               # starts, archetypes, stories, evidence metadata
-    model.js                # discovery candidates, relationship model, search, compare
-    state.js                # persistent journey state
-    graph.js                # Network / Time / Geography renderer
-    app.js                  # Discover, Stories, Collection, overlays and routing
-
-styles/
-  v3.css                    # Luminous Salon design system
-  v3-refinement.css         # final restrained jewel-accent treatment
+    config.js                # starts, archetypes, stories, evidence vocabulary
+    model.js                 # search, candidates, relations, comparison
+    state.js                 # validated persistence and URL snapshots
+    graph-runtime.js         # shared SVG, time, and geography rendering
+    graph-stable.js          # stable interactive network layout
+    app.js                   # routes, views, overlays, and interaction wiring
 
 tests/
   similarity.test.js
   v3.test.js
-
-scripts/
-  validate-data.js
+  e2e/journey.spec.js
 ```
 
-## Running locally
+The application is framework-free and deploys directly from `master` on GitHub Pages.
 
-The application is framework-free and does not require a build step. Because it uses ES modules, serve the repository over HTTP:
+## Run and validate
 
 ```bash
-python3 -m http.server 8000
+npm install
+npm run serve
 ```
 
-Then open:
+Open `http://127.0.0.1:4173`.
 
-```text
-http://localhost:8000
-```
-
-D3 is loaded from a CDN by `index.html`.
-
-## Validation
-
-Run the complete data and interaction test suite with:
+Run data and unit validation:
 
 ```bash
 npm run check
 ```
 
-The validation suite currently checks the dataset, core similarity behaviour, evidence categorisation, mystery connection generation, persistent graph growth, archetype membership, guided-story reveals, and comparison output. GitHub Actions also performs syntax checks on every v3 module.
+Run the Chromium interaction suite after installing the browser once:
 
-## Sources and interpretation
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
 
-The project draws on comparative mythology, Indo-European studies, and tradition-specific sources. Bibliographic material and per-deity references are retained in `src/data/citations.js`.
+GitHub Actions runs both suites for changes to `master` and pull requests.
 
-Mythos is an exploratory hobby project. It is designed to make relationships inspectable and interesting while keeping the difference between historical evidence and comparative resemblance visible to the visitor.
+## Interpretation
 
-## Branches
+Bibliographic material and per-figure references live in `src/data/citations.js`. Relationship notes in `src/data/cognates.js` are editorial summaries, not substitutes for the cited works. Entries without linked references are identified as awaiting source review in the interface.
 
-- `master` — live GitHub Pages deployment.
-- `v3/luminous-discovery` — current interactive discovery source branch.
-- `legacy/museum-atlas-v1` — frozen historical version.
-
-The earlier v2 museum-style interface is obsolete after the v3 rebuild.
+Mythos is an exploratory project. Its purpose is to make comparisons inspectable while keeping resemblance, historical contact, linguistic inheritance, and algorithmic similarity visibly separate.

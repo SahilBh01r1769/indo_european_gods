@@ -23,15 +23,15 @@ export const TRAITS = [
 ];
 
 export const PANTHEON_COLORS = {
-  Greek:         '#5BA7FF', // vivid sky blue
-  Vedic:         '#FF4F81', // hot pink
-  Norse:         '#3e2589', // electric violet
-  Celtic:        '#35D07F', // emerald green
-  Roman:         '#FFB52E', // golden amber
-  Slavic:        '#FF6B35', // bright orange
-  Mesopotamian:  '#D66BFF', // magenta purple
-  Iranian:       '#20D9D2', // turquoise
-  Egyptian:      '#00BFA6', // deep teal
+  Greek:         '#285c9f', // Aegean cobalt
+  Vedic:         '#c97822', // saffron
+  Norse:         '#2f6656', // pine
+  Celtic:        '#3f7b4e', // leaf green
+  Roman:         '#7e4358', // wine
+  Slavic:        '#a3423f', // madder red
+  Mesopotamian:  '#a65f3d', // fired clay
+  Iranian:       '#66518b', // lapis violet
+  Egyptian:      '#237a82', // Nile teal
 };
 
 

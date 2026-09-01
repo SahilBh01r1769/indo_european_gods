@@ -21,6 +21,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+
+      - name: Install test dependencies
+        run: npm ci
 
       - name: Validate data and interaction logic
         run: npm run check
@@ -34,3 +38,9 @@ jobs:
           node --check src/v3/graph-stable.js
           node --check src/v3/graph.js
           node --check src/v3/app.js
+
+      - name: Install browser for interaction tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Test desktop and mobile journeys
+        run: npm run test:e2e
