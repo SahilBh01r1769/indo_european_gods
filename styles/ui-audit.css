@@ -34,19 +34,25 @@ body{background-image:none!important;}
 .salon-window:before{border-radius:2px!important;}
 .window-arch{border-radius:2px!important;background:#d9d5ce!important;background-image:none!important;}
 .window-line{background:#a99d8f!important;}
-.deity-medallion{background:#e7e1d7!important;background-image:none!important;border-color:#9d9488!important;color:var(--slate,#50616d)!important;}
+.deity-medallion{background:#e7e1d7!important;background-image:none!important;border-color:#9d9488!important;color:#50616d!important;}
 .deity-medallion:after{border-color:#b4aa9d!important;}
+.journey-dot{background:#6b6258!important;}
 .start-deity-card:hover,.start-archetype-card:hover{background:#e3ddd3!important;border-color:#9c9185!important;}
 .archetype-start-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
 .graph-stage{background:#e5e0d7!important;background-image:none!important;}
 .graph-stage:after{display:none!important;}
-.node-disc{filter:none!important;fill:#e9e4db!important;}
+.node-disc{filter:none!important;fill:#e9e4db!important;stroke:#7b7064!important;}
+.node-halo{stroke:#69747a!important;}
+.node-glyph{fill:#50616d!important;color:#50616d!important;}
+.graph-node.is-selected .node-disc{stroke:#825f3d!important;}
+.graph-node.is-selected .node-halo{stroke:#825f3d!important;}
 .geo-field{fill:#d8d5cf!important;}
 .geo-grid{display:none!important;}
 .graph-node:hover .node-disc{filter:none!important;}
 .clue-arrow{display:none!important;}
 .pattern-mark,.search-symbol{color:#6f6559!important;}
 .search-symbol{border-color:#9c9185!important;}
+.compare-chips button{--accent:#6b6258!important;border-color:#9d9488!important;color:var(--ink)!important;}
 .initial-skeleton{width:min(1120px,calc(100% - 40px));margin:90px auto;padding:32px 0;}
 .skeleton-line,.skeleton-block{background:#d9d2c7;border:1px solid #c4baae;animation:skeletonPulse 1.05s ease-in-out infinite;}
 .skeleton-line{height:18px;width:42%;margin-bottom:12px;}.skeleton-line.wide{height:42px;width:68%;}.skeleton-block{height:260px;margin-top:28px;}
