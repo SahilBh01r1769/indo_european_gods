@@ -5,7 +5,12 @@ import {
   normTrait,
 } from "../src/data/deities.js";
 import { COGNATE_PAIRS } from "../src/data/cognates.js";
-import { BIBLIOGRAPHY, DEITY_CITATIONS } from "../src/data/citations.js";
+import {
+  BIBLIOGRAPHY,
+  DEITY_CITATIONS,
+  TRADITION_CITATIONS,
+  getDeityRefs,
+} from "../src/data/citations.js";
 import { RELATION_KIND_OVERRIDES } from "../src/v3/config.js";
 
 const knownTraits = new Set(TRAITS.map(normTrait));
@@ -68,6 +73,27 @@ for (const [deityId, citations] of Object.entries(DEITY_CITATIONS)) {
         `${deityId}: unknown bibliography reference "${citation.ref}"`,
       );
     }
+  }
+}
+
+for (const [tradition, citations] of Object.entries(TRADITION_CITATIONS)) {
+  if (!PANTHEON_COLORS[tradition]) {
+    errors.push(
+      `Tradition citations reference an unknown tradition: ${tradition}`,
+    );
+  }
+  for (const citation of citations) {
+    if (!bibliographyIds.has(citation.ref)) {
+      errors.push(
+        `${tradition}: unknown tradition bibliography reference "${citation.ref}"`,
+      );
+    }
+  }
+}
+
+for (const deity of DEITIES) {
+  if (!getDeityRefs(deity.id).length) {
+    errors.push(`${deity.id}: no figure-specific or tradition-level source`);
   }
 }
 

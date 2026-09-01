@@ -84,6 +84,14 @@ export class MythGraph {
       }))
       .filter((edge) => edge.sourceDeity && edge.targetDeity);
 
+    if (state.mode === "network") {
+      this.svg.call(this.zoom);
+      this.svg.classed("is-static-mode", false);
+    } else {
+      this.svg.call(this.zoom.transform, d3.zoomIdentity);
+      this.svg.on(".zoom", null).classed("is-static-mode", true);
+    }
+
     if (state.mode === "time")
       return this.renderTime(discovered, edges, state, width, height);
     if (state.mode === "geography")
@@ -421,6 +429,7 @@ export class MythGraph {
 
     const merged = entered
       .merge(nodeSelection)
+      .on(".drag", null)
       .attr("class", "graph-node graph-node-deity")
       .attr("transform", (node) => `translate(${node.x},${node.y})`)
       .classed("is-selected", (node) => node.id === state.selectedNode)
@@ -429,23 +438,35 @@ export class MythGraph {
 
     merged
       .select(".node-halo")
-      .attr("r", (node) => (node.id === state.selectedNode ? 34 : 29))
+      .attr("r", (node) => (node.id === state.selectedNode ? 50 : 44))
       .style("stroke", (node) => deityAccent(node.deity));
     merged
       .select(".node-disc")
-      .attr("r", 23)
+      .attr("r", 35)
+      .style(
+        "fill",
+        (node) => `color-mix(in srgb, ${deityAccent(node.deity)} 12%, #fffaf0)`,
+      )
       .style("stroke", (node) => deityAccent(node.deity));
     merged
       .select(".node-glyph")
       .style("fill", (node) => deityAccent(node.deity))
+      .style("font-size", (node) => {
+        const length = [...deityGlyph(node.deity)].length;
+        if (length > 10) return "8px";
+        if (length > 7) return "10px";
+        if (length > 5) return "12px";
+        if (length > 3) return "15px";
+        return "20px";
+      })
       .text((node) => deityGlyph(node.deity));
     merged
       .select(".node-name")
-      .attr("y", 48)
+      .attr("y", 61)
       .text((node) => node.deity.id);
     merged
       .select(".node-meta")
-      .attr("y", 63)
+      .attr("y", 78)
       .text((node) => node.deity.pantheon);
   }
 
@@ -504,11 +525,38 @@ export class MythGraph {
         .text(pantheon);
     });
 
+    const timelineNodes = discovered.map((deity) => ({
+      id: deity.id,
+      deity,
+      x: x(deity.era),
+      y: y(deity.pantheon),
+      targetX: x(deity.era),
+      targetY: y(deity.pantheon),
+    }));
+    d3.forceSimulation(timelineNodes)
+      .force("x", d3.forceX((node) => node.targetX).strength(0.78))
+      .force("y", d3.forceY((node) => node.targetY).strength(0.2))
+      .force("collision", d3.forceCollide(69).iterations(3))
+      .stop()
+      .tick(180);
+    const timelinePositions = new Map(
+      timelineNodes.map((node) => [
+        node.id,
+        {
+          x: Math.max(margin.left, Math.min(width - margin.right, node.x)),
+          y: Math.max(
+            margin.top,
+            Math.min(height - margin.bottom - 28, node.y),
+          ),
+        },
+      ]),
+    );
+
     this.renderStatic(
       discovered,
       edges,
       state,
-      (deity) => ({ x: x(deity.era), y: y(deity.pantheon) }),
+      (deity) => timelinePositions.get(deity.id),
       { dimFuture: true },
     );
   }
@@ -609,13 +657,38 @@ export class MythGraph {
       .attr("text-anchor", "end")
       .text("Approximate cultural regions · not historical borders");
 
-    this.renderStatic(discovered, edges, state, (deity) => {
+    const geographyNodes = discovered.map((deity) => {
       const position = TRADITION_POSITIONS[deity.pantheon] || { x: 50, y: 50 };
+      const targetX = (width * position.x) / 100;
+      const targetY = (height * position.y) / 100;
       return {
-        x: (width * position.x) / 100 + jitter(deity.id, 54),
-        y: (height * position.y) / 100 + jitter(`${deity.id}:y`, 46),
+        id: deity.id,
+        deity,
+        targetX,
+        targetY,
+        x: targetX + jitter(deity.id, 82),
+        y: targetY + jitter(`${deity.id}:y`, 74),
       };
     });
+    d3.forceSimulation(geographyNodes)
+      .force("x", d3.forceX((node) => node.targetX).strength(0.22))
+      .force("y", d3.forceY((node) => node.targetY).strength(0.22))
+      .force("collision", d3.forceCollide(72).iterations(3))
+      .stop()
+      .tick(180);
+    const geographyPositions = new Map(
+      geographyNodes.map((node) => [
+        node.id,
+        {
+          x: Math.max(92, Math.min(width - 92, node.x)),
+          y: Math.max(96, Math.min(height - 104, node.y)),
+        },
+      ]),
+    );
+
+    this.renderStatic(discovered, edges, state, (deity) =>
+      geographyPositions.get(deity.id),
+    );
   }
 
   fit() {

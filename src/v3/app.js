@@ -45,8 +45,10 @@ const app = document.querySelector("#app");
 let currentView = null,
   graph = null,
   toastTimer = null,
+  storyTimer = null,
   previousFocus = null,
   restoredPayload = null;
+const STORY_STEP_DELAY = 2400;
 const esc = (v) =>
   String(v ?? "")
     .replaceAll("&", "&amp;")
@@ -54,8 +56,13 @@ const esc = (v) =>
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
-const iconLabel = (deity) =>
-  `<span class="deity-medallion" style="--accent:${deityAccent(deity)}"><span>${esc(deityGlyph(deity))}</span></span>`;
+const iconLabel = (deity) => {
+  const glyph = deityGlyph(deity);
+  const length = [...glyph].length;
+  const sizeClass =
+    length > 8 ? "glyph-long" : length > 5 ? "glyph-medium" : "";
+  return `<span class="deity-medallion ${sizeClass}" style="--accent:${deityAccent(deity)}" title="${esc(deity?.originalScript || deity?.id || "")}"><span>${esc(glyph)}</span></span>`;
+};
 const evidenceLegend = ({ compact = false } = {}) =>
   `<div class="evidence-legend ${compact ? "compact" : ""}" aria-label="Relationship evidence legend">${Object.entries(
     RELATION_META,
@@ -161,6 +168,7 @@ function renderSearchResults(query) {
 }
 
 function route() {
+  clearTimeout(storyTimer);
   closeOverlay();
   const { view, parts, query } = parseRoute();
   const sharedJourney = query.get("journey");
@@ -183,6 +191,7 @@ function route() {
     renderDiscover();
     openCompare(parts.slice(1).map(decodeURIComponent));
   } else renderDiscover();
+  window.scrollTo({ top: 0, left: 0 });
 }
 
 function renderHome() {
@@ -219,14 +228,37 @@ function renderDiscover() {
 
 function renderLanding(view, { home = false } = {}) {
   const featured = START_DEITIES.map(getDeity).filter(Boolean);
-  const visibleDeities = home ? featured.slice(0, 4) : featured;
+  const visibleDeities = home
+    ? ["Thor", "Isis", "Mithra", "Perun"].map(getDeity).filter(Boolean)
+    : featured;
   const visibleArchetypes = home ? ARCHETYPES.slice(0, 3) : ARCHETYPES;
-  const previewNodes = ["Thor", "Indra", "Perun", "Zeus"]
-    .map(getDeity)
-    .filter(Boolean);
+  const previewThreads = [
+    {
+      a: "Zeus",
+      b: "Dyaus",
+      kind: "linguistic",
+      label: "Inherited divine name",
+    },
+    {
+      a: "Hermes",
+      b: "Thoth",
+      kind: "historical",
+      label: "Documented identification",
+    },
+    {
+      a: "Thor",
+      b: "Indra",
+      kind: "structural",
+      label: "Shared combat pattern",
+    },
+  ].map((thread) => ({
+    ...thread,
+    left: getDeity(thread.a),
+    right: getDeity(thread.b),
+  }));
   const state = getState();
 
-  view.innerHTML = `<section class="landing ${home ? "home-landing" : "discover-landing"}"><div class="landing-hero"><div class="hero-copy"><span class="eyebrow">Interactive comparative mythology</span><h1>${home ? "Follow the evidence. Find the pattern." : STARTING_COPY.heading}</h1><p>${home ? "Build a path through gods, names and recurring stories. Mythos keeps historical evidence distinct from resemblance, so every connection can be examined—not merely admired." : STARTING_COPY.lead}</p><div class="hero-actions">${state.started ? '<a class="primary-button resume-journey" href="#discover">Resume your journey</a>' : '<button class="primary-button surprise-start">Surprise me</button>'}<a class="quiet-link" href="#stories">Take a guided story</a></div><div class="hero-proof"><span>67 figures</span><span>9 traditions</span><span>6 evidence levels</span></div></div><div class="hero-map" aria-label="Preview of an evidence-aware mythology network"><svg class="hero-map-lines" viewBox="0 0 560 360" aria-hidden="true"><path class="preview-link linguistic" d="M118 182 C215 92 335 82 444 166"/><path class="preview-link structural" d="M118 182 C210 245 318 258 444 166"/><path class="preview-link comparative" d="M280 56 C310 120 318 225 280 304"/><path class="preview-link model" d="M118 182 C220 164 350 175 444 166"/></svg>${previewNodes.map((deity, index) => `<div class="preview-node preview-node-${index + 1}" style="--accent:${deityAccent(deity)}">${iconLabel(deity)}<strong>${esc(deity.id)}</strong><small>${esc(deity.pantheon)}</small></div>`).join("")}<div class="preview-question" aria-hidden="true">?</div>${evidenceLegend({ compact: true })}</div></div><section class="start-section"><div class="section-heading"><span>Begin with a deity</span><small>Choose a figure you recognise—or one you don’t.</small></div><div class="deity-start-grid">${visibleDeities.map((deity) => `<button class="start-deity-card" data-start-deity="${esc(deity.id)}" style="--accent:${deityAccent(deity)}">${iconLabel(deity)}<span class="card-tradition">${esc(deity.pantheon)}</span><strong>${esc(deity.id)}</strong><span>${esc(deity.domains?.slice(0, 3).join(" · ") || deity.pantheon)}</span></button>`).join("")}</div>${home ? '<a class="section-link" href="#discover">See all starting figures →</a>' : ""}</section><section class="start-section archetype-start-section"><div class="section-heading"><span>Or follow a recurring pattern</span><small>Begin with an idea and uncover the figures inside it.</small></div><div class="archetype-start-grid">${visibleArchetypes.map((a, i) => `<button class="start-archetype-card" data-start-archetype="${a.id}"><span class="pattern-number">0${i + 1}</span><span class="pattern-mark" aria-hidden="true">◇</span><strong>${esc(a.name)}</strong><span>${esc(a.short)}</span><small>Explore pattern →</small></button>`).join("")}</div>${home ? '<a class="section-link" href="#discover">Browse all patterns →</a>' : ""}</section></section>`;
+  view.innerHTML = `<section class="landing ${home ? "home-landing" : "discover-landing"}"><div class="landing-hero"><div class="hero-copy"><span class="eyebrow">Interactive comparative mythology</span><h1>${home ? "Follow the evidence. Find the pattern." : STARTING_COPY.heading}</h1><p>${home ? "Build a path through gods, names and recurring stories. Mythos keeps historical evidence distinct from resemblance, so every connection can be examined—not merely admired." : STARTING_COPY.lead}</p><div class="hero-actions">${state.started ? '<a class="primary-button resume-journey" href="#discover">Resume your journey</a>' : '<button class="primary-button surprise-start">Surprise me</button>'}<a class="quiet-link" href="#stories">Take a guided story</a></div><div class="hero-proof"><span>67 sourced figures</span><span>9 traditions</span><span>6 evidence levels</span></div></div><div class="hero-map" aria-label="Three examples of evidence-aware mythological relationships"><header class="preview-heading"><span class="eyebrow">A line is a claim</span><strong>Three relationships. Three different meanings.</strong></header><div class="preview-thread-list">${previewThreads.map((thread) => `<article class="preview-thread"><div class="preview-person">${iconLabel(thread.left)}<span><strong>${esc(thread.left.id)}</strong><small>${esc(thread.left.pantheon)}</small></span></div><div class="preview-relation"><i class="legend-line edge-kind-${thread.kind}" aria-hidden="true"></i><span>${esc(thread.label)}</span></div><div class="preview-person right">${iconLabel(thread.right)}<span><strong>${esc(thread.right.id)}</strong><small>${esc(thread.right.pantheon)}</small></span></div></article>`).join("")}</div><p class="preview-footnote">Names, historical contact and narrative resemblance remain visibly distinct.</p></div></div><section class="start-section"><div class="section-heading"><span>Begin with a deity</span><small>Four traditions, four different ways into the atlas.</small></div><div class="deity-start-grid">${visibleDeities.map((deity) => `<button class="start-deity-card" data-start-deity="${esc(deity.id)}" style="--accent:${deityAccent(deity)}">${iconLabel(deity)}<span class="card-tradition">${esc(deity.pantheon)}</span><strong>${esc(deity.id)}</strong><span>${esc(deity.domains?.slice(0, 3).join(" · ") || deity.pantheon)}</span></button>`).join("")}</div>${home ? '<a class="section-link" href="#discover">See all starting figures →</a>' : ""}</section><section class="start-section archetype-start-section"><div class="section-heading"><span>Or follow a recurring pattern</span><small>Begin with an idea and uncover the figures inside it.</small></div><div class="archetype-start-grid">${visibleArchetypes.map((a, i) => `<button class="start-archetype-card" data-start-archetype="${a.id}"><span class="pattern-number">0${i + 1}</span><span class="pattern-mark" aria-hidden="true">◇</span><strong>${esc(a.name)}</strong><span>${esc(a.short)}</span><small>Explore pattern →</small></button>`).join("")}</div>${home ? '<a class="section-link" href="#discover">Browse all patterns →</a>' : ""}</section></section>`;
   view.querySelectorAll("[data-start-deity]").forEach((btn) =>
     btn.addEventListener("click", () => {
       startWithDeity(btn.dataset.startDeity);
@@ -257,6 +289,26 @@ function updateDiscover(state) {
   renderContextPanel(state);
   renderModebar(state);
   graph?.render(state);
+  scheduleStoryAdvance(state);
+}
+
+function scheduleStoryAdvance(state) {
+  clearTimeout(storyTimer);
+  const active = state.activeStory;
+  const story = active ? getStory(active.id) : null;
+  if (!story || active.index >= story.path.length - 1) return;
+  const expectedIndex = active.index;
+  storyTimer = window.setTimeout(() => {
+    const current = getState().activeStory;
+    if (
+      currentView !== "discover" ||
+      current?.id !== active.id ||
+      current.index !== expectedIndex
+    )
+      return;
+    const target = revealStoryNext();
+    if (target) toast(`${target} joins the story`);
+  }, STORY_STEP_DELAY);
 }
 function renderJourneyPanel(state) {
   const root = document.querySelector(".journey-panel");
@@ -313,16 +365,16 @@ function renderContextPanel(state) {
       '<div class="empty-inline">Select a discovered figure.</div>';
     return;
   }
-  const clues = availableClues(deity.id),
+  const story = state.activeStory ? getStory(state.activeStory.id) : null,
+    storyIndex = state.activeStory?.index ?? 0,
+    clues = story ? [] : availableClues(deity.id),
     selectedEdge = state.discoveredEdges.find(
       (edge) => edge.id === state.selectedEdge,
-    ),
-    story = state.activeStory ? getStory(state.activeStory.id) : null,
-    storyIndex = state.activeStory?.index ?? 0;
+    );
   const isRecentReveal = Boolean(
     selectedEdge && state.lastReveal?.edgeId === selectedEdge.id,
   );
-  root.innerHTML = `<div class="context-scroll">${selectedEdge ? relationCallout(selectedEdge, { recent: isRecentReveal }) : ""}${story ? `<div class="story-coach"><span class="eyebrow">Guided story · ${storyIndex + 1}/${story.path.length}</span><h3>${esc(story.title)}</h3><p>${esc(story.chapters[storyIndex])}</p>${storyIndex < story.path.length - 1 ? '<button class="primary-button story-next">Reveal next chapter</button>' : '<strong class="story-complete">Story path complete. Keep exploring freely.</strong>'}<button class="text-button leave-story">Leave guided story</button></div>` : ""}<div class="context-identity">${iconLabel(deity)}<div><span class="eyebrow">${esc(deity.pantheon)} · ${esc(eraLabel(deity.era))}</span><h2>${esc(deity.id)}</h2><p class="original-script">${esc(deity.originalScript || "")}</p></div></div><p class="context-epithet">${esc(deity.epithet || "")}</p><div class="context-actions"><button class="quiet-button dossier-open">Open dossier</button><button class="quiet-button compare-toggle">${state.compare.includes(deity.id) ? "Remove from compare" : "Add to compare"}</button></div><div class="context-section"><span class="panel-kicker">Available clues</span>${clues.length ? `<div class="clue-list">${clues.map((clue, i) => `<button class="clue-button" data-clue-index="${i}"><span class="clue-mark">?</span><span><strong>${esc(clue.label)}</strong><small>${esc(clue.hint)}</small></span><span class="clue-arrow">→</span></button>`).join("")}</div>` : `<div class="empty-inline compact"><strong>This branch is quiet.</strong><span>Choose another discovered figure to continue.</span></div>`}</div><div class="context-section"><span class="panel-kicker">Domains</span><div class="chip-row">${(
+  root.innerHTML = `<div class="context-scroll">${selectedEdge ? relationCallout(selectedEdge, { recent: isRecentReveal }) : ""}${story ? `<div class="story-coach"><span class="eyebrow">Guided story · ${storyIndex + 1}/${story.path.length}</span><h3>${esc(story.title)}</h3><div class="story-progress" style="--story-steps:${story.path.length}" aria-label="Story progress">${story.path.map((_, index) => `<i class="${index <= storyIndex ? "complete" : ""}"></i>`).join("")}</div><p>${esc(story.chapters[storyIndex])}</p>${storyIndex < story.path.length - 1 ? '<span class="story-auto-note"><i></i> Next chapter is arriving…</span>' : '<strong class="story-complete">Story complete. The full route is now visible.</strong>'}<button class="text-button leave-story">Leave guided story</button></div>` : ""}<div class="context-identity">${iconLabel(deity)}<div><span class="eyebrow">${esc(deity.pantheon)} · ${esc(eraLabel(deity.era))}</span><h2>${esc(deity.id)}</h2><p class="original-script">${esc(deity.originalScript || "")}</p></div></div><p class="context-epithet">${esc(deity.epithet || "")}</p><div class="context-actions"><button class="quiet-button dossier-open">Open dossier</button><button class="quiet-button compare-toggle">${state.compare.includes(deity.id) ? "Remove from compare" : "Add to compare"}</button></div>${story ? "" : `<div class="context-section"><span class="panel-kicker">Available clues</span>${clues.length ? `<div class="clue-list">${clues.map((clue, i) => `<button class="clue-button" data-clue-index="${i}"><span class="clue-mark">?</span><span><strong>${esc(clue.label)}</strong><small>${esc(clue.hint)}</small></span><span class="clue-arrow">→</span></button>`).join("")}</div>` : `<div class="empty-inline compact"><strong>This branch is quiet.</strong><span>Choose another discovered figure to continue.</span></div>`}</div>`}<div class="context-section"><span class="panel-kicker">Domains</span><div class="chip-row">${(
     deity.domains || []
   )
     .slice(0, 6)
@@ -340,10 +392,6 @@ function renderContextPanel(state) {
       if (result) toast(`${result.deity.id} revealed`);
     }),
   );
-  root.querySelector(".story-next")?.addEventListener("click", () => {
-    const target = revealStoryNext();
-    if (target) toast(`${target} revealed`);
-  });
   root.querySelector(".leave-story")?.addEventListener("click", leaveStory);
 }
 function renderModebar(state) {
@@ -497,7 +545,7 @@ function openDossier(id) {
       .slice(0, 6),
     references = getDeityRefs(deity.id);
   openOverlay(
-    `<div class="dossier-overlay overlay-card"><button class="overlay-close" aria-label="Close">×</button><div class="dossier-head">${iconLabel(deity)}<div><span class="eyebrow">${esc(deity.pantheon)} · ${esc(eraLabel(deity.era))}</span><h2>${esc(deity.id)}</h2><p class="original-script">${esc(deity.originalScript || "")}</p><strong>${esc(deity.epithet)}</strong></div></div><p class="dossier-desc">${esc(deity.desc)}</p><div class="dossier-columns"><section><span class="panel-kicker">Dominant traits</span>${topTraits.map(([trait, value]) => `<div class="trait-row"><span>${esc(trait)}</span><span class="trait-bar"><i style="width:${Math.round(value * 100)}%"></i></span></div>`).join("")}</section><section><span class="panel-kicker">Symbols</span><div class="plain-list">${(deity.symbols || []).map((s) => `<span>${esc(s)}</span>`).join("")}</div><span class="panel-kicker">Domains</span><div class="chip-row">${(deity.domains || []).map((s) => `<span>${esc(s)}</span>`).join("")}</div></section></div><section class="dossier-connections"><span class="panel-kicker">Curated threads</span>${relationships.map((r) => `<div class="dossier-thread"><span class="evidence-badge evidence-${r.kind}">${esc(r.label)}</span><strong>${esc(r.source === deity.id ? r.target : r.source)}</strong><p>${esc(r.note || r.description)}</p>${r.sourceText ? `<small>${esc(r.sourceText)}</small>` : ""}</div>`).join("") || "<p>No curated threads are currently listed for this figure.</p>"}</section>${references.length ? `<section class="dossier-sources"><span class="panel-kicker">Sources for this dossier</span><ol>${references.map((reference) => `<li><cite>${esc(reference.bib.author)} (${esc(reference.bib.year)}), <em>${esc(reference.bib.title)}</em></cite><span>${esc(reference.pages)} — ${esc(reference.note)}</span></li>`).join("")}</ol></section>` : '<section class="source-caution"><strong>Source review pending</strong><p>This entry currently has no linked per-deity bibliography. Treat its summary as an editorial overview rather than a cited research note.</p></section>'}<div class="overlay-actions"><button class="primary-button reveal-dossier">${state.started ? "Reveal in your graph" : "Begin here"}</button><button class="quiet-button compare-dossier">${state.compare.includes(deity.id) ? "Remove from compare" : "Add to compare"}</button></div></div>`,
+    `<div class="dossier-overlay overlay-card"><button class="overlay-close" aria-label="Close">×</button><div class="dossier-head">${iconLabel(deity)}<div><span class="eyebrow">${esc(deity.pantheon)} · ${esc(eraLabel(deity.era))}</span><h2>${esc(deity.id)}</h2><p class="original-script">${esc(deity.originalScript || "")}</p><strong>${esc(deity.epithet)}</strong></div></div><p class="dossier-desc">${esc(deity.desc)}</p><div class="dossier-columns"><section><span class="panel-kicker">Dominant traits</span>${topTraits.map(([trait, value]) => `<div class="trait-row"><span>${esc(trait)}</span><span class="trait-bar"><i style="width:${Math.round(value * 100)}%"></i></span></div>`).join("")}</section><section><span class="panel-kicker">Symbols</span><div class="plain-list">${(deity.symbols || []).map((s) => `<span>${esc(s)}</span>`).join("")}</div><span class="panel-kicker">Domains</span><div class="chip-row">${(deity.domains || []).map((s) => `<span>${esc(s)}</span>`).join("")}</div></section></div><section class="dossier-connections"><span class="panel-kicker">Curated threads</span>${relationships.map((r) => `<div class="dossier-thread"><span class="evidence-badge evidence-${r.kind}">${esc(r.label)}</span><strong>${esc(r.source === deity.id ? r.target : r.source)}</strong><p>${esc(r.note || r.description)}</p>${r.sourceText ? `<small>${esc(r.sourceText)}</small>` : ""}</div>`).join("") || "<p>No curated threads are currently listed for this figure.</p>"}</section>${references.length ? `<section class="dossier-sources"><span class="panel-kicker">Sources and further reading</span><ol>${references.map((reference) => `<li><span class="source-scope">${reference.scope === "tradition" ? "Tradition overview" : "Figure-specific"}</span><cite>${esc(reference.bib.author)} (${esc(reference.bib.year)}), <em>${esc(reference.bib.title)}</em></cite><span>${esc(reference.pages)} — ${esc(reference.note)}</span></li>`).join("")}</ol></section>` : '<section class="source-caution"><strong>Source review pending</strong><p>This entry currently has no linked bibliography. Treat its summary as an editorial overview rather than a cited research note.</p></section>'}<div class="overlay-actions"><button class="primary-button reveal-dossier">${state.started ? "Reveal in your graph" : "Begin here"}</button><button class="quiet-button compare-dossier">${state.compare.includes(deity.id) ? "Remove from compare" : "Add to compare"}</button></div></div>`,
   );
   document.querySelector(".reveal-dossier")?.addEventListener("click", () => {
     addToJourney(deity.id);

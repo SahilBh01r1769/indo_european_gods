@@ -16,6 +16,8 @@ import {
   encodeJourney,
   restoreJourney,
 } from "../src/v3/state.js";
+import { DEITIES } from "../src/data/deities.js";
+import { getDeityRefs } from "../src/data/citations.js";
 
 test("Thor exposes curated mystery paths before model-only echoes", () => {
   const clues = candidateConnections("Thor", ["Thor"], 4);
@@ -80,6 +82,21 @@ test("guided stories reveal into the same journey state", () => {
   assert.ok(state.discoveredNodes.includes("Zeus"));
   assert.ok(state.discoveredNodes.includes("Dyaus"));
   assert.equal(state.activeStory.index, 1);
+});
+
+test("every deity has a clearly scoped source path", () => {
+  const coverage = DEITIES.map((deity) => ({
+    deity: deity.id,
+    refs: getDeityRefs(deity.id),
+  }));
+
+  assert.equal(coverage.length, 67);
+  assert.ok(coverage.every(({ refs }) => refs.length > 0));
+  assert.ok(
+    coverage.every(({ refs }) =>
+      refs.every(({ scope }) => ["figure", "tradition"].includes(scope)),
+    ),
+  );
 });
 
 test("comparison keeps qualitative evidence plus model overlap data", () => {
