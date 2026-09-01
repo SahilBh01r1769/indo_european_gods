@@ -1,12 +1,20 @@
-import { DEITIES, TRAITS, PANTHEON_COLORS, normTrait } from '../src/data/deities.js';
+import {
+  DEITIES,
+  TRAITS,
+  PANTHEON_COLORS,
+  normTrait,
+} from "../src/data/deities.js";
+import { COGNATE_PAIRS } from "../src/data/cognates.js";
+import { BIBLIOGRAPHY, DEITY_CITATIONS } from "../src/data/citations.js";
+import { RELATION_KIND_OVERRIDES } from "../src/v3/config.js";
 
 const knownTraits = new Set(TRAITS.map(normTrait));
 const ids = new Set();
 const errors = [];
 
 for (const deity of DEITIES) {
-  if (!deity.id || typeof deity.id !== 'string') {
-    errors.push('Deity with missing/invalid id');
+  if (!deity.id || typeof deity.id !== "string") {
+    errors.push("Deity with missing/invalid id");
     continue;
   }
 
@@ -31,10 +39,46 @@ for (const deity of DEITIES) {
   }
 }
 
+for (const pair of COGNATE_PAIRS) {
+  if (!ids.has(pair.a) || !ids.has(pair.b)) {
+    errors.push(
+      `Relationship references an unknown deity: ${pair.a} / ${pair.b}`,
+    );
+  }
+  if (!pair.note?.trim() || !pair.source?.trim()) {
+    errors.push(
+      `Relationship is missing interpretation or source: ${pair.a} / ${pair.b}`,
+    );
+  }
+  const key = [pair.a, pair.b].sort().join("|");
+  if (!RELATION_KIND_OVERRIDES.has(key)) {
+    errors.push(
+      `Relationship is missing an explicit evidence type: ${pair.a} / ${pair.b}`,
+    );
+  }
+}
+
+const bibliographyIds = new Set(BIBLIOGRAPHY.map((entry) => entry.id));
+for (const [deityId, citations] of Object.entries(DEITY_CITATIONS)) {
+  if (!ids.has(deityId))
+    errors.push(`Citations reference an unknown deity: ${deityId}`);
+  for (const citation of citations) {
+    if (!bibliographyIds.has(citation.ref)) {
+      errors.push(
+        `${deityId}: unknown bibliography reference "${citation.ref}"`,
+      );
+    }
+  }
+}
+
 if (errors.length) {
   console.error(`Dataset validation failed with ${errors.length} error(s):`);
-  errors.forEach(error => console.error(`- ${error}`));
+  errors.forEach((error) => console.error(`- ${error}`));
   process.exit(1);
 }
 
-console.log(`Validated ${DEITIES.length} deities, ${TRAITS.length} canonical traits, and ${Object.keys(PANTHEON_COLORS).length} pantheons.`);
+console.log(
+  `Validated ${DEITIES.length} deities, ${TRAITS.length} canonical traits, ` +
+    `${COGNATE_PAIRS.length} curated relationships, ${BIBLIOGRAPHY.length} sources, ` +
+    `and ${Object.keys(PANTHEON_COLORS).length} traditions.`,
+);
