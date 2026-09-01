@@ -18,8 +18,6 @@ export class MythGraph extends RuntimeGraph {
   constructor(container, handlers = {}) {
     super(container, handlers);
 
-    // Replace the eager resize renderer with a guarded, frame-batched observer.
-    // This prevents scrollbar/layout noise from creating a resize/render loop.
     this.resizeObserver?.disconnect();
     if (this.resizeHandler) {
       window.removeEventListener('resize', this.resizeHandler);
@@ -30,6 +28,7 @@ export class MythGraph extends RuntimeGraph {
     this.networkLayoutKey = null;
     this.resizeFrame = null;
     this.lastObservedSize = this.dimensions();
+    this.pendingReveal = null;
 
     const scheduleResize = () => {
       const next = this.dimensions();
@@ -61,6 +60,7 @@ export class MythGraph extends RuntimeGraph {
     this.clearDecoration();
     this.simulation?.stop();
 
+    const reveal = this.pendingReveal;
     const clues = availableClues(state.selectedNode);
     const deityNodes = discovered.map(deity => ({ type: 'deity', id: deity.id, deity }));
     const clueNodes = clues.map(clue => ({ type: 'clue', id: clue.id, clue }));
@@ -79,6 +79,11 @@ export class MythGraph extends RuntimeGraph {
       if (remembered) {
         node.x = remembered.x;
         node.y = remembered.y;
+        return;
+      }
+      if (reveal && node.id === reveal.target) {
+        node.x = reveal.x;
+        node.y = reveal.y;
         return;
       }
       if (node.id === state.selectedNode) {
@@ -131,9 +136,11 @@ export class MythGraph extends RuntimeGraph {
 
     edgeSelection.exit().remove();
 
-    const edgesMerged = edgeSelection.enter()
+    const edgeEntered = edgeSelection.enter()
       .append('line')
-      .attr('class', 'graph-edge')
+      .attr('class', 'graph-edge');
+
+    const edgesMerged = edgeEntered
       .merge(edgeSelection)
       .attr('class', link => `graph-edge ${link.type === 'clue' ? 'edge-mystery' : edgeClass(link.kind)}`)
       .classed('edge-selected', link => link.edgeId === state.selectedEdge)
@@ -152,14 +159,34 @@ export class MythGraph extends RuntimeGraph {
       .attr('tabindex', 0)
       .attr('role', 'button')
       .on('click', (_, node) => {
-        if (node.type === 'deity') this.handlers.onNode?.(node.deity.id);
-        else this.handlers.onReveal?.(node.clue);
+        if (node.type === 'deity') {
+          this.handlers.onNode?.(node.deity.id);
+        } else {
+          this.pendingReveal = {
+            clueId: node.id,
+            target: node.clue.target,
+            from: node.clue.from,
+            x: node.x,
+            y: node.y,
+          };
+          this.handlers.onReveal?.(node.clue);
+        }
       })
       .on('keydown', (event, node) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
         event.preventDefault();
-        if (node.type === 'deity') this.handlers.onNode?.(node.deity.id);
-        else this.handlers.onReveal?.(node.clue);
+        if (node.type === 'deity') {
+          this.handlers.onNode?.(node.deity.id);
+        } else {
+          this.pendingReveal = {
+            clueId: node.id,
+            target: node.clue.target,
+            from: node.clue.from,
+            x: node.x,
+            y: node.y,
+          };
+          this.handlers.onReveal?.(node.clue);
+        }
       });
 
     entered.append('circle').attr('class', 'node-halo');
@@ -208,9 +235,15 @@ export class MythGraph extends RuntimeGraph {
 
     if (layoutKey !== this.networkLayoutKey || !hasAllPositions) {
       const selectedNode = deityNodes.find(node => node.id === state.selectedNode);
+      const revealedNode = reveal ? deityNodes.find(node => node.id === reveal.target) : null;
+
       if (selectedNode) {
-        selectedNode.fx = clamp(selectedNode.x, 86, width - 86);
-        selectedNode.fy = clamp(selectedNode.y, 86, height - 92);
+        selectedNode.fx = clamp(anchor.x, 86, width - 86);
+        selectedNode.fy = clamp(anchor.y, 86, height - 92);
+      }
+      if (revealedNode) {
+        revealedNode.fx = clamp(reveal.x, 82, width - 82);
+        revealedNode.fy = clamp(reveal.y, 84, height - 88);
       }
 
       this.simulation = d3.forceSimulation(nodes)
@@ -225,13 +258,19 @@ export class MythGraph extends RuntimeGraph {
         .alphaDecay(.085)
         .stop();
 
-      // Settle the graph synchronously. The visitor sees the final arrangement,
-      // not a physics simulation that keeps bouncing while they read or scroll.
       for (let i = 0; i < 72; i++) this.simulation.tick();
 
       if (selectedNode) {
+        selectedNode.x = selectedNode.fx;
+        selectedNode.y = selectedNode.fy;
         selectedNode.fx = null;
         selectedNode.fy = null;
+      }
+      if (revealedNode) {
+        revealedNode.x = revealedNode.fx;
+        revealedNode.y = revealedNode.fy;
+        revealedNode.fx = null;
+        revealedNode.fy = null;
       }
 
       nodes.forEach(node => {
@@ -260,6 +299,48 @@ export class MythGraph extends RuntimeGraph {
     };
 
     place();
+
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    if (reveal) {
+      const revealedNode = nodes.find(node => node.id === reveal.target);
+      const revealedRelation = links.find(link => link.type === 'revealed' && link.source && link.target &&
+        ((typeof link.source === 'object' ? link.source.id : link.source) === reveal.from) &&
+        ((typeof link.target === 'object' ? link.target.id : link.target) === reveal.target));
+
+      if (revealedNode && !reduceMotion) {
+        const targetSelection = nodesMerged.filter(node => node.id === reveal.target);
+        targetSelection
+          .interrupt()
+          .style('opacity', .08)
+          .attr('transform', `translate(${revealedNode.x},${revealedNode.y}) scale(.28)`)
+          .transition()
+          .duration(520)
+          .ease(d3.easeCubicOut)
+          .style('opacity', 1)
+          .attr('transform', `translate(${revealedNode.x},${revealedNode.y}) scale(1)`);
+      }
+
+      if (revealedRelation && !reduceMotion) {
+        const source = typeof revealedRelation.source === 'object' ? revealedRelation.source : nodes.find(node => node.id === reveal.from);
+        const target = typeof revealedRelation.target === 'object' ? revealedRelation.target : nodes.find(node => node.id === reveal.target);
+        edgeEntered
+          .filter(link => link.id === revealedRelation.id)
+          .interrupt()
+          .attr('x1', source?.x ?? reveal.x)
+          .attr('y1', source?.y ?? reveal.y)
+          .attr('x2', source?.x ?? reveal.x)
+          .attr('y2', source?.y ?? reveal.y)
+          .style('opacity', .15)
+          .transition()
+          .duration(540)
+          .ease(d3.easeCubicOut)
+          .attr('x2', target?.x ?? reveal.x)
+          .attr('y2', target?.y ?? reveal.y)
+          .style('opacity', null);
+      }
+
+      this.pendingReveal = null;
+    }
 
     nodesMerged.call(d3.drag()
       .on('start', event => {
