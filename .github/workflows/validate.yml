@@ -41,5 +41,8 @@ jobs:
       - name: Install browser for interaction tests
         run: npx playwright install --with-deps chromium
 
-      - name: Test desktop and mobile journeys
-        run: npm run test:e2e
+      - name: Test core journeys and dossiers
+        run: npx playwright test --grep "starts|dossier|provenance"
+
+      - name: Test map and responsive layouts
+        run: npx playwright test --grep "geography|scrollbars|mobile navigation"
