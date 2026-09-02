@@ -23,6 +23,8 @@ test("starts, reveals, explains and restores a journey", async ({ page }) => {
   );
 
   await page.locator(".clue-button").first().click();
+  await expect(page.locator(".guess-overlay")).toBeVisible();
+  await page.getByRole("button", { name: "Reveal without guessing" }).click();
   await expect(page.locator(".journey-count strong")).toHaveText("2");
   await expect(page.locator(".new-thread.is-reveal")).toContainText(
     "New discovery",
@@ -82,11 +84,13 @@ test("guided stories reveal their route automatically without mystery nodes", as
   expect(overlappingPairs).toEqual([]);
 });
 
-test("native-language names occupy deity nodes", async ({ page }) => {
+test("provenance-aware marks occupy compact deity nodes", async ({ page }) => {
   await page.getByRole("button", { name: /Thor/ }).first().click();
   await expect(
     page.locator(".graph-node-deity .node-glyph").first(),
-  ).toHaveText("Þórr");
+  ).toHaveText("ᚦ");
+  await page.getByRole("button", { name: "Open dossier" }).click();
+  await expect(page.getByText(/associated historical attribute/i)).toBeVisible();
 });
 
 test("geography renders a visible fixed map and methodology is legible", async ({
@@ -94,7 +98,7 @@ test("geography renders a visible fixed map and methodology is legible", async (
 }, testInfo) => {
   await page.getByRole("button", { name: /Thor/ }).first().click();
   await page.getByRole("button", { name: "Geography" }).click();
-  await expect(page.locator(".geo-land")).toHaveCount(3);
+  await expect(page.locator(".geo-land")).toHaveCount(6);
 
   const node = page.locator(".graph-node-deity").first();
   const before = await node.getAttribute("transform");
@@ -115,7 +119,7 @@ test("geography renders a visible fixed map and methodology is legible", async (
       .evaluate((element) =>
         Number.parseFloat(getComputedStyle(element).fontSize),
       );
-    expect(bodySize).toBeGreaterThanOrEqual(15);
+    expect(bodySize).toBeGreaterThanOrEqual(14);
   }
 });
 

@@ -12,6 +12,7 @@ import {
   RELATION_META,
   STORIES,
 } from "./config.js";
+import { deityProfile } from "./metadata.js";
 
 const byId = new Map(DEITIES.map((d) => [d.id.toLowerCase(), d]));
 
@@ -264,7 +265,7 @@ export function deityAccent(deity) {
 
 export function deityGlyph(deity) {
   if (!deity) return "·";
-  return `${deity.originalScript || deity.id}`.trim();
+  return deityProfile(deity)?.mark || `${deity.originalScript || deity.id}`.trim();
 }
 
 export function eraLabel(era) {
@@ -285,6 +286,8 @@ export function searchMythos(query, limit = 12) {
       deity.pantheon,
       deity.epithet,
       deity.desc,
+      deity.originalScript,
+      ...(deityProfile(deity)?.aliases || []),
       ...(deity.domains || []),
       ...(deity.symbols || []),
       ...Object.keys(deity.traits || {}),

@@ -185,6 +185,21 @@ export class MythGraph extends RuntimeGraph {
           this.handlers.onEdge?.(link.edgeId);
       });
 
+    const edgeHitSelection = this.edgeLayer.selectAll("line.graph-edge-hit")
+      .data(links.filter((link) => link.type === "revealed"), (link) => link.id);
+    edgeHitSelection.exit().remove();
+    const edgeHitsMerged = edgeHitSelection.enter().append("line")
+      .attr("class", "graph-edge-hit").attr("tabindex", 0).attr("role", "button")
+      .merge(edgeHitSelection)
+      .attr("aria-label", (link) => `Inspect relationship between ${link.source.id || link.source} and ${link.target.id || link.target}`)
+      .on("click", (_, link) => this.handlers.onEdge?.(link.edgeId))
+      .on("keydown", (event, link) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          this.handlers.onEdge?.(link.edgeId);
+        }
+      });
+
     const nodeSelection = this.nodeLayer
       .selectAll("g.graph-node")
       .data(nodes, (node) => node.id);
@@ -267,9 +282,9 @@ export class MythGraph extends RuntimeGraph {
       .attr("r", (node) =>
         node.type === "deity"
           ? node.deity.id === state.selectedNode
-            ? 52
-            : 45
-          : 31,
+            ? 31
+            : 27
+          : 25,
       )
       .style("stroke", (node) =>
         node.type === "deity" ? deityAccent(node.deity) : "#aa9877",
@@ -277,7 +292,7 @@ export class MythGraph extends RuntimeGraph {
 
     nodesMerged
       .select(".node-disc")
-      .attr("r", (node) => (node.type === "deity" ? 36 : 24))
+      .attr("r", (node) => (node.type === "deity" ? 20 : 18))
       .style("fill", (node) =>
         node.type === "deity"
           ? `color-mix(in srgb, ${deityAccent(node.deity)} 12%, #fffaf0)`
@@ -293,19 +308,17 @@ export class MythGraph extends RuntimeGraph {
         node.type === "deity" ? deityAccent(node.deity) : "#625b52",
       )
       .style("font-size", (node) => {
-        if (node.type !== "deity") return "19px";
+        if (node.type !== "deity") return "17px";
         const length = [...deityGlyph(node.deity)].length;
-        if (length > 10) return "8px";
-        if (length > 7) return "10px";
-        if (length > 5) return "12px";
-        if (length > 3) return "15px";
-        return "20px";
+        if (length > 3) return "11px";
+        if (length > 1) return "15px";
+        return "19px";
       })
       .text((node) => (node.type === "deity" ? deityGlyph(node.deity) : "?"));
 
     nodesMerged
       .select(".node-name")
-      .attr("y", (node) => (node.type === "deity" ? 62 : 53))
+      .attr("y", (node) => (node.type === "deity" ? 41 : 39))
       .text((node) =>
         node.type === "deity"
           ? node.deity.id
@@ -314,7 +327,7 @@ export class MythGraph extends RuntimeGraph {
 
     nodesMerged
       .select(".node-meta")
-      .attr("y", (node) => (node.type === "deity" ? 79 : 69))
+      .attr("y", (node) => (node.type === "deity" ? 55 : 53))
       .text((node) =>
         node.type === "deity" ? node.deity.pantheon : "Select to reveal",
       );
@@ -378,15 +391,11 @@ export class MythGraph extends RuntimeGraph {
           "collision",
           d3
             .forceCollide()
-            .radius((node) =>
-              compactLayout
-                ? node.type === "clue"
-                  ? 64
-                  : 84
-                : node.type === "clue"
-                  ? 82
-                  : 108,
-            ),
+            .radius((node) => {
+              const label = node.type === "clue" ? `${getDeity(node.clue.target)?.pantheon || "Hidden"} clue` : node.deity.id;
+              const labelRadius = Math.min(116, label.length * 3.7 + 24);
+              return Math.max(node.type === "clue" ? 66 : 55, labelRadius);
+            }).iterations(5),
         )
         .alpha(0.82)
         .alphaDecay(0.055)
@@ -496,9 +505,15 @@ export class MythGraph extends RuntimeGraph {
               : nodeMap.get(link.target)
             )?.y ?? 0,
         );
+      edgeHitsMerged
+        .attr("x1", (link) => (typeof link.source === "object" ? link.source : nodeMap.get(link.source))?.x ?? 0)
+        .attr("y1", (link) => (typeof link.source === "object" ? link.source : nodeMap.get(link.source))?.y ?? 0)
+        .attr("x2", (link) => (typeof link.target === "object" ? link.target : nodeMap.get(link.target))?.x ?? 0)
+        .attr("y2", (link) => (typeof link.target === "object" ? link.target : nodeMap.get(link.target))?.y ?? 0);
       nodesMerged.attr("transform", (node) => `translate(${node.x},${node.y})`);
     };
 
+    place();
     const reduceMotion = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)",
     )?.matches;
@@ -569,8 +584,8 @@ export class MythGraph extends RuntimeGraph {
           event.sourceEvent?.stopPropagation();
         })
         .on("drag", (event, node) => {
-          node.x = clamp(event.x, 112, width - 112);
-          node.y = clamp(event.y, 112, height - 120);
+          node.x = clamp(event.x, 66, width - 66);
+          node.y = clamp(event.y, 72, height - 78);
           this.networkPositions.set(node.id, { x: node.x, y: node.y });
           if (node.type === "deity")
             this.positions.set(node.id, { x: node.x, y: node.y });

@@ -33,13 +33,20 @@ import {
   setEra,
   toggleCompare,
   clearCompare,
-  resetJourney,
+  clearJourney,
+  undoJourney,
+  redoJourney,
+  restorePreviousJourney,
+  restoreFreeJourney,
+  journeyCapabilities,
   leaveStory,
+  toggleStoryPause,
   encodeJourney,
   restoreJourney,
 } from "./state.js";
 import { MythGraph } from "./graph.js";
 import { getDeityRefs } from "../data/citations.js";
+import { clueHints, deityProfile, matchesDeityGuess } from "./metadata.js";
 
 const app = document.querySelector("#app");
 let currentView = null,
@@ -49,6 +56,7 @@ let currentView = null,
   previousFocus = null,
   restoredPayload = null;
 const STORY_STEP_DELAY = 2400;
+let contextSheetExpanded = false;
 const esc = (v) =>
   String(v ?? "")
     .replaceAll("&", "&amp;")
@@ -58,10 +66,11 @@ const esc = (v) =>
     .replaceAll("'", "&#039;");
 const iconLabel = (deity) => {
   const glyph = deityGlyph(deity);
+  const profile = deityProfile(deity);
   const length = [...glyph].length;
   const sizeClass =
     length > 8 ? "glyph-long" : length > 5 ? "glyph-medium" : "";
-  return `<span class="deity-medallion ${sizeClass}" style="--accent:${deityAccent(deity)}" title="${esc(deity?.originalScript || deity?.id || "")}"><span>${esc(glyph)}</span></span>`;
+  return `<span class="deity-medallion ${sizeClass}" style="--accent:${deityAccent(deity)}" title="${esc(`${deity?.id || ""}: ${profile?.markLabel || deity?.originalScript || "native name"}`)}" role="img" aria-label="${esc(`${deity?.id || "Deity"}, represented by ${profile?.markLabel || "a native-name mark"}`)}"><span aria-hidden="true">${esc(glyph)}</span></span>`;
 };
 const evidenceLegend = ({ compact = false } = {}) =>
   `<div class="evidence-legend ${compact ? "compact" : ""}" aria-label="Relationship evidence legend">${Object.entries(
@@ -207,11 +216,11 @@ function renderDiscover() {
   view.innerHTML = `<section class="discover-shell"><aside class="journey-panel" aria-label="Your journey"></aside><section class="graph-column"><div class="graph-heading-row"><div><span class="eyebrow">Your mythology journey</span><h1>Follow the thread</h1></div><div class="graph-heading-actions"><button class="quiet-button journey-toggle" aria-expanded="false">Journey</button><button class="quiet-button fit-graph">Fit view</button></div></div>${evidenceLegend({ compact: true })}<div id="graph-stage" class="graph-stage"></div><div class="modebar"></div></section><aside class="context-panel" aria-label="Selected mythology context"></aside></section>`;
   graph = new MythGraph(document.querySelector("#graph-stage"), {
     onNode: (id) => selectNode(id),
-    onEdge: (id) => selectEdge(id),
-    onReveal: (clue) => {
-      const result = revealClue(clue);
-      if (result?.newlyDiscovered) toast(`${result.deity.id} revealed`);
+    onEdge: (id) => {
+      selectEdge(id);
+      openRelationship(getState().discoveredEdges.find((edge) => edge.id === id));
     },
+    onReveal: (clue) => openGuessClue(clue),
   });
   document
     .querySelector(".fit-graph")
@@ -224,6 +233,7 @@ function renderDiscover() {
       event.currentTarget.setAttribute("aria-expanded", String(isOpen));
     });
   updateDiscover(state);
+  maybeShowGuide();
 }
 
 function renderLanding(view, { home = false } = {}) {
@@ -296,7 +306,7 @@ function scheduleStoryAdvance(state) {
   clearTimeout(storyTimer);
   const active = state.activeStory;
   const story = active ? getStory(active.id) : null;
-  if (!story || active.index >= story.path.length - 1) return;
+  if (!story || active.paused || active.index >= story.path.length - 1) return;
   const expectedIndex = active.index;
   storyTimer = window.setTimeout(() => {
     const current = getState().activeStory;
@@ -314,7 +324,8 @@ function renderJourneyPanel(state) {
   const root = document.querySelector(".journey-panel");
   if (!root) return;
   const emergent = emergentArchetypes(state.discoveredNodes),
-    recentEdges = state.discoveredEdges.slice(-3).reverse();
+    recentEdges = state.discoveredEdges.slice(-3).reverse(),
+    capabilities = journeyCapabilities();
   root.innerHTML = `<div class="panel-kicker">Your journey</div><div class="journey-count"><strong>${state.discoveredNodes.length}</strong><span>figures uncovered</span></div><div class="journey-list">${state.discoveredNodes
     .map((id) => {
       const deity = getDeity(id);
@@ -322,7 +333,7 @@ function renderJourneyPanel(state) {
     })
     .join(
       "",
-    )}</div>${recentEdges.length ? `<div class="journey-subsection"><span>Recent threads</span>${recentEdges.map((edge) => `<button data-journey-edge="${esc(edge.id)}"><small>${esc(edge.label)}</small><strong>${esc(edge.source)} ↔ ${esc(edge.target)}</strong></button>`).join("")}</div>` : ""}${emergent.length ? `<div class="pattern-found"><span>Pattern emerging</span><strong>${esc(emergent[0].archetype.name)}</strong><small>${emergent[0].members.map((x) => x.deity.id).join(" · ")}</small></div>` : ""}<div class="journey-actions"><button class="quiet-button share-journey">Share journey</button><button class="text-button reset-journey">Start over</button></div>`;
+    )}</div>${recentEdges.length ? `<div class="journey-subsection"><span>Recent threads</span>${recentEdges.map((edge) => `<button data-journey-edge="${esc(edge.id)}"><small>${esc(edge.label)}</small><strong>${esc(edge.source)} ↔ ${esc(edge.target)}</strong></button>`).join("")}</div>` : ""}${emergent.length ? `<div class="pattern-found"><span>Pattern emerging</span><strong>${esc(emergent[0].archetype.name)}</strong><small>${emergent[0].members.map((x) => x.deity.id).join(" · ")}</small></div>` : ""}<div class="journey-actions"><div class="history-actions"><button class="text-button undo-journey" ${capabilities.canUndo ? "" : "disabled"}>Undo</button><button class="text-button redo-journey" ${capabilities.canRedo ? "" : "disabled"}>Redo</button></div><button class="quiet-button share-journey" ${state.discoveredNodes.length ? "" : "disabled"}>Share journey</button><button class="quiet-button restore-journey" ${capabilities.canRestore ? "" : "disabled"}>Restore previous${capabilities.recentCount ? ` (${capabilities.recentCount})` : ""}</button>${capabilities.canRestoreFree ? '<button class="quiet-button restore-free-journey">Return to free journey</button>' : ""}<button class="danger-text-button clear-journey" ${state.discoveredNodes.length ? "" : "disabled"}>Clear graph</button></div>`;
   root
     .querySelectorAll("[data-journey-node]")
     .forEach((btn) =>
@@ -333,13 +344,21 @@ function renderJourneyPanel(state) {
     .forEach((btn) =>
       btn.addEventListener("click", () => selectEdge(btn.dataset.journeyEdge)),
     );
-  root.querySelector(".reset-journey")?.addEventListener("click", () => {
+  root.querySelector(".clear-journey")?.addEventListener("click", () => {
     if (
       confirm(
-        "Start a new journey? Your current discovered graph will be cleared.",
+        "Clear this graph? You can restore it from your recent journeys.",
       )
     )
-      resetJourney();
+      clearJourney();
+  });
+  root.querySelector(".undo-journey")?.addEventListener("click", undoJourney);
+  root.querySelector(".redo-journey")?.addEventListener("click", redoJourney);
+  root.querySelector(".restore-journey")?.addEventListener("click", () => {
+    if (restorePreviousJourney()) toast("Previous journey restored");
+  });
+  root.querySelector(".restore-free-journey")?.addEventListener("click", () => {
+    if (restoreFreeJourney()) toast("Free journey restored");
   });
   root.querySelector(".share-journey")?.addEventListener("click", async () => {
     const encoded = encodeJourney();
@@ -354,7 +373,7 @@ function renderJourneyPanel(state) {
 }
 function relationCallout(edge, { recent = false } = {}) {
   if (!edge) return "";
-  return `<div class="new-thread ${recent ? "is-reveal" : ""}">${recent ? '<span class="reveal-kicker">New discovery</span>' : ""}<span class="evidence-badge evidence-${edge.kind}">${esc(edge.label)}</span><h3>${esc(edge.source)} <span>↔</span> ${esc(edge.target)}</h3><p>${esc(edge.note || edge.description)}</p>${edge.sourceText ? `<small>Source: ${esc(edge.sourceText)}</small>` : ""}</div>`;
+  return `<div class="new-thread ${recent ? "is-reveal" : ""}">${recent ? '<span class="reveal-kicker">New discovery</span>' : ""}<span class="evidence-badge evidence-${edge.kind}">${esc(edge.label)}</span><h3>${esc(edge.source)} <span>↔</span> ${esc(edge.target)}</h3><p>${esc(edge.note || edge.description)}</p>${edge.sourceText ? `<small>Source: ${esc(edge.sourceText)}</small>` : ""}<button class="text-button inspect-relation" data-relation="${esc(edge.id)}">Inspect evidence</button></div>`;
 }
 function renderContextPanel(state) {
   const root = document.querySelector(".context-panel");
@@ -365,6 +384,7 @@ function renderContextPanel(state) {
       '<div class="empty-inline">Select a discovered figure.</div>';
     return;
   }
+  const profile = deityProfile(deity);
   const story = state.activeStory ? getStory(state.activeStory.id) : null,
     storyIndex = state.activeStory?.index ?? 0,
     clues = story ? [] : availableClues(deity.id),
@@ -374,7 +394,7 @@ function renderContextPanel(state) {
   const isRecentReveal = Boolean(
     selectedEdge && state.lastReveal?.edgeId === selectedEdge.id,
   );
-  root.innerHTML = `<div class="context-scroll">${selectedEdge ? relationCallout(selectedEdge, { recent: isRecentReveal }) : ""}${story ? `<div class="story-coach"><span class="eyebrow">Guided story · ${storyIndex + 1}/${story.path.length}</span><h3>${esc(story.title)}</h3><div class="story-progress" style="--story-steps:${story.path.length}" aria-label="Story progress">${story.path.map((_, index) => `<i class="${index <= storyIndex ? "complete" : ""}"></i>`).join("")}</div><p>${esc(story.chapters[storyIndex])}</p>${storyIndex < story.path.length - 1 ? '<span class="story-auto-note"><i></i> Next chapter is arriving…</span>' : '<strong class="story-complete">Story complete. The full route is now visible.</strong>'}<button class="text-button leave-story">Leave guided story</button></div>` : ""}<div class="context-identity">${iconLabel(deity)}<div><span class="eyebrow">${esc(deity.pantheon)} · ${esc(eraLabel(deity.era))}</span><h2>${esc(deity.id)}</h2><p class="original-script">${esc(deity.originalScript || "")}</p></div></div><p class="context-epithet">${esc(deity.epithet || "")}</p><div class="context-actions"><button class="quiet-button dossier-open">Open dossier</button><button class="quiet-button compare-toggle">${state.compare.includes(deity.id) ? "Remove from compare" : "Add to compare"}</button></div>${story ? "" : `<div class="context-section"><span class="panel-kicker">Available clues</span>${clues.length ? `<div class="clue-list">${clues.map((clue, i) => `<button class="clue-button" data-clue-index="${i}"><span class="clue-mark">?</span><span><strong>${esc(clue.label)}</strong><small>${esc(clue.hint)}</small></span><span class="clue-arrow">→</span></button>`).join("")}</div>` : `<div class="empty-inline compact"><strong>This branch is quiet.</strong><span>Choose another discovered figure to continue.</span></div>`}</div>`}<div class="context-section"><span class="panel-kicker">Domains</span><div class="chip-row">${(
+  root.innerHTML = `<div class="context-sheet-handle"><button class="context-sheet-toggle" aria-expanded="${contextSheetExpanded}"><span></span>${contextSheetExpanded ? "Collapse dossier" : "Quick dossier"}</button></div><div class="context-scroll">${selectedEdge ? relationCallout(selectedEdge, { recent: isRecentReveal }) : ""}${story ? `<div class="story-coach"><span class="eyebrow">Guided story · ${storyIndex + 1}/${story.path.length}</span><h3>${esc(story.title)}</h3><div class="story-progress" style="--story-steps:${story.path.length}" aria-label="Story progress">${story.path.map((_, index) => `<i class="${index <= storyIndex ? "complete" : ""}"></i>`).join("")}</div><p>${esc(story.chapters[storyIndex])}</p>${storyIndex < story.path.length - 1 ? `<span class="story-auto-note ${state.activeStory.paused ? "paused" : ""}"><i></i> ${state.activeStory.paused ? "Journey paused" : "Next chapter is arriving…"}</span><button class="quiet-button pause-story">${state.activeStory.paused ? "Resume story" : "Pause story"}</button>` : '<strong class="story-complete">Story complete. The full route is now visible.</strong>'}<button class="text-button restart-story">Restart story</button><button class="text-button leave-story">Leave guided story</button></div>` : ""}<div class="context-identity">${iconLabel(deity)}<div><span class="eyebrow">${esc(deity.pantheon)} · ${esc(eraLabel(deity.era))}</span><h2>${esc(deity.id)}</h2><p class="original-script">${esc(deity.originalScript || "")}</p></div></div><p class="context-memory">${esc(profile?.memoryHook || deity.epithet || "")}</p><p class="context-epithet">${esc(profile?.period || "")} · ${esc(profile?.region || "")}</p><div class="context-actions"><button class="quiet-button dossier-open">Open dossier</button><button class="quiet-button compare-toggle">${state.compare.includes(deity.id) ? "Remove from compare" : "Add to compare"}</button></div>${story ? "" : `<div class="context-section"><span class="panel-kicker">Available clues</span><p class="clue-instruction">Investigate a clue, make a guess, or ask for another hint.</p>${clues.length ? `<div class="clue-list">${clues.map((clue, i) => `<button class="clue-button" data-clue-index="${i}"><span class="clue-mark">?</span><span><strong>${esc(clue.label)}</strong><small>${esc(clue.relation.short)}</small></span><span class="clue-arrow">Investigate</span></button>`).join("")}</div>` : `<div class="empty-inline compact"><strong>This branch is quiet.</strong><span>Choose another discovered figure to continue.</span></div>`}</div>`}<div class="context-section"><span class="panel-kicker">Domains</span><div class="chip-row">${(
     deity.domains || []
   )
     .slice(0, 6)
@@ -388,11 +408,21 @@ function renderContextPanel(state) {
     ?.addEventListener("click", () => toggleCompare(deity.id));
   root.querySelectorAll("[data-clue-index]").forEach((btn) =>
     btn.addEventListener("click", () => {
-      const result = revealClue(clues[Number(btn.dataset.clueIndex)]);
-      if (result) toast(`${result.deity.id} revealed`);
+      openGuessClue(clues[Number(btn.dataset.clueIndex)]);
     }),
   );
+  root.querySelector(".inspect-relation")?.addEventListener("click", () =>
+    openRelationship(selectedEdge),
+  );
+  root.querySelector(".context-sheet-toggle")?.addEventListener("click", () => {
+    contextSheetExpanded = !contextSheetExpanded;
+    document.querySelector(".context-panel")?.classList.toggle("sheet-expanded", contextSheetExpanded);
+    renderContextPanel(getState());
+  });
+  root.classList.toggle("sheet-expanded", contextSheetExpanded);
   root.querySelector(".leave-story")?.addEventListener("click", leaveStory);
+  root.querySelector(".pause-story")?.addEventListener("click", toggleStoryPause);
+  root.querySelector(".restart-story")?.addEventListener("click", () => beginStory(story.id));
 }
 function renderModebar(state) {
   const root = document.querySelector(".modebar");
@@ -531,10 +561,79 @@ function renderCollectionGrid(query = "", pantheon = "", sort = "tradition") {
   );
 }
 
+function openGuessClue(clue) {
+  if (!clue) return;
+  const hints = clueHints(clue);
+  let visibleHints = 1;
+  openOverlay(
+    `<div class="guess-overlay overlay-card"><button class="overlay-close" aria-label="Close">×</button><span class="eyebrow">Hidden connection</span><h2>${esc(clue.label)}</h2><p class="guess-lead">Use the evidence to identify the deity at the other end of this thread.</p><div class="guess-hints" aria-live="polite"><span class="panel-kicker">Clues</span><ol>${hints.map((hint, index) => `<li ${index ? "hidden" : ""}>${esc(hint)}</li>`).join("")}</ol></div><form class="guess-form"><label for="deity-guess">Your guess</label><div><input id="deity-guess" name="guess" autocomplete="off" placeholder="Type a deity name or alias"><button class="primary-button" type="submit">Check answer</button></div><p class="guess-feedback" role="status" aria-live="polite"></p></form><div class="guess-actions"><button class="quiet-button next-hint" ${hints.length <= 1 ? "disabled" : ""}>Another clue</button><button class="text-button reveal-answer">Reveal without guessing</button></div></div>`,
+  );
+  const root = document.querySelector(".guess-overlay");
+  const feedback = root?.querySelector(".guess-feedback");
+  root?.querySelector(".guess-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const value = new FormData(event.currentTarget).get("guess");
+    if (!String(value || "").trim()) {
+      feedback.textContent = "Enter a name first, or ask for another clue.";
+      return;
+    }
+    if (matchesDeityGuess(clue.target, value)) {
+      const result = revealClue(clue);
+      closeOverlay();
+      if (result) toast(`Correct — ${result.deity.id} joins your journey`);
+      return;
+    }
+    feedback.textContent = "Not this time. Try an alternate spelling or uncover another clue.";
+    feedback.classList.add("is-wrong");
+  });
+  root?.querySelector(".next-hint")?.addEventListener("click", (event) => {
+    visibleHints = Math.min(hints.length, visibleHints + 1);
+    root.querySelectorAll(".guess-hints li").forEach((item, index) => {
+      item.hidden = index >= visibleHints;
+    });
+    feedback.textContent = `Clue ${visibleHints} of ${hints.length} uncovered.`;
+    event.currentTarget.disabled = visibleHints >= hints.length;
+  });
+  root?.querySelector(".reveal-answer")?.addEventListener("click", () => {
+    const result = revealClue(clue);
+    closeOverlay();
+    if (result) toast(`${result.deity.id} revealed — no penalty`);
+  });
+  root?.querySelector("#deity-guess")?.focus();
+}
+
+function openRelationship(edge) {
+  if (!edge) return;
+  const source = getDeity(edge.source), target = getDeity(edge.target);
+  const references = [...getDeityRefs(edge.source), ...getDeityRefs(edge.target)]
+    .filter((reference, index, all) => all.findIndex((item) => item.bib.id === reference.bib.id) === index)
+    .slice(0, 5);
+  const similarities = edge.shared?.length ? edge.shared : ["No strong shared trait is asserted"];
+  openOverlay(
+    `<div class="relationship-overlay overlay-card"><button class="overlay-close" aria-label="Close">×</button><span class="eyebrow">Relationship dossier</span><div class="relationship-title"><div>${iconLabel(source)}<strong>${esc(source?.id)}</strong></div><span>↔</span><div>${iconLabel(target)}<strong>${esc(target?.id)}</strong></div></div><span class="evidence-badge evidence-${edge.kind}">${esc(edge.label)}</span><h2>${esc(edge.short)}</h2><p class="relationship-summary">${esc(edge.note || edge.description)}</p><div class="relationship-grid"><section><span class="panel-kicker">What supports the comparison</span><ul>${similarities.map((trait) => `<li>${esc(trait)}</li>`).join("")}</ul>${edge.sourceText ? `<p><strong>Curated note:</strong> ${esc(edge.sourceText)}</p>` : ""}</section><section><span class="panel-kicker">How cautiously to read it</span><p>${esc(edge.description)}</p><p><strong>${edge.curated ? "Curated relationship" : "Model-only suggestion"}.</strong> ${esc(edge.confidence || "Evidence level not assigned")}.</p></section></div><div class="difference-note"><strong>Similarity is not identity.</strong><p>${esc(source?.id)} and ${esc(target?.id)} belong to different cultural settings. Shared roles or stories do not by themselves establish descent or contact.</p></div>${references.length ? `<section class="dossier-sources"><span class="panel-kicker">Sources around these figures</span><ol>${references.map((reference) => `<li><span class="source-scope">${reference.scope === "tradition" ? "Tradition overview" : "Figure-specific"}</span><cite>${esc(reference.bib.author)} (${esc(reference.bib.year)}), <em>${esc(reference.bib.title)}</em></cite><span>${esc(reference.pages)} — ${esc(reference.note)}</span></li>`).join("")}</ol></section>` : ""}</div>`,
+  );
+}
+
+function maybeShowGuide() {
+  if (typeof localStorage === "undefined" || localStorage.getItem("mythos:guide:v1")) return;
+  const column = document.querySelector(".graph-column");
+  if (!column || column.querySelector(".guide-nudge")) return;
+  const guide = document.createElement("aside");
+  guide.className = "guide-nudge";
+  guide.setAttribute("aria-label", "First-use guide");
+  guide.innerHTML = `<button aria-label="Dismiss guide">×</button><span>First thread</span><strong>Select → investigate → examine</strong><p>Guess a hidden figure, then select its line to inspect the evidence. Time and Geography keep the same journey.</p>`;
+  column.append(guide);
+  guide.querySelector("button")?.addEventListener("click", () => {
+    localStorage.setItem("mythos:guide:v1", "seen");
+    guide.remove();
+  });
+}
+
 function openDossier(id) {
   const deity = getDeity(id);
   if (!deity) return;
   const state = getState(),
+    profile = deityProfile(deity),
     relationships = DEITIES.filter((d) => d.id !== deity.id)
       .map((d) => relationBetween(deity, d))
       .filter((r) => r?.curated)
@@ -545,7 +644,13 @@ function openDossier(id) {
       .slice(0, 6),
     references = getDeityRefs(deity.id);
   openOverlay(
-    `<div class="dossier-overlay overlay-card"><button class="overlay-close" aria-label="Close">×</button><div class="dossier-head">${iconLabel(deity)}<div><span class="eyebrow">${esc(deity.pantheon)} · ${esc(eraLabel(deity.era))}</span><h2>${esc(deity.id)}</h2><p class="original-script">${esc(deity.originalScript || "")}</p><strong>${esc(deity.epithet)}</strong></div></div><p class="dossier-desc">${esc(deity.desc)}</p><div class="dossier-columns"><section><span class="panel-kicker">Dominant traits</span>${topTraits.map(([trait, value]) => `<div class="trait-row"><span>${esc(trait)}</span><span class="trait-bar"><i style="width:${Math.round(value * 100)}%"></i></span></div>`).join("")}</section><section><span class="panel-kicker">Symbols</span><div class="plain-list">${(deity.symbols || []).map((s) => `<span>${esc(s)}</span>`).join("")}</div><span class="panel-kicker">Domains</span><div class="chip-row">${(deity.domains || []).map((s) => `<span>${esc(s)}</span>`).join("")}</div></section></div><section class="dossier-connections"><span class="panel-kicker">Curated threads</span>${relationships.map((r) => `<div class="dossier-thread"><span class="evidence-badge evidence-${r.kind}">${esc(r.label)}</span><strong>${esc(r.source === deity.id ? r.target : r.source)}</strong><p>${esc(r.note || r.description)}</p>${r.sourceText ? `<small>${esc(r.sourceText)}</small>` : ""}</div>`).join("") || "<p>No curated threads are currently listed for this figure.</p>"}</section>${references.length ? `<section class="dossier-sources"><span class="panel-kicker">Sources and further reading</span><ol>${references.map((reference) => `<li><span class="source-scope">${reference.scope === "tradition" ? "Tradition overview" : "Figure-specific"}</span><cite>${esc(reference.bib.author)} (${esc(reference.bib.year)}), <em>${esc(reference.bib.title)}</em></cite><span>${esc(reference.pages)} — ${esc(reference.note)}</span></li>`).join("")}</ol></section>` : '<section class="source-caution"><strong>Source review pending</strong><p>This entry currently has no linked bibliography. Treat its summary as an editorial overview rather than a cited research note.</p></section>'}<div class="overlay-actions"><button class="primary-button reveal-dossier">${state.started ? "Reveal in your graph" : "Begin here"}</button><button class="quiet-button compare-dossier">${state.compare.includes(deity.id) ? "Remove from compare" : "Add to compare"}</button></div></div>`,
+    `<div class="dossier-overlay overlay-card"><button class="overlay-close" aria-label="Close">×</button><div class="dossier-head">${iconLabel(deity)}<div><span class="eyebrow">${esc(deity.pantheon)} · ${esc(eraLabel(deity.era))}</span><h2>${esc(deity.id)}</h2><p class="original-script">${esc(deity.originalScript || "")}</p><strong>${esc(deity.epithet)}</strong></div></div><div class="memory-hook"><span>Remember this figure</span><strong>${esc(profile?.memoryHook || deity.epithet)}</strong></div><p class="dossier-desc">${esc(deity.desc)}</p><div class="dossier-facts"><div><span>Tradition</span><strong>${esc(profile?.period)}</strong></div><div><span>Region</span><strong>${esc(profile?.region)}</strong></div><div><span>Names and aliases</span><strong>${esc(profile?.aliases.join(" · "))}</strong></div><div><span>Node mark</span><strong>${esc(profile?.mark)} — ${esc(profile?.markLabel)}</strong><small>${esc(profile?.markProvenance)}; an editorial shorthand, not an official ancient logo.</small></div></div><div class="dossier-columns"><section><span class="panel-kicker">Dominant traits</span>${topTraits.map(([trait, value]) => `<div class="trait-row"><span>${esc(trait)}</span><span class="trait-bar"><i style="width:${Math.round(value * 100)}%"></i></span></div>`).join("")}</section><section><span class="panel-kicker">Attested attributes and symbols</span><div class="plain-list">${(deity.symbols || []).map((s) => `<span>${esc(s)}</span>`).join("")}</div><span class="panel-kicker">Domains</span><div class="chip-row">${(deity.domains || []).map((s) => `<span>${esc(s)}</span>`).join("")}</div></section></div><section class="dossier-connections"><span class="panel-kicker">Curated threads</span>${relationships.map((r) => `<button class="dossier-thread" data-open-relationship="${esc(r.id)}"><span class="evidence-badge evidence-${r.kind}">${esc(r.label)}</span><strong>${esc(r.source === deity.id ? r.target : r.source)}</strong><p>${esc(r.note || r.description)}</p><small>Open relationship dossier →</small></button>`).join("") || "<p>No curated threads are currently listed for this figure.</p>"}</section>${references.length ? `<section class="dossier-sources"><span class="panel-kicker">Sources and further reading</span><ol>${references.map((reference) => `<li><span class="source-scope">${reference.scope === "tradition" ? "Tradition overview" : "Figure-specific"}</span><cite>${esc(reference.bib.author)} (${esc(reference.bib.year)}), <em>${esc(reference.bib.title)}</em></cite><span>${esc(reference.pages)} — ${esc(reference.note)}</span></li>`).join("")}</ol></section>` : '<section class="source-caution"><strong>Source review pending</strong><p>This entry currently has no linked bibliography. Treat its summary as an editorial overview rather than a cited research note.</p></section>'}<div class="overlay-actions"><button class="primary-button reveal-dossier">${state.started ? "Reveal in your graph" : "Begin here"}</button><button class="quiet-button compare-dossier">${state.compare.includes(deity.id) ? "Remove from compare" : "Add to compare"}</button></div></div>`,
+  );
+  document.querySelectorAll("[data-open-relationship]").forEach((button) =>
+    button.addEventListener("click", () => {
+      const relation = relationships.find((item) => item.id === button.dataset.openRelationship);
+      openRelationship(relation);
+    }),
   );
   document.querySelector(".reveal-dossier")?.addEventListener("click", () => {
     addToJourney(deity.id);

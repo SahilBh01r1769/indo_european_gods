@@ -17,6 +17,7 @@ export class MythGraph {
     this.handlers = handlers;
     this.positions = new Map();
     this.lastState = null;
+    this.lastMode = null;
     this.simulation = null;
 
     this.svg = d3
@@ -36,8 +37,11 @@ export class MythGraph {
       .scaleExtent([0.55, 2.2])
       .on("zoom", (event) => {
         const transform = event.transform;
+        this.decor.attr("transform", transform);
         this.edgeLayer.attr("transform", transform);
         this.nodeLayer.attr("transform", transform);
+        this.nodeLayer.selectAll(".node-name").style("opacity", transform.k < 0.72 ? 0 : 1);
+        this.nodeLayer.selectAll(".node-meta").style("opacity", transform.k < 1.05 ? 0 : 1);
       });
     this.svg.call(this.zoom);
 
@@ -70,6 +74,8 @@ export class MythGraph {
 
   render(state) {
     if (!state) return;
+    const modeChanged = this.lastMode !== state.mode;
+    this.lastMode = state.mode;
     this.lastState = state;
     const { width, height } = this.dimensions();
     this.svg.attr("viewBox", `0 0 ${width} ${height}`);
@@ -84,12 +90,9 @@ export class MythGraph {
       }))
       .filter((edge) => edge.sourceDeity && edge.targetDeity);
 
-    if (state.mode === "network") {
-      this.svg.call(this.zoom);
-      this.svg.classed("is-static-mode", false);
-    } else {
+    this.svg.call(this.zoom).classed("is-static-mode", state.mode !== "network");
+    if (modeChanged) {
       this.svg.call(this.zoom.transform, d3.zoomIdentity);
-      this.svg.on(".zoom", null).classed("is-static-mode", true);
     }
 
     if (state.mode === "time")
@@ -104,6 +107,7 @@ export class MythGraph {
   }
 
   resetZoomSilently() {
+    this.decor.attr("transform", null);
     this.edgeLayer.attr("transform", null);
     this.nodeLayer.attr("transform", null);
   }
@@ -181,6 +185,21 @@ export class MythGraph {
           this.handlers.onEdge?.(link.edgeId);
       });
 
+    const edgeHits = this.edgeLayer.selectAll("line.graph-edge-hit")
+      .data(links.filter((link) => link.type === "revealed"), (link) => link.id);
+    edgeHits.exit().remove();
+    const edgeHitsMerged = edgeHits.enter().append("line")
+      .attr("class", "graph-edge-hit").attr("tabindex", 0).attr("role", "button")
+      .merge(edgeHits)
+      .attr("aria-label", (link) => `Inspect relationship between ${link.source.id || link.source} and ${link.target.id || link.target}`)
+      .on("click", (_, link) => this.handlers.onEdge?.(link.edgeId))
+      .on("keydown", (event, link) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          this.handlers.onEdge?.(link.edgeId);
+        }
+      });
+
     const nodeSelection = this.nodeLayer
       .selectAll("g.graph-node")
       .data(nodes, (node) => node.id);
@@ -243,9 +262,9 @@ export class MythGraph {
       .attr("r", (node) =>
         node.type === "deity"
           ? node.deity.id === state.selectedNode
-            ? 37
-            : 31
-          : 29,
+            ? 31
+            : 27
+          : 25,
       )
       .style("stroke", (node) =>
         node.type === "deity" ? deityAccent(node.deity) : "#b99d68",
@@ -253,7 +272,7 @@ export class MythGraph {
 
     nodesMerged
       .select(".node-disc")
-      .attr("r", (node) => (node.type === "deity" ? 24 : 21))
+      .attr("r", (node) => (node.type === "deity" ? 20 : 18))
       .style("stroke", (node) =>
         node.type === "deity" ? deityAccent(node.deity) : "#9d8d78",
       );
@@ -267,14 +286,14 @@ export class MythGraph {
 
     nodesMerged
       .select(".node-name")
-      .attr("y", (node) => (node.type === "deity" ? 50 : 48))
+      .attr("y", (node) => (node.type === "deity" ? 41 : 39))
       .text((node) =>
         node.type === "deity" ? node.deity.id : node.clue.label,
       );
 
     nodesMerged
       .select(".node-meta")
-      .attr("y", (node) => (node.type === "deity" ? 66 : 63))
+      .attr("y", (node) => (node.type === "deity" ? 55 : 53))
       .text((node) =>
         node.type === "deity" ? node.deity.pantheon : node.clue.hint,
       );
@@ -288,7 +307,7 @@ export class MythGraph {
         d3
           .forceLink(links)
           .id((node) => node.id)
-          .distance((link) => (link.type === "clue" ? 135 : 170))
+          .distance((link) => (link.type === "clue" ? 145 : 155))
           .strength((link) => (link.type === "clue" ? 0.72 : 0.42)),
       )
       .force(
@@ -300,7 +319,10 @@ export class MythGraph {
       .force("center", d3.forceCenter(width * 0.52, height * 0.48))
       .force(
         "collision",
-        d3.forceCollide().radius((node) => (node.type === "clue" ? 78 : 88)),
+        d3.forceCollide().radius((node) => {
+          const label = node.type === "clue" ? node.clue.label : node.deity.id;
+          return Math.max(node.type === "clue" ? 78 : 55, Math.min(118, label.length * 3.6 + 24));
+        }).iterations(4),
       )
       .alpha(0.85)
       .alphaDecay(0.04)
@@ -317,6 +339,9 @@ export class MythGraph {
           .attr("y1", (link) => link.source.y)
           .attr("x2", (link) => link.target.x)
           .attr("y2", (link) => link.target.y);
+        edgeHitsMerged
+          .attr("x1", (link) => link.source.x).attr("y1", (link) => link.source.y)
+          .attr("x2", (link) => link.target.x).attr("y2", (link) => link.target.y);
 
         nodesMerged.attr(
           "transform",
@@ -394,6 +419,21 @@ export class MythGraph {
       .attr("y2", (edge) => edge.t.y)
       .on("click", (_, edge) => this.handlers.onEdge?.(edge.id));
 
+    const edgeHits = this.edgeLayer.selectAll("line.graph-edge-hit").data(links, (edge) => edge.id);
+    edgeHits.exit().remove();
+    edgeHits.enter().append("line").attr("class", "graph-edge-hit")
+      .attr("tabindex", 0).attr("role", "button").merge(edgeHits)
+      .attr("x1", (edge) => edge.s.x).attr("y1", (edge) => edge.s.y)
+      .attr("x2", (edge) => edge.t.x).attr("y2", (edge) => edge.t.y)
+      .attr("aria-label", (edge) => `Inspect relationship between ${edge.source} and ${edge.target}`)
+      .on("click", (_, edge) => this.handlers.onEdge?.(edge.id))
+      .on("keydown", (event, edge) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          this.handlers.onEdge?.(edge.id);
+        }
+      });
+
     const nodeSelection = this.nodeLayer
       .selectAll("g.graph-node")
       .data(nodes, (node) => node.id);
@@ -438,11 +478,11 @@ export class MythGraph {
 
     merged
       .select(".node-halo")
-      .attr("r", (node) => (node.id === state.selectedNode ? 50 : 44))
+      .attr("r", (node) => (node.id === state.selectedNode ? 31 : 27))
       .style("stroke", (node) => deityAccent(node.deity));
     merged
       .select(".node-disc")
-      .attr("r", 35)
+      .attr("r", 20)
       .style(
         "fill",
         (node) => `color-mix(in srgb, ${deityAccent(node.deity)} 12%, #fffaf0)`,
@@ -453,20 +493,18 @@ export class MythGraph {
       .style("fill", (node) => deityAccent(node.deity))
       .style("font-size", (node) => {
         const length = [...deityGlyph(node.deity)].length;
-        if (length > 10) return "8px";
-        if (length > 7) return "10px";
-        if (length > 5) return "12px";
-        if (length > 3) return "15px";
-        return "20px";
+        if (length > 3) return "11px";
+        if (length > 1) return "15px";
+        return "19px";
       })
       .text((node) => deityGlyph(node.deity));
     merged
       .select(".node-name")
-      .attr("y", 61)
+      .attr("y", 42)
       .text((node) => node.deity.id);
     merged
       .select(".node-meta")
-      .attr("y", 78)
+      .attr("y", 56)
       .text((node) => node.deity.pantheon);
   }
 
@@ -536,7 +574,7 @@ export class MythGraph {
     d3.forceSimulation(timelineNodes)
       .force("x", d3.forceX((node) => node.targetX).strength(0.78))
       .force("y", d3.forceY((node) => node.targetY).strength(0.2))
-      .force("collision", d3.forceCollide(69).iterations(3))
+      .force("collision", d3.forceCollide(55).iterations(5))
       .stop()
       .tick(180);
     const timelinePositions = new Map(
@@ -580,32 +618,37 @@ export class MythGraph {
       .x((point) => mapX(point[0]))
       .y((point) => mapY(point[1]))
       .curve(d3.curveBasisClosed);
+    // A deliberately simplified, region-focused Old World atlas. Coastlines
+    // are recognizable, while modern national borders are omitted.
     const landMasses = [
       [
-        [0.06, 0.26],
-        [0.18, 0.15],
-        [0.34, 0.16],
-        [0.46, 0.27],
-        [0.43, 0.44],
-        [0.29, 0.51],
-        [0.12, 0.46],
+        [0.08, 0.28], [0.14, 0.21], [0.22, 0.2], [0.27, 0.13],
+        [0.34, 0.16], [0.38, 0.23], [0.45, 0.26], [0.49, 0.35],
+        [0.44, 0.43], [0.36, 0.42], [0.32, 0.49], [0.23, 0.47],
+        [0.15, 0.42], [0.09, 0.36],
       ],
       [
-        [0.34, 0.43],
-        [0.49, 0.42],
-        [0.58, 0.57],
-        [0.53, 0.82],
-        [0.42, 0.76],
-        [0.35, 0.58],
+        [0.27, 0.45], [0.39, 0.42], [0.49, 0.46], [0.56, 0.55],
+        [0.55, 0.67], [0.49, 0.83], [0.41, 0.9], [0.36, 0.77],
+        [0.31, 0.63],
       ],
       [
-        [0.4, 0.18],
-        [0.6, 0.1],
-        [0.86, 0.17],
-        [0.94, 0.34],
-        [0.83, 0.56],
-        [0.62, 0.6],
-        [0.47, 0.43],
+        [0.4, 0.22], [0.52, 0.12], [0.69, 0.1], [0.85, 0.16],
+        [0.95, 0.27], [0.91, 0.39], [0.83, 0.45], [0.82, 0.56],
+        [0.74, 0.62], [0.65, 0.55], [0.58, 0.58], [0.51, 0.48],
+        [0.44, 0.42],
+      ],
+      [
+        [0.54, 0.47], [0.62, 0.48], [0.67, 0.61], [0.62, 0.7],
+        [0.57, 0.63],
+      ],
+      [
+        [0.68, 0.49], [0.75, 0.51], [0.79, 0.65], [0.74, 0.76],
+        [0.7, 0.65],
+      ],
+      [
+        [0.26, 0.11], [0.31, 0.05], [0.37, 0.08], [0.39, 0.2],
+        [0.34, 0.27], [0.29, 0.22],
       ],
     ];
     this.decor
@@ -615,6 +658,16 @@ export class MythGraph {
       .append("path")
       .attr("class", "geo-land")
       .attr("d", land);
+
+    const atlasLabels = [
+      [0.27, 0.34, "EUROPE"], [0.42, 0.67, "NORTH AFRICA"],
+      [0.57, 0.46, "NEAR EAST"], [0.7, 0.3, "CENTRAL ASIA"],
+      [0.75, 0.68, "SOUTH ASIA"],
+    ];
+    this.decor.selectAll("text.geo-atlas-label").data(atlasLabels).enter()
+      .append("text").attr("class", "geo-atlas-label")
+      .attr("x", (item) => mapX(item[0])).attr("y", (item) => mapY(item[1]))
+      .attr("text-anchor", "middle").text((item) => item[2]);
 
     for (let gx = 15; gx <= 85; gx += 14) {
       this.decor
@@ -673,15 +726,15 @@ export class MythGraph {
     d3.forceSimulation(geographyNodes)
       .force("x", d3.forceX((node) => node.targetX).strength(0.22))
       .force("y", d3.forceY((node) => node.targetY).strength(0.22))
-      .force("collision", d3.forceCollide(72).iterations(3))
+      .force("collision", d3.forceCollide(56).iterations(5))
       .stop()
       .tick(180);
     const geographyPositions = new Map(
       geographyNodes.map((node) => [
         node.id,
         {
-          x: Math.max(92, Math.min(width - 92, node.x)),
-          y: Math.max(96, Math.min(height - 104, node.y)),
+          x: Math.max(62, Math.min(width - 62, node.x)),
+          y: Math.max(66, Math.min(height - 76, node.y)),
         },
       ]),
     );
