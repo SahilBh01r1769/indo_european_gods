@@ -3116,6 +3116,244 @@ body {
   }
 }
 
+/* V6 guided atlas ---------------------------------------------------------
+   One reading scroll, a coastline-backed map, paced clues and tour-sized
+   typography. */
+.geo-basemap {
+  opacity: 1;
+  pointer-events: none;
+}
+
+.geo-region {
+  fill: rgba(220, 124, 55, 0.14);
+  stroke: rgba(132, 77, 34, 0.52);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 5;
+  pointer-events: none;
+}
+
+.geo-region-norse,
+.geo-region-celtic {
+  fill: rgba(27, 124, 104, 0.13);
+  stroke: rgba(17, 105, 88, 0.58);
+}
+
+.geo-region-greek,
+.geo-region-roman {
+  fill: rgba(39, 99, 176, 0.12);
+  stroke: rgba(35, 83, 148, 0.55);
+}
+
+.geo-region-slavic {
+  fill: rgba(190, 55, 50, 0.12);
+  stroke: rgba(168, 46, 41, 0.55);
+}
+
+.pronunciation-guide {
+  display: grid;
+  gap: 4px;
+  margin: 13px 0 15px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--amber);
+  background: rgba(229, 190, 116, 0.14);
+}
+
+.pronunciation-guide span,
+.story-change span,
+.story-thesis-card > span,
+.story-kind {
+  color: var(--brass-dark);
+  font: 800 9px var(--sans);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pronunciation-guide strong {
+  font: 600 16px/1.25 var(--serif);
+}
+
+.pronunciation-guide small {
+  color: var(--ink-soft);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.next-clue {
+  margin-top: 8px;
+  color: var(--sapphire);
+}
+
+.story-card {
+  min-height: 390px;
+}
+
+.story-kind {
+  position: absolute;
+  top: 25px;
+  right: 25px;
+  max-width: 64%;
+  text-align: right;
+}
+
+.story-card blockquote {
+  margin: 11px 0 18px;
+  padding-left: 12px;
+  border-left: 2px solid var(--amber);
+  color: #5f574e;
+  font: italic 13px/1.5 var(--serif);
+}
+
+.story-thesis-card {
+  margin: 24px 0;
+  padding: 16px 18px;
+  border-left: 3px solid var(--amber);
+  background: #f3eadb;
+}
+
+.story-thesis-card p {
+  margin: 6px 0 0;
+  font: 500 15px/1.55 var(--serif);
+}
+
+.story-stop dl,
+.story-change {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 13px 0 0;
+}
+
+.story-stop dl > div,
+.story-change > div {
+  padding: 10px;
+  background: rgba(231, 215, 185, 0.26);
+}
+
+.story-stop dt {
+  color: var(--brass-dark);
+  font: 800 8px var(--sans);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.story-stop dd {
+  margin: 4px 0 0;
+  font: 500 12px/1.4 var(--serif);
+}
+
+.story-thesis {
+  padding: 9px 11px;
+  border-left: 2px solid var(--amber);
+  background: rgba(231, 215, 185, 0.24);
+  color: #514a43 !important;
+  font-style: italic !important;
+}
+
+.story-place {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ink-soft);
+}
+
+.story-place strong {
+  font: 600 15px var(--serif);
+}
+
+.story-place span {
+  font-size: 10px;
+}
+
+.story-change {
+  grid-template-columns: 1fr;
+}
+
+.story-change strong {
+  display: block;
+  margin-top: 4px;
+  font: 500 12px/1.4 var(--serif);
+}
+
+.story-tour-actions {
+  display: flex;
+  gap: 7px;
+  margin: 12px 0 5px;
+}
+
+.story-coach p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.compare-title p {
+  font-size: 15px;
+}
+
+.compare-heads small {
+  font-size: 11px;
+}
+
+.pair-evidence h3 {
+  font-size: 18px;
+}
+
+.pair-evidence strong {
+  font-size: 15px;
+}
+
+.pair-evidence small {
+  font-size: 11px;
+}
+
+.pair-evidence p {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.compare-trait-row strong {
+  font-size: 12px;
+}
+
+.compare-trait-row > span {
+  height: 7px;
+}
+
+@media (min-width: 821px) {
+  .discover-shell {
+    height: auto;
+    min-height: calc(100vh - 72px);
+    align-items: start;
+  }
+
+  .journey-panel,
+  .context-panel,
+  .context-scroll,
+  .journey-list {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .graph-column {
+    position: sticky;
+    top: 72px;
+    height: calc(100vh - 72px);
+    min-height: 620px;
+  }
+}
+
+@media (max-width: 820px) {
+  .story-kind {
+    position: static;
+    max-width: none;
+    text-align: left;
+  }
+
+  .story-stop dl {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* V5 discovery depth -------------------------------------------------------
    Compact iconography, readable scholarship, journey history and an atlas
    with enough colour to feel alive without becoming a game dashboard. */

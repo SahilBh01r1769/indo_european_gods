@@ -186,9 +186,19 @@ export function candidateConnections(id, discoveredIds = [], max = 4) {
       candidates.set(relation.target, relation);
   }
 
-  return [...candidates.values()]
-    .sort((a, b) => relationPriority(a) - relationPriority(b))
-    .slice(0, max)
+  const ranked = [...candidates.values()].sort(
+    (a, b) => relationPriority(a) - relationPriority(b),
+  );
+  const diverse = [], seen = new Set();
+  for (const relation of ranked) {
+    const signature = `${relation.kind}:${relation.clue}`;
+    if (seen.has(signature)) continue;
+    seen.add(signature);
+    diverse.push(relation);
+    if (diverse.length === max) break;
+  }
+
+  return diverse
     .map((relation, index) => ({
       id: `clue:${deity.id}:${relation.target}`,
       from: deity.id,

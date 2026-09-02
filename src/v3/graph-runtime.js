@@ -611,87 +611,27 @@ export class MythGraph {
       .attr("height", height - 56)
       .attr("rx", 26);
 
-    const mapX = (value) => 28 + (width - 56) * value;
-    const mapY = (value) => 28 + (height - 56) * value;
-    const land = d3
-      .line()
-      .x((point) => mapX(point[0]))
-      .y((point) => mapY(point[1]))
-      .curve(d3.curveBasisClosed);
-    // A deliberately simplified, region-focused Old World atlas. Coastlines
-    // are recognizable, while modern national borders are omitted.
-    const landMasses = [
-      [
-        [0.08, 0.28], [0.14, 0.21], [0.22, 0.2], [0.27, 0.13],
-        [0.34, 0.16], [0.38, 0.23], [0.45, 0.26], [0.49, 0.35],
-        [0.44, 0.43], [0.36, 0.42], [0.32, 0.49], [0.23, 0.47],
-        [0.15, 0.42], [0.09, 0.36],
-      ],
-      [
-        [0.27, 0.45], [0.39, 0.42], [0.49, 0.46], [0.56, 0.55],
-        [0.55, 0.67], [0.49, 0.83], [0.41, 0.9], [0.36, 0.77],
-        [0.31, 0.63],
-      ],
-      [
-        [0.4, 0.22], [0.52, 0.12], [0.69, 0.1], [0.85, 0.16],
-        [0.95, 0.27], [0.91, 0.39], [0.83, 0.45], [0.82, 0.56],
-        [0.74, 0.62], [0.65, 0.55], [0.58, 0.58], [0.51, 0.48],
-        [0.44, 0.42],
-      ],
-      [
-        [0.54, 0.47], [0.62, 0.48], [0.67, 0.61], [0.62, 0.7],
-        [0.57, 0.63],
-      ],
-      [
-        [0.68, 0.49], [0.75, 0.51], [0.79, 0.65], [0.74, 0.76],
-        [0.7, 0.65],
-      ],
-      [
-        [0.26, 0.11], [0.31, 0.05], [0.37, 0.08], [0.39, 0.2],
-        [0.34, 0.27], [0.29, 0.22],
-      ],
-    ];
     this.decor
-      .selectAll("path.geo-land")
-      .data(landMasses)
-      .enter()
-      .append("path")
-      .attr("class", "geo-land")
-      .attr("d", land);
-
-    const atlasLabels = [
-      [0.27, 0.34, "EUROPE"], [0.42, 0.67, "NORTH AFRICA"],
-      [0.57, 0.46, "NEAR EAST"], [0.7, 0.3, "CENTRAL ASIA"],
-      [0.75, 0.68, "SOUTH ASIA"],
-    ];
-    this.decor.selectAll("text.geo-atlas-label").data(atlasLabels).enter()
-      .append("text").attr("class", "geo-atlas-label")
-      .attr("x", (item) => mapX(item[0])).attr("y", (item) => mapY(item[1]))
-      .attr("text-anchor", "middle").text((item) => item[2]);
-
-    for (let gx = 15; gx <= 85; gx += 14) {
-      this.decor
-        .append("line")
-        .attr("class", "geo-grid")
-        .attr("x1", (width * gx) / 100)
-        .attr("x2", (width * gx) / 100)
-        .attr("y1", 48)
-        .attr("y2", height - 48);
-    }
-    for (let gy = 18; gy <= 82; gy += 16) {
-      this.decor
-        .append("line")
-        .attr("class", "geo-grid")
-        .attr("x1", 48)
-        .attr("x2", width - 48)
-        .attr("y1", (height * gy) / 100)
-        .attr("y2", (height * gy) / 100);
-    }
+      .append("image")
+      .attr("class", "geo-basemap")
+      .attr("href", "assets/old-world-map.svg")
+      .attr("x", 28)
+      .attr("y", 28)
+      .attr("width", width - 56)
+      .attr("height", height - 56)
+      .attr("preserveAspectRatio", "none");
 
     [...new Set(discovered.map((deity) => deity.pantheon))].forEach(
       (pantheon) => {
         const position = TRADITION_POSITIONS[pantheon];
         if (!position) return;
+        this.decor
+          .append("ellipse")
+          .attr("class", `geo-region geo-region-${pantheon.toLowerCase()}`)
+          .attr("cx", (width * position.x) / 100)
+          .attr("cy", (height * position.y) / 100)
+          .attr("rx", Math.max(42, Math.min(76, width * 0.065)))
+          .attr("ry", Math.max(27, Math.min(44, height * 0.065)));
         this.decor
           .append("text")
           .attr("class", "geo-region-label")
