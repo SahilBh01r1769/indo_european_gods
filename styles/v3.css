@@ -620,6 +620,17 @@ body.overlay-open {
   cursor: pointer;
   vector-effect: non-scaling-stroke;
 }
+.graph-edge-hit {
+  stroke: transparent;
+  stroke-width: 14;
+  cursor: pointer;
+  pointer-events: stroke;
+}
+
+.graph-edge-hit:focus-visible {
+  stroke: rgba(38, 103, 182, 0.18);
+  outline: none;
+}
 .edge-kind-linguistic {
   stroke: #a88441;
   stroke-width: 1.7;
@@ -3102,5 +3113,526 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .story-auto-note i {
     animation: none;
+  }
+}
+
+/* V5 discovery depth -------------------------------------------------------
+   Compact iconography, readable scholarship, journey history and an atlas
+   with enough colour to feel alive without becoming a game dashboard. */
+.start-deity-card {
+  border-top: 4px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, #fffaf1);
+}
+
+.start-deity-card:hover {
+  background: color-mix(in srgb, var(--accent) 13%, #fffaf1);
+}
+
+.card-tradition {
+  color: color-mix(in srgb, var(--accent) 78%, #2f2922);
+  font-weight: 800;
+}
+
+.evidence-badge {
+  font-size: 8px;
+  padding: 5px 8px;
+}
+
+.node-glyph {
+  font-size: 18px;
+  font-family: var(--serif);
+}
+
+.node-name {
+  font-size: 13.5px;
+  paint-order: stroke;
+  stroke: rgba(251, 248, 242, 0.96);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.node-meta {
+  font-size: 8.5px;
+  paint-order: stroke;
+  stroke: rgba(251, 248, 242, 0.96);
+  stroke-width: 2.5px;
+}
+
+.graph-node-clue .node-name {
+  font-size: 12px;
+}
+
+.geo-field {
+  fill: #cfe4e3;
+  stroke: #839f9b;
+  stroke-width: 1.2;
+}
+
+.geo-land {
+  fill: #e7d4a9;
+  stroke: #9d865b;
+  stroke-width: 1.15;
+  opacity: 0.96;
+}
+
+.geo-grid {
+  stroke: rgba(54, 93, 98, 0.17);
+}
+
+.geo-atlas-label {
+  fill: rgba(71, 68, 56, 0.46);
+  font: 700 8px var(--sans);
+  letter-spacing: 0.16em;
+}
+
+.geo-region-label {
+  fill: #57472f;
+  font-size: 11px;
+  paint-order: stroke;
+  stroke: rgba(239, 224, 192, 0.9);
+  stroke-width: 3px;
+}
+
+.geo-caution {
+  fill: #355f63;
+  font-size: 9px;
+}
+
+.history-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.journey-actions button {
+  width: 100%;
+}
+
+.journey-actions button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.danger-text-button {
+  border: 0;
+  background: transparent;
+  color: #9f443b;
+  padding: 8px;
+  font: 600 10px var(--sans);
+  cursor: pointer;
+}
+
+.context-memory {
+  margin: 18px 0 0;
+  color: var(--ink);
+  font: 600 16px/1.35 var(--serif);
+}
+
+.context-epithet {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.clue-instruction {
+  margin: 8px 0 12px;
+  color: var(--ink-soft);
+  font: 400 11px/1.5 var(--serif);
+}
+
+.clue-arrow {
+  font: 700 8px var(--sans);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.new-thread .inspect-relation {
+  margin-top: 8px;
+  padding-left: 0;
+}
+
+.guess-overlay,
+.relationship-overlay,
+.guide-overlay {
+  width: min(760px, 100%);
+}
+
+.guess-overlay h2,
+.relationship-overlay h2,
+.guide-overlay h2 {
+  margin: 8px 0 12px;
+  font: 500 38px/1.08 var(--serif);
+}
+
+.guess-lead,
+.relationship-summary,
+.guide-overlay > p {
+  color: var(--ink-soft);
+  font: 400 15px/1.65 var(--serif);
+}
+
+.guess-hints {
+  margin: 22px 0;
+  padding: 18px 20px;
+  border-left: 3px solid var(--brass);
+  background: #f3ead9;
+}
+
+.guess-hints ol {
+  margin: 10px 0 0;
+  padding-left: 20px;
+}
+
+.guess-hints li {
+  margin: 7px 0;
+  color: #4b4842;
+  font: 500 14px/1.45 var(--serif);
+}
+
+.guess-form label {
+  display: block;
+  margin-bottom: 7px;
+  font: 700 9px var(--sans);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.guess-form > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.guess-form input {
+  min-width: 0;
+  border: 1px solid #b8aa93;
+  border-radius: 7px;
+  padding: 11px 13px;
+  background: #fffdf9;
+  color: var(--ink);
+  font: 500 15px var(--serif);
+}
+
+.guess-feedback {
+  min-height: 21px;
+  margin: 8px 0 0;
+  color: var(--emerald);
+  font-size: 11px;
+}
+
+.guess-feedback.is-wrong {
+  color: #9f443b;
+}
+
+.guess-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.relationship-title {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 18px;
+  margin: 5px 0 20px;
+}
+
+.relationship-title > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 19px var(--serif);
+}
+
+.relationship-title > div:last-child {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.relationship-title > span {
+  color: var(--brass-dark);
+  font-size: 22px;
+}
+
+.relationship-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
+  margin-top: 24px;
+}
+
+.relationship-grid section {
+  border-top: 1px solid var(--line);
+  padding-top: 15px;
+}
+
+.relationship-grid li,
+.relationship-grid p,
+.difference-note p {
+  color: var(--ink-soft);
+  font: 400 13px/1.55 var(--serif);
+}
+
+.difference-note {
+  margin: 22px 0;
+  padding: 15px 17px;
+  border: 1px solid rgba(165, 93, 54, 0.26);
+  background: #f8eee5;
+}
+
+.difference-note p {
+  margin-bottom: 0;
+}
+
+.guide-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.guide-steps > div {
+  padding: 16px;
+  border-top: 3px solid var(--brass);
+  background: #f4ecdf;
+}
+
+.guide-steps span {
+  color: var(--brass-dark);
+  font: 700 10px var(--sans);
+}
+
+.guide-steps strong {
+  display: block;
+  margin: 10px 0 5px;
+  font: 600 18px var(--serif);
+}
+
+.guide-steps p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.guide-nudge {
+  position: absolute;
+  z-index: 6;
+  top: 118px;
+  right: 24px;
+  width: min(280px, calc(100% - 48px));
+  padding: 14px 34px 14px 16px;
+  border: 1px solid rgba(160, 119, 55, 0.4);
+  border-left: 4px solid var(--brass);
+  background: #fff8eb;
+  box-shadow: 0 12px 30px rgba(63, 49, 30, 0.14);
+}
+
+.graph-column {
+  position: relative;
+}
+
+.guide-nudge > button {
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  border: 0;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.guide-nudge span,
+.guide-nudge strong {
+  display: block;
+}
+
+.guide-nudge span {
+  color: var(--brass-dark);
+  font: 800 8px var(--sans);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.guide-nudge strong {
+  margin: 5px 0;
+  font: 600 15px var(--serif);
+}
+
+.guide-nudge p {
+  margin: 0;
+  color: var(--ink-soft);
+  font: 400 11px/1.45 var(--serif);
+}
+
+.memory-hook {
+  display: grid;
+  gap: 4px;
+  margin-top: 22px;
+  padding: 14px 17px;
+  border-left: 3px solid var(--accent, var(--brass));
+  background: #f3eadb;
+}
+
+.memory-hook span,
+.dossier-facts span {
+  color: var(--brass-dark);
+  font: 700 8px var(--sans);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.memory-hook strong {
+  font: 600 17px var(--serif);
+}
+
+.dossier-facts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.dossier-facts > div {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  background: rgba(230, 217, 193, 0.32);
+}
+
+.dossier-facts strong {
+  font: 500 13px/1.45 var(--serif);
+}
+
+.dossier-facts small {
+  color: var(--ink-soft);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+button.dossier-thread {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.dossier-thread:hover {
+  background: rgba(230, 217, 193, 0.24);
+}
+
+.context-sheet-handle {
+  display: none;
+}
+
+.method-note p,
+.about-lead,
+.evidence-grid p {
+  font-size: 14px;
+}
+
+.evidence-grid .evidence-badge,
+.method-note strong {
+  font-size: 9px;
+}
+
+@media (max-width: 820px) {
+  .guide-nudge {
+    top: 92px;
+    right: 12px;
+  }
+  .context-panel {
+    position: relative;
+    max-height: 34vh;
+    overflow: hidden;
+    transition: max-height 260ms ease;
+  }
+
+  .context-panel.sheet-expanded {
+    max-height: 72vh;
+  }
+
+  .context-sheet-handle {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: rgba(250, 247, 241, 0.98);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .context-sheet-toggle {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 7px;
+    color: var(--ink-soft);
+    font: 700 8px var(--sans);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+  }
+
+  .context-sheet-toggle span {
+    display: block;
+    width: 42px;
+    height: 4px;
+    margin: 0 auto 5px;
+    border-radius: 3px;
+    background: #b8aa93;
+  }
+
+  .modebar {
+    bottom: calc(34vh - 1px);
+  }
+
+  .context-panel.sheet-expanded ~ .modebar {
+    bottom: calc(72vh - 1px);
+  }
+
+  .context-panel.sheet-expanded .context-epithet,
+  .context-panel.sheet-expanded .context-section:last-child {
+    display: block;
+  }
+
+  .relationship-grid,
+  .guide-steps,
+  .dossier-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .guess-overlay h2,
+  .relationship-overlay h2,
+  .guide-overlay h2 {
+    font-size: 30px;
+  }
+}
+
+@media (max-width: 520px) {
+  .guess-form > div {
+    grid-template-columns: 1fr;
+  }
+
+  .guess-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .relationship-title {
+    gap: 8px;
+  }
+
+  .relationship-title > div {
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    font-size: 15px;
+  }
+
+  .relationship-title > div:last-child {
+    flex-direction: column;
+    text-align: center;
   }
 }

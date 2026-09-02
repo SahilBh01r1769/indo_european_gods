@@ -6,8 +6,9 @@ import {
   relationBetween,
 } from "./model.js";
 
-const STORAGE_KEY = "mythos:journey:v4";
-const STORAGE_VERSION = 1;
+const STORAGE_KEY = "mythos:journey:v5";
+const LEGACY_STORAGE_KEY = "mythos:journey:v4";
+const STORAGE_VERSION = 2;
 const listeners = new Set();
 
 const blank = () => ({
@@ -62,7 +63,7 @@ function normalize(candidate) {
 
   return {
     ...base,
-    started: Boolean(candidate.started && discoveredNodes.length),
+    started: Boolean(candidate.started),
     startType: candidate.startType || null,
     startId: candidate.startId || null,
     discoveredNodes,
@@ -88,25 +89,66 @@ function normalize(candidate) {
 }
 
 function loadStoredState() {
-  if (typeof localStorage === "undefined") return blank();
+  if (typeof localStorage === "undefined") return { state: blank() };
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (!saved) {
+      const legacy = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY));
+      if (legacy?.state) return { state: normalize(legacy.state) };
+    }
     return saved?.version === STORAGE_VERSION
-      ? normalize(saved.state)
-      : blank();
+      ? {
+          state: normalize(saved.state),
+          recent: (saved.recent || []).map(normalize).filter((item) => item.started).slice(-5),
+          undo: (saved.undo || []).map(normalize).slice(-24),
+          redo: (saved.redo || []).map(normalize).slice(-24),
+          freeJourney: saved.freeJourney ? normalize(saved.freeJourney) : null,
+        }
+      : { state: blank() };
   } catch {
-    return blank();
+    return { state: blank() };
   }
 }
 
-let state = loadStoredState();
+const loaded = loadStoredState();
+let state = loaded.state;
+let recentJourneys = loaded.recent || [];
+let undoStack = loaded.undo || [];
+let redoStack = loaded.redo || [];
+let savedFreeJourney = loaded.freeJourney || null;
+
+function snapshot(value = state) {
+  return cloneState(value);
+}
+
+function checkpoint() {
+  undoStack = [...undoStack, snapshot()].slice(-24);
+  redoStack = [];
+}
+
+function archiveCurrent() {
+  if (!state.started || !state.discoveredNodes.length) return;
+  const candidate = snapshot();
+  const signature = candidate.discoveredNodes.join("|");
+  recentJourneys = [
+    ...recentJourneys.filter((item) => item.discoveredNodes.join("|") !== signature),
+    candidate,
+  ].slice(-5);
+}
 
 function persist() {
   if (typeof localStorage === "undefined") return;
   try {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ version: STORAGE_VERSION, state: cloneState(state) }),
+      JSON.stringify({
+        version: STORAGE_VERSION,
+        state: cloneState(state),
+        recent: recentJourneys,
+        undo: undoStack,
+        redo: redoStack,
+        freeJourney: savedFreeJourney,
+      }),
     );
   } catch {
     // Storage can be disabled. The in-memory journey should still work.
@@ -140,13 +182,21 @@ export function subscribe(listener) {
 
 export function resetJourney({ publish: shouldPublish = true } = {}) {
   state = blank();
+  recentJourneys = [];
+  undoStack = [];
+  redoStack = [];
+  savedFreeJourney = null;
   if (typeof localStorage !== "undefined") localStorage.removeItem(STORAGE_KEY);
+  if (typeof localStorage !== "undefined") localStorage.removeItem(LEGACY_STORAGE_KEY);
   if (shouldPublish) publish();
 }
 
 export function startWithDeity(id) {
   const deity = getDeity(id);
   if (!deity) return false;
+  archiveCurrent();
+  undoStack = [];
+  redoStack = [];
   state = {
     ...blank(),
     started: true,
@@ -167,6 +217,9 @@ export function startWithArchetype(id) {
   const relation =
     seeds.length > 1 ? relationBetween(seeds[0], seeds[1]) : null;
   const edges = relation?.curated || relation?.score >= 0.34 ? [relation] : [];
+  archiveCurrent();
+  undoStack = [];
+  redoStack = [];
   state = {
     ...blank(),
     started: true,
@@ -186,6 +239,11 @@ export function beginStory(id) {
   const story = getStory(id);
   if (!story) return false;
   const first = story.path[0];
+  if (state.started && !state.activeStory && state.discoveredNodes.length)
+    savedFreeJourney = snapshot();
+  archiveCurrent();
+  undoStack = [];
+  redoStack = [];
   state = {
     ...blank(),
     started: true,
@@ -202,7 +260,7 @@ export function beginStory(id) {
 
 export function revealStoryNext() {
   const active = state.activeStory;
-  if (!active) return null;
+  if (!active || active.paused) return null;
   const story = getStory(active.id);
   if (!story) return null;
   const nextIndex = active.index + 1;
@@ -210,7 +268,7 @@ export function revealStoryNext() {
   const from = story.path[active.index];
   const target = story.path[nextIndex];
   revealDirect(from, target, { select: true, silent: true });
-  state.activeStory = { id: story.id, index: nextIndex };
+  state.activeStory = { id: story.id, index: nextIndex, paused: false };
   step("story-step", { story: story.id, index: nextIndex, target });
   publish();
   return target;
@@ -226,6 +284,7 @@ export function availableClues(id = state.selectedNode) {
 
 export function revealClue(clue, { selectTarget = true } = {}) {
   if (!clue?.from || !clue?.target) return null;
+  checkpoint();
   return revealDirect(clue.from, clue.target, { select: selectTarget });
 }
 
@@ -264,6 +323,7 @@ export function addToJourney(id, from = state.selectedNode) {
   if (!deity) return false;
   if (!state.started) return startWithDeity(deity.id);
 
+  checkpoint();
   const relation =
     from && from !== deity.id ? relationBetween(from, deity.id) : null;
   if (relation && (relation.curated || relation.score >= 0.34)) {
@@ -334,6 +394,74 @@ export function leaveStory() {
   publish();
 }
 
+export function toggleStoryPause() {
+  if (!state.activeStory) return false;
+  state.activeStory = {
+    ...state.activeStory,
+    paused: !state.activeStory.paused,
+  };
+  publish();
+  return state.activeStory.paused;
+}
+
+export function clearJourney() {
+  archiveCurrent();
+  checkpoint();
+  const mode = state.mode;
+  state = { ...blank(), started: true, mode };
+  step("clear-journey");
+  publish();
+}
+
+export function undoJourney() {
+  const previous = undoStack.pop();
+  if (!previous) return false;
+  redoStack = [...redoStack, snapshot()].slice(-24);
+  state = normalize(previous);
+  publish();
+  return true;
+}
+
+export function redoJourney() {
+  const next = redoStack.pop();
+  if (!next) return false;
+  undoStack = [...undoStack, snapshot()].slice(-24);
+  state = normalize(next);
+  publish();
+  return true;
+}
+
+export function restorePreviousJourney() {
+  const previous = recentJourneys.pop();
+  if (!previous) return false;
+  checkpoint();
+  state = normalize(previous);
+  state.activeStory = null;
+  publish();
+  return true;
+}
+
+export function restoreFreeJourney() {
+  if (!savedFreeJourney) return false;
+  archiveCurrent();
+  checkpoint();
+  state = normalize(savedFreeJourney);
+  state.activeStory = null;
+  savedFreeJourney = null;
+  publish();
+  return true;
+}
+
+export function journeyCapabilities() {
+  return {
+    canUndo: undoStack.length > 0,
+    canRedo: redoStack.length > 0,
+    canRestore: recentJourneys.length > 0,
+    canRestoreFree: Boolean(savedFreeJourney),
+    recentCount: recentJourneys.length,
+  };
+}
+
 function shareSnapshot() {
   return {
     v: STORAGE_VERSION,
@@ -366,7 +494,7 @@ export function restoreJourney(encoded) {
       character.charCodeAt(0),
     );
     const candidate = JSON.parse(new TextDecoder().decode(bytes));
-    if (candidate.v !== STORAGE_VERSION) return false;
+    if (![1, STORAGE_VERSION].includes(candidate.v)) return false;
     state = normalize({
       started: true,
       startType: candidate.s?.[0],

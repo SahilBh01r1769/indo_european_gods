@@ -9,17 +9,18 @@ The interface distinguishes historical and linguistic evidence from structural c
 ### Home and Discover
 
 - The home page explains the premise and shows the visual grammar before asking for a commitment.
-- Discover begins with a deity or archetype and reveals one inspectable thread at a time.
+- Discover begins with a deity or archetype and turns each hidden thread into a progressive, guessable clue.
 - Every reveal selects the new figure, explains the relationship, and remains in the visitor's journey.
-- Network, chronological, and approximate cultural-region views show the same discoveries from different angles.
-- Journeys persist in local storage and can be shared through a compact URL snapshot.
+- Network, chronological, and fixed Old World atlas views show the same discoveries from different angles.
+- Journeys support clear, undo, redo and recent-journey restoration, persist locally, and can be shared through a compact URL snapshot.
 - Curated relationships and model-only echoes use visibly different line treatments and labels.
 
 ### Stories, Collection, and comparison
 
 - Six guided stories provide narrative entry points while writing into the same exploration state.
 - The collection supports search, tradition filtering, sorting, result counts, and cited dossiers.
-- Dossiers show source notes when references exist and an explicit caution when they do not.
+- Deity dossiers combine native names, aliases, memory hooks, periods, regions, provenance-labelled marks and scoped sources.
+- Relationship dossiers explain what supports a connection, how cautiously to read it, and where the compared figures differ.
 - Two or three figures can be compared without losing the graph. Qualitative evidence appears before the trait-overlap score.
 
 ## Evidence vocabulary
@@ -43,7 +44,7 @@ The UI includes keyboard-operable graph nodes, visible focus states, a skip link
 
 ## Data and architecture
 
-The dataset currently contains 67 figures, 16 canonical trait dimensions, 51 curated relationships, 10 bibliography records, and 9 represented traditions. Trait weights are editorial heuristics for exploration; they are not scholarly measurements or confidence values.
+The dataset currently contains 67 figures, 16 canonical trait dimensions, 51 curated relationships, 17 bibliography records, and 9 represented traditions. Trait weights are editorial heuristics for exploration; they are not scholarly measurements or confidence values.
 
 ```text
 index.html
@@ -59,6 +60,7 @@ src/
   v3/
     config.js                # starts, archetypes, stories, evidence vocabulary
     model.js                 # search, candidates, relations, comparison
+    metadata.js              # marks, aliases, regions, memory hooks, guesses
     state.js                 # validated persistence and URL snapshots
     graph-runtime.js         # shared SVG, time, and geography rendering
     graph-stable.js          # stable interactive network layout

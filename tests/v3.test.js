@@ -15,9 +15,12 @@ import {
   revealStoryNext,
   encodeJourney,
   restoreJourney,
+  clearJourney,
+  restorePreviousJourney,
 } from "../src/v3/state.js";
 import { DEITIES } from "../src/data/deities.js";
 import { getDeityRefs } from "../src/data/citations.js";
+import { deityProfile, matchesDeityGuess, validateProfiles } from "../src/v3/metadata.js";
 
 test("Thor exposes curated mystery paths before model-only echoes", () => {
   const clues = candidateConnections("Thor", ["Thor"], 4);
@@ -108,4 +111,22 @@ test("comparison keeps qualitative evidence plus model overlap data", () => {
       (p) => typeof p.fit === "string" && typeof p.score === "number",
     ),
   );
+});
+
+test("all figures have a usable mark, alias set and geographic profile", () => {
+  assert.deepEqual(validateProfiles(), []);
+  assert.equal(deityProfile("Indra").markLabel, "vajra");
+  assert.equal(matchesDeityGuess("Odin", "Odinn"), true);
+  assert.equal(matchesDeityGuess("Apophis", "Apep"), true);
+  assert.equal(matchesDeityGuess("Thor", "Zeus"), false);
+});
+
+test("clearing keeps Discover active and the previous journey restorable", () => {
+  resetJourney({ publish: false });
+  startWithDeity("Thor");
+  clearJourney();
+  assert.equal(getState().started, true);
+  assert.deepEqual(getState().discoveredNodes, []);
+  assert.equal(restorePreviousJourney(), true);
+  assert.deepEqual(getState().discoveredNodes, ["Thor"]);
 });
