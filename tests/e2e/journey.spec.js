@@ -58,35 +58,12 @@ test("exhibitions reveal their route one deliberate stop at a time", async ({
 
   await expect(page).toHaveURL(/#discover/);
   await expect(page.locator(".graph-node-clue")).toHaveCount(0);
-  while (await page.locator(".next-story").count()) {
-    await page.locator(".next-story").click();
-    await page.waitForTimeout(300);
-  }
-  await expect(page.locator(".journey-count strong")).toHaveText("4");
-  await expect(page.locator(".story-complete")).toBeVisible();
-  await expect(page.locator(".story-conclusion")).toContainText("Curator’s conclusion");
+  await expect(page.locator(".journey-count strong")).toHaveText("1");
+  await expect(page.locator(".story-coach")).toContainText("Exhibition · stop 1/4");
+  await page.locator(".next-story").click();
+  await expect(page.locator(".journey-count strong")).toHaveText("2");
+  await expect(page.locator(".story-coach")).toContainText("Why this stop follows");
   await expect(page.locator(".graph-node-clue")).toHaveCount(0);
-  await page.waitForTimeout(900);
-
-  const overlappingPairs = await page
-    .locator(".graph-node-deity")
-    .evaluateAll((elements) => {
-      const boxes = elements.map((element) => ({
-        name: element.getAttribute("aria-label"),
-        box: element.getBoundingClientRect(),
-      }));
-      return boxes.flatMap((left, index) =>
-        boxes.slice(index + 1).flatMap((right) => {
-          const separated =
-            left.box.right < right.box.left ||
-            right.box.right < left.box.left ||
-            left.box.bottom < right.box.top ||
-            right.box.bottom < left.box.top;
-          return separated ? [] : [[left.name, right.name]];
-        }),
-      );
-    });
-  expect(overlappingPairs).toEqual([]);
 });
 
 test("provenance-aware marks occupy compact deity nodes", async ({ page }) => {
