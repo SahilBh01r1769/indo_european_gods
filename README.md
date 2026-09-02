@@ -9,17 +9,17 @@ The interface distinguishes historical and linguistic evidence from structural c
 ### Home and Discover
 
 - The home page explains the premise and shows the visual grammar before asking for a commitment.
-- Discover begins with a deity or archetype and turns each hidden thread into a progressive, guessable clue.
+- Discover begins with a deity or archetype and presents one progressive, guessable lead at a time.
 - Every reveal selects the new figure, explains the relationship, and remains in the visitor's journey.
-- Network, chronological, and fixed Old World atlas views show the same discoveries from different angles.
+- Network, chronological, and fixed Old World atlas views show the same discoveries from different angles. The atlas uses Natural Earth coastline data beneath approximate cultural-region overlays.
 - Journeys support clear, undo, redo and recent-journey restoration, persist locally, and can be shared through a compact URL snapshot.
 - Curated relationships and model-only echoes use visibly different line treatments and labels.
 
 ### Stories, Collection, and comparison
 
-- Six guided stories provide narrative entry points while writing into the same exploration state.
+- Six paced transformation tours show what a divine identity retains and changes through inherited ancestry, cultural contact and reinterpretation; a control tour demonstrates the limits of resemblance.
 - The collection supports search, tradition filtering, sorting, result counts, and cited dossiers.
-- Deity dossiers combine native names, aliases, memory hooks, periods, regions, provenance-labelled marks and scoped sources.
+- Deity dossiers combine native names, approximate historical-language pronunciation guides, aliases, memory hooks, periods, regions, provenance-labelled marks and scoped sources.
 - Relationship dossiers explain what supports a connection, how cautiously to read it, and where the compared figures differ.
 - Two or three figures can be compared without losing the graph. Qualitative evidence appears before the trait-overlap score.
 
@@ -34,7 +34,7 @@ The interface distinguishes historical and linguistic evidence from structural c
 | Speculative curiosity       | A deliberately tentative connection with limited support                          |
 | Model-only thematic echo    | Similarity produced by manually assigned trait weights, not historical evidence   |
 
-Egyptian and Mesopotamian figures are comparative outgroups. Their presence does not imply that those traditions are Indo-European. The geography view shows approximate cultural regions, not historical borders.
+Egyptian and Mesopotamian figures are comparative outgroups. Their presence does not imply that those traditions are Indo-European. The geography view shows approximate cultural regions, not historical borders. Its coastline asset is generated from Natural Earth 1:110m public-domain land data.
 
 ## Visual direction
 
@@ -73,6 +73,8 @@ tests/
 ```
 
 The application is framework-free and deploys directly from `master` on GitHub Pages.
+
+`assets/old-world-map.svg` is a checked-in build artifact. Regenerate it after installing dependencies with `node scripts/build-old-world-map.mjs`.
 
 ## Run and validate
 

@@ -11,6 +11,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
-    "d3": "^7.9.0"
+    "d3": "^7.9.0",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
   }
 }

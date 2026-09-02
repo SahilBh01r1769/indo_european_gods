@@ -21,6 +21,7 @@ test("starts, reveals, explains and restores a journey", async ({ page }) => {
   await expect(page.locator(".journey-count")).toContainText(
     "figures uncovered",
   );
+  await expect(page.locator(".clue-button")).toHaveCount(1);
 
   await page.locator(".clue-button").first().click();
   await expect(page.locator(".guess-overlay")).toBeVisible();
@@ -53,12 +54,12 @@ test("guided stories reveal their route automatically without mystery nodes", as
   page,
 }) => {
   await page.getByRole("link", { name: "Stories" }).first().click();
-  await page.getByRole("button", { name: "Begin journey" }).first().click();
+  await page.getByRole("button", { name: "Begin guided tour" }).first().click();
 
   await expect(page).toHaveURL(/#discover/);
   await expect(page.locator(".graph-node-clue")).toHaveCount(0);
   await expect(page.locator(".journey-count strong")).toHaveText("4", {
-    timeout: 12_000,
+    timeout: 24_000,
   });
   await expect(page.locator(".story-complete")).toBeVisible();
   await expect(page.locator(".graph-node-clue")).toHaveCount(0);
@@ -91,6 +92,7 @@ test("provenance-aware marks occupy compact deity nodes", async ({ page }) => {
   ).toHaveText("ᚦ");
   await page.getByRole("button", { name: "Open dossier" }).click();
   await expect(page.getByText(/associated historical attribute/i)).toBeVisible();
+  await expect(page.getByText(/approximate scholarly guide/i)).toBeVisible();
 });
 
 test("geography renders a visible fixed map and methodology is legible", async ({
@@ -98,7 +100,8 @@ test("geography renders a visible fixed map and methodology is legible", async (
 }, testInfo) => {
   await page.getByRole("button", { name: /Thor/ }).first().click();
   await page.getByRole("button", { name: "Geography" }).click();
-  await expect(page.locator(".geo-land")).toHaveCount(6);
+  await expect(page.locator(".geo-basemap")).toHaveCount(1);
+  await expect(page.locator(".geo-region")).toHaveCount(1);
 
   const node = page.locator(".graph-node-deity").first();
   const before = await node.getAttribute("transform");
@@ -121,6 +124,27 @@ test("geography renders a visible fixed map and methodology is legible", async (
       );
     expect(bodySize).toBeGreaterThanOrEqual(14);
   }
+});
+
+test("desktop Discover uses the page scroll instead of nested panel scrollbars", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name.startsWith("mobile"));
+  await page.getByRole("button", { name: /Thor/ }).first().click();
+  const overflow = await page.evaluate(() =>
+    [".journey-panel", ".context-panel", ".context-scroll", ".journey-list"].map(
+      (selector) => {
+        const element = document.querySelector(selector);
+        return {
+          selector,
+          overflowY: getComputedStyle(element).overflowY,
+          nestedScroll: element.scrollHeight > element.clientHeight + 2,
+        };
+      },
+    ),
+  );
+  expect(overflow.every((item) => item.overflowY === "visible")).toBe(true);
+  expect(overflow.every((item) => !item.nestedScroll)).toBe(true);
 });
 
 test("mobile navigation keeps every primary view reachable", async ({

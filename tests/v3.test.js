@@ -21,6 +21,7 @@ import {
 import { DEITIES } from "../src/data/deities.js";
 import { getDeityRefs } from "../src/data/citations.js";
 import { deityProfile, matchesDeityGuess, validateProfiles } from "../src/v3/metadata.js";
+import { STORIES } from "../src/v3/config.js";
 
 test("Thor exposes curated mystery paths before model-only echoes", () => {
   const clues = candidateConnections("Thor", ["Thor"], 4);
@@ -80,11 +81,24 @@ test("guided stories reveal into the same journey state", () => {
   resetJourney({ publish: false });
   beginStory("daylight-sky");
   const next = revealStoryNext();
-  assert.equal(next, "Dyaus");
+  assert.equal(next, "Zeus");
   const state = getState();
-  assert.ok(state.discoveredNodes.includes("Zeus"));
   assert.ok(state.discoveredNodes.includes("Dyaus"));
+  assert.ok(state.discoveredNodes.includes("Zeus"));
   assert.equal(state.activeStory.index, 1);
+});
+
+test("guided tours carry a thesis and change-over-time notes at every stop", () => {
+  const deityIds = new Set(DEITIES.map((deity) => deity.id));
+  assert.ok(STORIES.length >= 6);
+  assert.ok(STORIES.every((story) => story.thesis && story.kind));
+  assert.ok(STORIES.every((story) => story.stops.length === story.path.length));
+  assert.ok(STORIES.flatMap((story) => story.path).every((id) => deityIds.has(id)));
+  assert.ok(
+    STORIES.flatMap((story) => story.stops).every(
+      (stop) => stop.body && stop.retained && stop.changed && stop.era && stop.place,
+    ),
+  );
 });
 
 test("every deity has a clearly scoped source path", () => {
@@ -113,9 +127,10 @@ test("comparison keeps qualitative evidence plus model overlap data", () => {
   );
 });
 
-test("all figures have a usable mark, alias set and geographic profile", () => {
+test("all figures have a mark, alias set, geographic profile and pronunciation", () => {
   assert.deepEqual(validateProfiles(), []);
   assert.equal(deityProfile("Indra").markLabel, "vajra");
+  assert.match(deityProfile("Thor").pronunciation, /thohr/i);
   assert.equal(matchesDeityGuess("Odin", "Odinn"), true);
   assert.equal(matchesDeityGuess("Apophis", "Apep"), true);
   assert.equal(matchesDeityGuess("Thor", "Zeus"), false);

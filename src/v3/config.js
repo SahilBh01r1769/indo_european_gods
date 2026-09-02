@@ -80,76 +80,85 @@ export const ARCHETYPES = [
 
 export const STORIES = [
   {
-    id: "thunderer-serpent",
-    title: "The Thunderer and the Serpent",
-    deck: "Why do storm gods so often meet a serpent, dragon or enemy of the waters?",
-    path: ["Thor", "Indra", "Perun", "Zeus"],
-    chapters: [
-      "Begin with Thor, the Norse thunderer whose most famous enemy is the world-serpent Jörmungandr.",
-      "Travel east to Indra, Vṛtra-slayer of the Rigveda, whose victory releases the obstructed waters.",
-      "Follow the storm pattern into Slavic tradition, where Perun opposes the underworld figure Veles.",
-      "End with Zeus: another sky-and-thunder sovereign whose monster combats belong to the same broad mythic field.",
-    ],
-  },
-  {
-    id: "archer-heals",
-    title: "The Archer Who Heals",
-    deck: "A strange divine paradox: the power to send affliction and the power to remove it.",
-    path: ["Apollo", "Rudra", "Sekhmet"],
-    chapters: [
-      "Apollo enters the Iliad as a distant archer whose arrows bring plague, yet he is also a god of medicine and purification.",
-      "Rudra combines the same unsettling powers: archer, disease-sender, healer and dangerous lord of the margins.",
-      "Sekhmet is not a linguistic relative, but she sharpens the structural question: why are plague and healing so often joined in one divine figure?",
-    ],
-  },
-  {
     id: "daylight-sky",
-    title: "Names of the Daylight Sky",
-    deck: "Some connections are not merely thematic. The names themselves preserve history.",
-    path: ["Zeus", "Dyaus", "Jupiter", "Tyr"],
-    chapters: [
-      "Zeus begins as the Greek ruler of the bright sky and thunder.",
-      "Dyaus preserves a closely related Vedic name, one of comparative mythology’s clearest linguistic continuities.",
-      "Jupiter carries the same ancient sky-father name into Latin through a changed form and changed religious system.",
-      "Tyr preserves another branch of the old divine-name family, though his later Norse role is very different.",
+    title: "One Ancient Name, Four Divine Lives",
+    kind: "Inherited ancestry · branching journey",
+    deck: "Follow an ancient daylight-sky name as daughter languages reshape both its sound and its god.",
+    thesis: "This is branching inheritance, not a claim that one historical god literally became the next.",
+    path: ["Dyaus", "Zeus", "Jupiter", "Tyr"],
+    stops: [
+      { era: "2nd millennium BCE", place: "Vedic South Asia", body: "Dyaus Pitṛ preserves the old daylight-sky father with unusual clarity, although he is already less central than Indra.", retained: "The inherited sky-name and paternal frame", changed: "A receding ritual role" },
+      { era: "Archaic Greece", place: "Aegean world", body: "Zeus carries the cognate name into Greek, but grows into thunder-wielding sovereign, guardian of order and ruler of Olympus.", retained: "The bright-sky name and fatherly authority", changed: "Kingship and thunder dominate" },
+      { era: "Roman Republic and Empire", place: "Central Mediterranean", body: "Latin Iuppiter—Jupiter—joins the inherited sky-father name to Rome’s civic sovereignty, oath and state cult.", retained: "Sky-father language and sovereign function", changed: "A distinctly Roman political cult" },
+      { era: "Germanic antiquity", place: "Northern Europe", body: "Týr preserves another relative of the divine-name family, yet his surviving Norse character centres law, courage and the binding of Fenrir.", retained: "A descendant of the old word for god", changed: "The sky role has largely disappeared" },
     ],
   },
   {
-    id: "guides-dead",
-    title: "Guides Beyond the Last Boundary",
-    deck: "Not every god of death rules the dead. Some specialise in crossing the boundary itself.",
-    path: ["Hermes", "Anubis", "Yama", "Hades"],
-    chapters: [
-      "Hermes can move between Olympus, earth and the underworld, making him the archetypal boundary-crosser.",
-      "Anubis guides and protects the dead through Egyptian funerary ritual and judgment.",
-      "Yama becomes a ruler and receiver of the dead in Vedic tradition.",
-      "Hades closes the journey as sovereign of the Greek underworld: a ruler of the dead rather than a personification of death.",
+    id: "mithra-mithras",
+    title: "From Covenant to Mystery Cult",
+    kind: "Documented adaptation",
+    deck: "Watch Iranian Mithra enter the Roman world—and emerge as the recognisable but profoundly altered Mithras.",
+    thesis: "The names are historically connected; the Roman cult was not a simple copy of Iranian worship.",
+    path: ["Mithra", "Mithras"],
+    stops: [
+      { era: "1st millennium BCE", place: "Iranian world", body: "Mithra guards covenant, truth and social order in Iranian tradition, with strong associations of light and watchfulness.", retained: "Name, light and binding agreements", changed: "The starting ritual world is Iranian" },
+      { era: "1st–4th centuries CE", place: "Roman Empire", body: "Mithras appears at the centre of initiatory communities and the tauroctony. Roman imagery transforms inherited material into a new mystery-cult system.", retained: "The adapted name and solar affinities", changed: "Initiation grades, cave temples and bull-slaying iconography" },
     ],
   },
   {
-    id: "sacred-fire",
-    title: "Fire That Carries a Message",
-    deck: "Fire can be sacrifice, messenger, craft and the technology that changes a civilisation.",
-    path: ["Agni", "Brigid", "Hephaestus", "Vulcan"],
-    chapters: [
-      "Agni is the ritual messenger: offerings placed in fire travel from the human world toward the gods.",
-      "Brigid broadens sacred flame into healing, poetry and craft.",
-      "Hephaestus turns fire toward the forge, where divine craft produces weapons, devices and wonders.",
-      "Vulcan shows how a related craft role can be recast in another religious system through Roman interpretation.",
+    id: "hermes-thoth",
+    title: "When Hermes Met Thoth",
+    kind: "Cultural contact and fusion",
+    deck: "Enter Hellenistic Egypt, where translation between pantheons produces a durable composite tradition.",
+    thesis: "This tour follows interpretatio and syncretism: contact and identification, not common ancestry.",
+    path: ["Thoth", "Hermes", "Mercury"],
+    stops: [
+      { era: "Pharaonic Egypt", place: "Nile valley", body: "Thoth is a god of writing, reckoning, ritual knowledge and lunar order—the divine expert who makes knowledge operative.", retained: "Writing, wisdom and mediation", changed: "The tour begins in Egyptian temple religion" },
+      { era: "Hellenistic period", place: "Ptolemaic Egypt", body: "Greek speakers identify Thoth with Hermes. Their shared intellectual and mediating roles help form the figure later called Hermes Trismegistus.", retained: "Sacred knowledge and boundary-crossing", changed: "Two traditions are translated into a composite authority" },
+      { era: "Roman period", place: "Mediterranean world", body: "Roman Mercury inherits Greek Hermes while Hermetic writings circulate in an Egyptian-Greek intellectual setting.", retained: "Messenger, interpreter and master of exchange", changed: "Roman naming and a widening textual afterlife" },
     ],
   },
   {
-    id: "war-love",
-    title: "Love, War and the Chosen Dead",
-    deck: "Why do desire, sovereignty and the battlefield converge in some goddesses?",
-    path: ["Ishtar", "Freya", "The Morrigan"],
-    chapters: [
-      "Ishtar combines erotic power, kingship and war in a way modern categories struggle to separate.",
-      "Freya offers a striking comparative echo: love, magic and a share of the battle-slain.",
-      "The Morrigan makes the comparison more dangerous and more speculative, drawing attention to fate, war and death without claiming direct descent.",
+    id: "artemis-diana",
+    title: "Artemis Becomes Diana?",
+    kind: "Roman identification",
+    deck: "A guided case study in how Rome adopts, identifies and reshapes a foreign divine figure.",
+    thesis: "Diana was not simply renamed Artemis; Roman identification layered Greek stories onto an existing Italic goddess.",
+    path: ["Artemis", "Diana", "Apollo"],
+    stops: [
+      { era: "Archaic Greece", place: "Greek world", body: "Artemis governs wild places, young life, the hunt and dangerous transitions, while remaining Apollo’s divine twin.", retained: "Hunt, bow, wilderness and lunar associations", changed: "A specifically Greek family and mythic biography" },
+      { era: "Republican Rome", place: "Italy", body: "Diana already has Italic sanctuaries and civic meanings. Identification with Artemis imports Greek imagery without erasing Diana’s local cult.", retained: "Hunt and protection at boundaries", changed: "Latin ritual, places and civic constituencies" },
+      { era: "Roman Imperial period", place: "Mediterranean world", body: "Apollo’s presence makes the borrowed sibling pattern visible, while Roman Diana continues to exceed that Greek narrative frame.", retained: "A recognisable divine pair", changed: "Local and imperial meanings coexist" },
     ],
   },
-];
+  {
+    id: "forge-crossing",
+    title: "The Forge Crosses to Rome",
+    kind: "Adoption with reinterpretation",
+    deck: "Trace the strong identification of Hephaestus and Vulcan, then test where a shared fire motif stops being history.",
+    thesis: "The first transition is historical identification; the final comparison is thematic and deliberately marked as such.",
+    path: ["Hephaestus", "Vulcan", "Brigid"],
+    stops: [
+      { era: "Archaic Greece", place: "Aegean world", body: "Hephaestus is the master artificer whose forge creates divine armour, automata and objects of dangerous beauty.", retained: "Fire, metalwork and divine craft", changed: "The Greek artisan’s distinctive myths" },
+      { era: "Roman Republic and Empire", place: "Italy", body: "Vulcan is identified with Hephaestus, but Roman worship keeps its own concern with destructive and controlled fire.", retained: "The forge and imported Greek narratives", changed: "Roman ritual emphasis on containing fire" },
+      { era: "Medieval Irish tradition", place: "Ireland", body: "Brigid shares fire and craft associations, but there is no equivalent adoption chain. She is the control stop that prevents resemblance becoming false descent.", retained: "A productive sacred flame", changed: "Independent tradition, functions and evidence category" },
+    ],
+  },
+  {
+    id: "thunderer-serpent",
+    title: "The Thunderer Pattern—And Its Limits",
+    kind: "Comparative control tour",
+    deck: "Travel through a compelling storm-and-serpent pattern while learning why recurrence alone is not an evolution story.",
+    thesis: "Similarity can guide comparison, but without linguistic or contact evidence it cannot prove that Thor became Indra or Perun.",
+    path: ["Indra", "Thor", "Perun", "Zeus"],
+    stops: [
+      { era: "2nd millennium BCE", place: "Vedic South Asia", body: "Indra kills Vṛtra and releases obstructed waters. The combat is richly attested in early Vedic poetry.", retained: "Storm power and monster combat", changed: "This is the oldest stop, not automatically the source of every later story" },
+      { era: "Medieval Norse sources", place: "Scandinavia", body: "Thor confronts Jörmungandr with thunderous force. The resemblance is vivid, yet the surviving narrative has its own cosmology and ending.", retained: "Thunderer against serpent", changed: "Characters, stakes and narrative structure" },
+      { era: "Reconstructed Slavic tradition", place: "Eastern Europe", body: "Perun’s opposition to Veles is reconstructed from later evidence and folklore, demanding a different confidence level.", retained: "Storm above versus adversary below", changed: "Evidence survives indirectly" },
+      { era: "Archaic Greece", place: "Aegean world", body: "Zeus defeats Typhon and secures divine rule. The tour ends by separating a broad inherited possibility from a demonstrated chain of transformations.", retained: "Storm sovereignty after monster combat", changed: "No simple line of descent joins all four figures" },
+    ],
+  },
+].map((story) => ({ ...story, chapters: story.stops.map((stop) => stop.body) }));
 
 export const RELATION_KIND_OVERRIDES = new Map([
   ["Jupiter|Zeus", "linguistic"],
@@ -245,15 +254,15 @@ export const RELATION_META = {
 };
 
 export const TRADITION_POSITIONS = {
-  Greek: { x: 48, y: 46, label: "Aegean" },
-  Roman: { x: 41, y: 45, label: "Central Mediterranean" },
-  Norse: { x: 39, y: 23, label: "Scandinavia" },
-  Celtic: { x: 28, y: 35, label: "Atlantic Europe" },
-  Slavic: { x: 55, y: 31, label: "Eastern Europe" },
-  Vedic: { x: 74, y: 53, label: "South Asia" },
-  Iranian: { x: 65, y: 47, label: "Iranian plateau" },
-  Mesopotamian: { x: 59, y: 53, label: "Mesopotamia" },
-  Egyptian: { x: 51, y: 61, label: "Nile valley" },
+  Greek: { x: 37, y: 48, label: "Aegean" },
+  Roman: { x: 29, y: 43, label: "Central Mediterranean" },
+  Norse: { x: 29, y: 18, label: "Scandinavia" },
+  Celtic: { x: 18, y: 29, label: "Atlantic Europe" },
+  Slavic: { x: 42, y: 30, label: "Eastern Europe" },
+  Vedic: { x: 73, y: 65, label: "South Asia" },
+  Iranian: { x: 58, y: 56, label: "Iranian plateau" },
+  Mesopotamian: { x: 51, y: 54, label: "Mesopotamia" },
+  Egyptian: { x: 42, y: 62, label: "Nile valley" },
 };
 
 export const STARTING_COPY = {

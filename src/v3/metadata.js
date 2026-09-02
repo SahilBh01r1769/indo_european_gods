@@ -49,6 +49,35 @@ const PERIODS = {
   Egyptian: "Ancient Egyptian religion",
 };
 
+// Readable approximations foreground the historical-language form where one
+// is securely recoverable. They are guides, not claims of a single timeless
+// pronunciation: place, period and scholarly convention can all differ.
+const PRONUNCIATIONS = {
+  Apollo: "a-POL-lōn", Artemis: "AR-teh-mis", Zeus: "zdyoos", Ares: "AH-rēs",
+  Hermes: "HEHR-mēs", Hephaestus: "hē-FAIS-tos", Dionysus: "dee-O-noo-sos",
+  Athena: "a-thē-NAH", Poseidon: "po-say-DAWN", Hades: "HAH-dēs",
+  Helios: "HĒ-lee-os", Eos: "eh-ŌS", Hera: "HĒ-rah", Rudra: "ROOD-rah",
+  Indra: "IN-drah", Agni: "UG-nee", Varuna: "VAH-roo-nah", Surya: "SOOR-yah",
+  Vishnu: "VISH-noo", Shiva: "SHEE-vah", Yama: "YUH-mah", Dyaus: "dyows",
+  Ushas: "OO-shas", Thor: "thohr (Old Norse: THOHRR)",
+  Odin: "OH-thin (Old Norse: OH-thin-n)", Loki: "LOH-kee", Freyr: "frayr",
+  Freya: "FRAY-yah", Tyr: "teer", Baldr: "BAL-dr", Heimdall: "HAYM-dal",
+  Lugh: "loo", "The Dagda": "DAG-dah", Cernunnos: "ker-NOON-nos",
+  "The Morrigan": "mor-REE-gan", Brigid: "BRIH-jid", Manannán: "man-an-AWN",
+  Nuada: "NOO-ah-dah", Taranis: "TAH-ra-nis", Mars: "mahrrs",
+  Jupiter: "YOO-pih-ter (Latin: yoo-PIH-ter)", Mercury: "MER-koo-ree",
+  Vulcan: "WOOL-kahn", Diana: "dee-AH-nah", Neptune: "nep-TOO-noos",
+  Mithras: "MITH-rahs", Perun: "peh-ROON", Veles: "VEH-les",
+  Svarog: "SVAH-rog", Mokosh: "MOH-kosh", Enlil: "EN-leel",
+  Marduk: "MAR-dook", Nergal: "NEHR-gal", Ishtar: "ISH-tar",
+  "Ahura Mazda": "ah-HOO-rah MAZ-dah", Mithra: "MEE-thrah",
+  Ahriman: "AH-ree-man", Ra: "rah (Egyptological reading)",
+  Osiris: "oh-SIGH-ris (Egyptian: Wesir)", Isis: "EYE-sis (Egyptian: Aset)",
+  Horus: "HOHR-us (Egyptian: Heru)", Set: "set (Egyptian: Sutekh)",
+  Anubis: "ah-NOO-bis (Egyptian: Inpu)", Thoth: "thohth (Egyptian: Djehuty)",
+  Sekhmet: "SEKH-met", Hathor: "HATH-or", Apophis: "ah-POH-fis (Egyptian: Apep)",
+};
+
 function fold(value) {
   return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
@@ -68,6 +97,8 @@ export function deityProfile(deityOrId) {
     aliases, normalizedAliases: aliases.map(fold), region: region?.label || deity.pantheon,
     coordinates: region ? { x: region.x, y: region.y } : { x: 50, y: 50 },
     period: PERIODS[deity.pantheon] || "Historical period varies", memoryHook: hook,
+    pronunciation: PRONUNCIATIONS[deity.id] || deity.id,
+    pronunciationNote: "Approximate scholarly guide; pronunciation varies by period and reconstruction.",
   };
 }
 
@@ -107,6 +138,7 @@ export function validateProfiles() {
     if (!profile.mark) errors.push(`${deity.id}: missing mark`);
     if (!profile.aliases.length) errors.push(`${deity.id}: missing aliases`);
     if (!profile.region) errors.push(`${deity.id}: missing region`);
+    if (!profile.pronunciation) errors.push(`${deity.id}: missing pronunciation`);
     return errors;
   });
 }
