@@ -50,18 +50,20 @@ test("dossier exposes citations and returns focus on close", async ({
   await expect(dossierButton).toBeFocused();
 });
 
-test("guided stories reveal their route automatically without mystery nodes", async ({
+test("exhibitions reveal their route one deliberate stop at a time", async ({
   page,
 }) => {
-  await page.getByRole("link", { name: "Stories" }).first().click();
-  await page.getByRole("button", { name: "Begin guided tour" }).first().click();
+  await page.getByRole("link", { name: "Exhibitions" }).first().click();
+  await page.getByRole("button", { name: "Enter exhibition" }).first().click();
 
   await expect(page).toHaveURL(/#discover/);
   await expect(page.locator(".graph-node-clue")).toHaveCount(0);
-  await expect(page.locator(".journey-count strong")).toHaveText("4", {
-    timeout: 24_000,
-  });
+  while (await page.locator(".next-story").count()) {
+    await page.locator(".next-story").click();
+  }
+  await expect(page.locator(".journey-count strong")).toHaveText("4");
   await expect(page.locator(".story-complete")).toBeVisible();
+  await expect(page.locator(".story-conclusion")).toContainText("Curator’s conclusion");
   await expect(page.locator(".graph-node-clue")).toHaveCount(0);
 
   const overlappingPairs = await page

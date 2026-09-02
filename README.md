@@ -15,10 +15,10 @@ The interface distinguishes historical and linguistic evidence from structural c
 - Journeys support clear, undo, redo and recent-journey restoration, persist locally, and can be shared through a compact URL snapshot.
 - Curated relationships and model-only echoes use visibly different line treatments and labels.
 
-### Stories, Collection, and comparison
+### Exhibitions, Collection, and comparison
 
-- Six paced transformation tours show what a divine identity retains and changes through inherited ancestry, cultural contact and reinterpretation; a control tour demonstrates the limits of resemblance.
-- The collection supports search, tradition filtering, sorting, result counts, and cited dossiers.
+- Six curator-led exhibitions make explicit arguments about what a divine identity retains and changes. Every transition is evidence-labelled, every object links to its dossier and sources, and every route ends with a conclusion and an open question.
+- The collection supports full-text search, tradition, role and period facets, source-depth sorting, staged results, and cited dossiers.
 - Deity dossiers combine native names, approximate historical-language pronunciation guides, aliases, memory hooks, periods, regions, provenance-labelled marks and scoped sources.
 - Relationship dossiers explain what supports a connection, how cautiously to read it, and where the compared figures differ.
 - Two or three figures can be compared without losing the graph. Qualitative evidence appears before the trait-overlap score.
@@ -58,7 +58,7 @@ src/
   utils/
     similarity.js            # canonical trait calculations
   v3/
-    config.js                # starts, archetypes, stories, evidence vocabulary
+    config.js                # starts, archetypes, exhibitions, evidence vocabulary
     model.js                 # search, candidates, relations, comparison
     metadata.js              # marks, aliases, regions, memory hooks, guesses
     state.js                 # validated persistence and URL snapshots

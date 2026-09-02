@@ -40,11 +40,10 @@ import {
   restoreFreeJourney,
   journeyCapabilities,
   leaveStory,
-  toggleStoryPause,
   encodeJourney,
   restoreJourney,
 } from "./state.js";
-import { MythGraph } from "./graph.js";
+import { MythGraph } from "./graph-stable.js";
 import { getDeityRefs } from "../data/citations.js";
 import { clueHints, deityProfile, matchesDeityGuess } from "./metadata.js";
 
@@ -52,11 +51,10 @@ const app = document.querySelector("#app");
 let currentView = null,
   graph = null,
   toastTimer = null,
-  storyTimer = null,
   previousFocus = null,
   restoredPayload = null;
-const STORY_STEP_DELAY = 6500;
 let contextSheetExpanded = false;
+let collectionLimit = 18;
 const clueCursor = new Map();
 const esc = (v) =>
   String(v ?? "")
@@ -102,7 +100,7 @@ function toast(message) {
 }
 
 function shell() {
-  app.innerHTML = `<a class="skip-link" href="#view">Skip to content</a><div class="site-shell"><header class="topbar"><a class="brand" href="#home" aria-label="Mythos home"><span class="brand-mark" aria-hidden="true">✦</span><span>MYTHOS</span></a><nav class="main-nav" aria-label="Primary navigation"><a href="#home" data-nav="home">Home</a><a href="#discover" data-nav="discover">Discover</a><a href="#stories" data-nav="stories">Stories</a><a href="#collection" data-nav="collection">Collection</a></nav><div class="topbar-actions"><div class="search-wrap"><button class="icon-button search-toggle" aria-label="Search">⌕</button><div class="global-search-panel" hidden><input id="global-search" type="search" autocomplete="off" placeholder="Search gods, traditions, symbols…" aria-label="Search Mythos"><div id="global-search-results" class="global-search-results"></div></div></div><button class="text-button about-button">Methodology</button></div></header><main id="view" class="view" tabindex="-1"></main><nav class="mobile-nav" aria-label="Mobile navigation"><a href="#home" data-mobile-nav="home">Home</a><a href="#discover" data-mobile-nav="discover">Discover</a><a href="#stories" data-mobile-nav="stories">Stories</a><a href="#collection" data-mobile-nav="collection">Collection</a></nav></div><div id="overlay-root"></div><div id="toast" class="toast" role="status" aria-live="polite"></div>`;
+  app.innerHTML = `<a class="skip-link" href="#view">Skip to content</a><div class="site-shell"><header class="topbar"><a class="brand" href="#home" aria-label="Mythos home"><span class="brand-mark" aria-hidden="true">✦</span><span>MYTHOS</span></a><nav class="main-nav" aria-label="Primary navigation"><a href="#home" data-nav="home">Home</a><a href="#discover" data-nav="discover">Discover</a><a href="#stories" data-nav="stories">Exhibitions</a><a href="#collection" data-nav="collection">Collection</a></nav><div class="topbar-actions"><div class="search-wrap"><button class="icon-button search-toggle" aria-label="Search">⌕</button><div class="global-search-panel" hidden><input id="global-search" type="search" autocomplete="off" placeholder="Search gods, traditions, symbols…" aria-label="Search Mythos"><div id="global-search-results" class="global-search-results"></div></div></div><button class="text-button about-button">Methodology</button></div></header><main id="view" class="view" tabindex="-1"></main><nav class="mobile-nav" aria-label="Mobile navigation"><a href="#home" data-mobile-nav="home">Home</a><a href="#discover" data-mobile-nav="discover">Discover</a><a href="#stories" data-mobile-nav="stories">Exhibitions</a><a href="#collection" data-mobile-nav="collection">Collection</a></nav></div><div id="overlay-root"></div><div id="toast" class="toast" role="status" aria-live="polite"></div>`;
   bindShell();
 }
 function bindShell() {
@@ -178,7 +176,6 @@ function renderSearchResults(query) {
 }
 
 function route() {
-  clearTimeout(storyTimer);
   closeOverlay();
   const { view, parts, query } = parseRoute();
   const sharedJourney = query.get("journey");
@@ -269,7 +266,7 @@ function renderLanding(view, { home = false } = {}) {
   }));
   const state = getState();
 
-  view.innerHTML = `<section class="landing ${home ? "home-landing" : "discover-landing"}"><div class="landing-hero"><div class="hero-copy"><span class="eyebrow">Interactive comparative mythology</span><h1>${home ? "Follow the evidence. Find the pattern." : STARTING_COPY.heading}</h1><p>${home ? "Build a path through gods, names and recurring stories. Mythos keeps historical evidence distinct from resemblance, so every connection can be examined—not merely admired." : STARTING_COPY.lead}</p><div class="hero-actions">${state.started ? '<a class="primary-button resume-journey" href="#discover">Resume your journey</a>' : '<button class="primary-button surprise-start">Surprise me</button>'}<a class="quiet-link" href="#stories">Take a guided story</a></div><div class="hero-proof"><span>67 sourced figures</span><span>9 traditions</span><span>6 evidence levels</span></div></div><div class="hero-map" aria-label="Three examples of evidence-aware mythological relationships"><header class="preview-heading"><span class="eyebrow">A line is a claim</span><strong>Three relationships. Three different meanings.</strong></header><div class="preview-thread-list">${previewThreads.map((thread) => `<article class="preview-thread"><div class="preview-person">${iconLabel(thread.left)}<span><strong>${esc(thread.left.id)}</strong><small>${esc(thread.left.pantheon)}</small></span></div><div class="preview-relation"><i class="legend-line edge-kind-${thread.kind}" aria-hidden="true"></i><span>${esc(thread.label)}</span></div><div class="preview-person right">${iconLabel(thread.right)}<span><strong>${esc(thread.right.id)}</strong><small>${esc(thread.right.pantheon)}</small></span></div></article>`).join("")}</div><p class="preview-footnote">Names, historical contact and narrative resemblance remain visibly distinct.</p></div></div><section class="start-section"><div class="section-heading"><span>Begin with a deity</span><small>Four traditions, four different ways into the atlas.</small></div><div class="deity-start-grid">${visibleDeities.map((deity) => `<button class="start-deity-card" data-start-deity="${esc(deity.id)}" style="--accent:${deityAccent(deity)}">${iconLabel(deity)}<span class="card-tradition">${esc(deity.pantheon)}</span><strong>${esc(deity.id)}</strong><span>${esc(deity.domains?.slice(0, 3).join(" · ") || deity.pantheon)}</span></button>`).join("")}</div>${home ? '<a class="section-link" href="#discover">See all starting figures →</a>' : ""}</section><section class="start-section archetype-start-section"><div class="section-heading"><span>Or follow a recurring pattern</span><small>Begin with an idea and uncover the figures inside it.</small></div><div class="archetype-start-grid">${visibleArchetypes.map((a, i) => `<button class="start-archetype-card" data-start-archetype="${a.id}"><span class="pattern-number">0${i + 1}</span><span class="pattern-mark" aria-hidden="true">◇</span><strong>${esc(a.name)}</strong><span>${esc(a.short)}</span><small>Explore pattern →</small></button>`).join("")}</div>${home ? '<a class="section-link" href="#discover">Browse all patterns →</a>' : ""}</section></section>`;
+  view.innerHTML = `<section class="landing ${home ? "home-landing" : "discover-landing"}"><div class="landing-hero"><div class="hero-copy"><span class="eyebrow">Interactive comparative mythology</span><h1>${home ? "Follow the evidence. Find the pattern." : STARTING_COPY.heading}</h1><p>${home ? "Build a path through gods, names and recurring stories. Mythos keeps historical evidence distinct from resemblance, so every connection can be examined—not merely admired." : STARTING_COPY.lead}</p><div class="hero-actions">${state.started ? '<a class="primary-button resume-journey" href="#discover">Resume your journey</a>' : '<button class="primary-button surprise-start">Surprise me</button>'}<a class="quiet-link" href="#stories">Visit an exhibition</a></div><div class="hero-proof"><span>67 sourced figures</span><span>9 traditions</span><span>6 evidence levels</span></div></div><div class="hero-map" aria-label="Three examples of evidence-aware mythological relationships"><header class="preview-heading"><span class="eyebrow">A line is a claim</span><strong>Three relationships. Three different meanings.</strong></header><div class="preview-thread-list">${previewThreads.map((thread) => `<article class="preview-thread"><div class="preview-person">${iconLabel(thread.left)}<span><strong>${esc(thread.left.id)}</strong><small>${esc(thread.left.pantheon)}</small></span></div><div class="preview-relation"><i class="legend-line edge-kind-${thread.kind}" aria-hidden="true"></i><span>${esc(thread.label)}</span></div><div class="preview-person right">${iconLabel(thread.right)}<span><strong>${esc(thread.right.id)}</strong><small>${esc(thread.right.pantheon)}</small></span></div></article>`).join("")}</div><p class="preview-footnote">Names, historical contact and narrative resemblance remain visibly distinct.</p></div></div><section class="start-section"><div class="section-heading"><span>Begin with a deity</span><small>Four traditions, four different ways into the atlas.</small></div><div class="deity-start-grid">${visibleDeities.map((deity) => `<button class="start-deity-card" data-start-deity="${esc(deity.id)}" style="--accent:${deityAccent(deity)}">${iconLabel(deity)}<span class="card-tradition">${esc(deity.pantheon)}</span><strong>${esc(deity.id)}</strong><span>${esc(deity.domains?.slice(0, 3).join(" · ") || deity.pantheon)}</span></button>`).join("")}</div>${home ? '<a class="section-link" href="#discover">See all starting figures →</a>' : ""}</section><section class="start-section archetype-start-section"><div class="section-heading"><span>Or follow a recurring pattern</span><small>Begin with an idea and uncover the figures inside it.</small></div><div class="archetype-start-grid">${visibleArchetypes.map((a, i) => `<button class="start-archetype-card" data-start-archetype="${a.id}"><span class="pattern-number">0${i + 1}</span><span class="pattern-mark" aria-hidden="true">◇</span><strong>${esc(a.name)}</strong><span>${esc(a.short)}</span><small>Explore pattern →</small></button>`).join("")}</div>${home ? '<a class="section-link" href="#discover">Browse all patterns →</a>' : ""}</section></section>`;
   view.querySelectorAll("[data-start-deity]").forEach((btn) =>
     btn.addEventListener("click", () => {
       startWithDeity(btn.dataset.startDeity);
@@ -300,26 +297,6 @@ function updateDiscover(state) {
   renderContextPanel(state);
   renderModebar(state);
   graph?.render(state);
-  scheduleStoryAdvance(state);
-}
-
-function scheduleStoryAdvance(state) {
-  clearTimeout(storyTimer);
-  const active = state.activeStory;
-  const story = active ? getStory(active.id) : null;
-  if (!story || active.paused || active.index >= story.path.length - 1) return;
-  const expectedIndex = active.index;
-  storyTimer = window.setTimeout(() => {
-    const current = getState().activeStory;
-    if (
-      currentView !== "discover" ||
-      current?.id !== active.id ||
-      current.index !== expectedIndex
-    )
-      return;
-    const target = revealStoryNext();
-    if (target) toast(`${target} joins the story`);
-  }, STORY_STEP_DELAY);
 }
 function renderJourneyPanel(state) {
   const root = document.querySelector(".journey-panel");
@@ -398,8 +375,12 @@ function renderContextPanel(state) {
   const cursor = clues.length ? (clueCursor.get(deity.id) || 0) % clues.length : 0;
   const visibleClue = clues[cursor];
   const stop = story?.stops?.[storyIndex];
+  const transition =
+    story && storyIndex > 0
+      ? relationBetween(story.path[storyIndex - 1], story.path[storyIndex])
+      : null;
   const storyCoach = story
-    ? `<div class="story-coach"><span class="eyebrow">Guided tour · stop ${storyIndex + 1}/${story.path.length}</span><h3>${esc(story.title)}</h3><p class="story-thesis">${esc(story.thesis)}</p><div class="story-progress" style="--story-steps:${story.path.length}" aria-label="Story progress">${story.path.map((_, index) => `<i class="${index <= storyIndex ? "complete" : ""}"></i>`).join("")}</div>${stop ? `<div class="story-place"><strong>${esc(stop.place)}</strong><span>${esc(stop.era)}</span></div><p>${esc(stop.body)}</p><div class="story-change"><div><span>What endures</span><strong>${esc(stop.retained)}</strong></div><div><span>What changes</span><strong>${esc(stop.changed)}</strong></div></div>` : `<p>${esc(story.chapters[storyIndex])}</p>`}${storyIndex < story.path.length - 1 ? `<span class="story-auto-note ${state.activeStory.paused ? "paused" : ""}"><i></i> ${state.activeStory.paused ? "Tour paused" : "Next stop arrives after time to read"}</span><div class="story-tour-actions"><button class="primary-button next-story">Continue now</button><button class="quiet-button pause-story">${state.activeStory.paused ? "Resume tour" : "Pause tour"}</button></div>` : '<strong class="story-complete">Tour complete. The evidence-labelled route is now visible.</strong>'}<button class="text-button restart-story">Restart tour</button><button class="text-button leave-story">Leave guided tour</button></div>`
+    ? `<div class="story-coach"><span class="eyebrow">Exhibition · stop ${storyIndex + 1}/${story.path.length}</span><h3>${esc(story.title)}</h3><p class="story-thesis">${esc(story.thesis)}</p><div class="story-progress" style="--story-steps:${story.path.length}" aria-label="Exhibition progress">${story.path.map((_, index) => `<i class="${index <= storyIndex ? "complete" : ""}"></i>`).join("")}</div>${transition ? `<div class="exhibition-evidence"><span>Why this stop follows</span><span class="evidence-badge evidence-${transition.kind}">${esc(transition.label)}</span><p>${esc(transition.note || transition.description)}</p>${transition.sourceText ? `<small>${esc(transition.sourceText)}</small>` : ""}</div>` : ""}${stop ? `<div class="story-place"><strong>${esc(stop.place)}</strong><span>${esc(stop.era)}</span></div><p>${esc(stop.body)}</p><div class="story-change"><div><span>What endures</span><strong>${esc(stop.retained)}</strong></div><div><span>What changes</span><strong>${esc(stop.changed)}</strong></div></div>` : `<p>${esc(story.chapters[storyIndex])}</p>`}${storyIndex < story.path.length - 1 ? '<div class="story-tour-actions"><button class="primary-button next-story">Continue to next object</button></div>' : `<div class="story-conclusion"><span>Curator’s conclusion</span><strong>${esc(story.conclusion)}</strong><p>${esc(story.question)}</p></div><strong class="story-complete">Exhibition complete. Its evidence-labelled route remains visible.</strong>`}<button class="text-button restart-story">Restart exhibition</button><button class="text-button leave-story">Leave exhibition</button></div>`
     : "";
   root.innerHTML = `<div class="context-sheet-handle"><button class="context-sheet-toggle" aria-expanded="${contextSheetExpanded}"><span></span>${contextSheetExpanded ? "Collapse dossier" : "Quick dossier"}</button></div><div class="context-scroll">${selectedEdge ? relationCallout(selectedEdge, { recent: isRecentReveal }) : ""}${storyCoach}<div class="context-identity">${iconLabel(deity)}<div><span class="eyebrow">${esc(deity.pantheon)} · ${esc(eraLabel(deity.era))}</span><h2>${esc(deity.id)}</h2><p class="original-script">${esc(deity.originalScript || "")}</p></div></div><div class="pronunciation-guide"><span>Say the historical name</span><strong>${esc(profile?.pronunciation || deity.id)}</strong><small>${esc(profile?.pronunciationNote || "")}</small></div><p class="context-memory">${esc(profile?.memoryHook || deity.epithet || "")}</p><p class="context-epithet">${esc(profile?.period || "")} · ${esc(profile?.region || "")}</p><div class="context-actions"><button class="quiet-button dossier-open">Open dossier</button><button class="quiet-button compare-toggle">${state.compare.includes(deity.id) ? "Remove from compare" : "Add to compare"}</button></div>${story ? "" : `<div class="context-section"><span class="panel-kicker">Current lead</span><p class="clue-instruction">One lead at a time. Investigate it, make a guess, or move to a different lead.</p>${visibleClue ? `<div class="clue-list"><button class="clue-button" data-clue-index="0"><span class="clue-mark">?</span><span><strong>${esc(visibleClue.label)}</strong><small>${esc(visibleClue.relation.short)}</small></span><span class="clue-arrow">Investigate</span></button></div>${clues.length > 1 ? `<button class="text-button next-clue">Show another lead · ${cursor + 1}/${clues.length}</button>` : ""}` : `<div class="empty-inline compact"><strong>This branch is quiet.</strong><span>Choose another discovered figure to continue.</span></div>`}</div>`}<div class="context-section"><span class="panel-kicker">Domains</span><div class="chip-row">${(
     deity.domains || []
@@ -432,7 +413,6 @@ function renderContextPanel(state) {
   });
   root.classList.toggle("sheet-expanded", contextSheetExpanded);
   root.querySelector(".leave-story")?.addEventListener("click", leaveStory);
-  root.querySelector(".pause-story")?.addEventListener("click", toggleStoryPause);
   root.querySelector(".next-story")?.addEventListener("click", () => revealStoryNext());
   root.querySelector(".restart-story")?.addEventListener("click", () => beginStory(story.id));
 }
@@ -464,7 +444,11 @@ function renderModebar(state) {
 function renderStories() {
   setActiveNav("stories");
   const view = document.querySelector("#view");
-  view.innerHTML = `<section class="page-shell stories-page"><header class="page-intro"><span class="eyebrow">Curated transformation tours</span><h1>Watch a divine identity travel—and change.</h1><p>Each paced tour follows inheritance, cultural contact or reinterpretation stop by stop. A comparison tour also shows where resemblance is not evidence of descent.</p></header><div class="story-grid">${STORIES.map((story, i) => `<article class="story-card"><span class="story-index">0${i + 1}</span><span class="story-kind">${esc(story.kind)}</span><div class="story-thread">${story.path.map((id, j) => `<span style="--accent:${deityAccent(getDeity(id))}">${j ? "—" : ""}●</span>`).join("")}</div><h2>${esc(story.title)}</h2><p>${esc(story.deck)}</p><blockquote>${esc(story.thesis)}</blockquote><small>${story.path.join(" → ")}</small><div class="card-actions"><button class="primary-button" data-begin-story="${story.id}">Begin guided tour</button><button class="text-button" data-read-story="${story.id}">Read itinerary</button></div></article>`).join("")}</div></section>`;
+  view.innerHTML = `<section class="page-shell stories-page"><header class="page-intro exhibition-intro"><span class="eyebrow">Curated exhibitions</span><h1>Six arguments about how gods travel, split and change.</h1><p>Discover is an open investigation. These exhibitions are different: each makes one bounded claim, presents its objects in sequence, labels the evidence between them and ends with a conclusion you can challenge.</p><div class="exhibition-key"><span><strong>1</strong> Thesis</span><span><strong>2</strong> Evidence route</span><span><strong>3</strong> Conclusion</span></div></header><div class="story-grid">${STORIES.map((story, i) => {
+    const sourceCount = new Set(story.path.flatMap((id) => getDeityRefs(id).map((ref) => ref.bib.id))).size;
+    const evidenceKinds = story.path.slice(1).map((id, index) => relationBetween(story.path[index], id)?.label).filter(Boolean);
+    return `<article class="story-card"><span class="story-index">0${i + 1}</span><span class="story-kind">${esc(story.kind)}</span><div class="story-thread">${story.path.map((id, j) => `<span style="--accent:${deityAccent(getDeity(id))}">${j ? "—" : ""}●</span>`).join("")}</div><h2>${esc(story.title)}</h2><p>${esc(story.deck)}</p><div class="exhibition-thesis"><span>Claim under examination</span><blockquote>${esc(story.thesis)}</blockquote></div><div class="exhibition-meta"><span>${story.path.length} objects</span><span>${sourceCount} sources</span><span>${new Set(evidenceKinds).size} evidence ${new Set(evidenceKinds).size === 1 ? "type" : "types"}</span></div><small>${story.path.join(" → ")}</small><div class="card-actions"><button class="primary-button" data-begin-story="${story.id}">Enter exhibition</button><button class="text-button" data-read-story="${story.id}">Read the argument</button></div></article>`;
+  }).join("")}</div></section>`;
   view.querySelectorAll("[data-begin-story]").forEach((btn) =>
     btn.addEventListener("click", () => {
       beginStory(btn.dataset.beginStory);
@@ -485,34 +469,55 @@ function renderStory(id) {
     view = document.querySelector("#view");
   if (!story) {
     view.innerHTML =
-      '<section class="page-shell"><div class="empty-inline"><strong>Story not found.</strong><a href="#stories">Return to stories</a></div></section>';
+      '<section class="page-shell"><div class="empty-inline"><strong>Exhibition not found.</strong><a href="#stories">Return to exhibitions</a></div></section>';
     return;
   }
-  view.innerHTML = `<section class="story-detail page-shell"><a class="back-link" href="#stories">← All stories</a><div class="story-detail-grid"><div class="story-detail-copy"><span class="eyebrow">${esc(story.kind)} · ${story.path.length} stops</span><h1>${esc(story.title)}</h1><p class="story-deck">${esc(story.deck)}</p><div class="story-thesis-card"><span>Tour thesis</span><p>${esc(story.thesis)}</p></div><button class="primary-button begin-detail-story">Begin interactive tour</button></div><div class="story-path-preview">${story.path
+  view.innerHTML = `<section class="story-detail page-shell"><a class="back-link" href="#stories">← All exhibitions</a><div class="story-detail-grid"><div class="story-detail-copy"><span class="eyebrow">${esc(story.kind)} · ${story.path.length} objects</span><h1>${esc(story.title)}</h1><p class="story-deck">${esc(story.deck)}</p><div class="story-thesis-card"><span>Curator’s thesis</span><p>${esc(story.thesis)}</p></div><button class="primary-button begin-detail-story">Begin interactive exhibition</button><div class="exhibition-conclusion-preview"><span>Where the argument lands</span><p>${esc(story.conclusion)}</p><small>${esc(story.question)}</small></div></div><div class="story-path-preview">${story.path
     .map((id, i) => {
       const d = getDeity(id);
       const stop = story.stops?.[i];
-      return `<div class="story-stop"><span class="stop-number">0${i + 1}</span>${iconLabel(d)}<div><strong>${esc(id)}</strong><small>${esc(stop?.place || d?.pantheon || "")} · ${esc(stop?.era || "")}</small><p>${esc(stop?.body || story.chapters[i] || "")}</p>${stop ? `<dl><div><dt>Endures</dt><dd>${esc(stop.retained)}</dd></div><div><dt>Changes</dt><dd>${esc(stop.changed)}</dd></div></dl>` : ""}</div></div>`;
+      const transition = i ? relationBetween(story.path[i - 1], id) : null;
+      const references = getDeityRefs(id);
+      return `${transition ? `<div class="story-transition"><span class="evidence-badge evidence-${transition.kind}">${esc(transition.label)}</span><strong>${esc(transition.short)}</strong><p>${esc(transition.note || transition.description)}</p>${transition.sourceText ? `<small>${esc(transition.sourceText)}</small>` : ""}</div>` : ""}<div class="story-stop"><span class="stop-number">0${i + 1}</span>${iconLabel(d)}<div><strong>${esc(id)}</strong><small>${esc(stop?.place || d?.pantheon || "")} · ${esc(stop?.era || "")}</small><p>${esc(stop?.body || story.chapters[i] || "")}</p>${stop ? `<dl><div><dt>Endures</dt><dd>${esc(stop.retained)}</dd></div><div><dt>Changes</dt><dd>${esc(stop.changed)}</dd></div></dl>` : ""}<button class="text-button" data-story-dossier="${esc(id)}">Open object dossier · ${references.length} ${references.length === 1 ? "source" : "sources"}</button></div></div>`;
     })
-    .join("")}</div></div></section>`;
+    .join("")}<div class="story-final"><span>Conclusion</span><h2>${esc(story.conclusion)}</h2><p>${esc(story.question)}</p></div></div></div></section>`;
   view.querySelector(".begin-detail-story")?.addEventListener("click", () => {
     beginStory(story.id);
     go("#discover");
   });
+  view.querySelectorAll("[data-story-dossier]").forEach((button) =>
+    button.addEventListener("click", () => openDossier(button.dataset.storyDossier)),
+  );
 }
 
 function renderCollection() {
   setActiveNav("collection");
   const view = document.querySelector("#view"),
-    pantheons = [...new Set(DEITIES.map((d) => d.pantheon))].sort();
-  view.innerHTML = `<section class="page-shell collection-page"><header class="page-intro"><span class="eyebrow">Collection</span><h1>Browse the figures behind the threads.</h1><p>Use the collection when you already know what you want—or when you want to choose the next branch deliberately.</p></header><div class="collection-toolbar"><label><span class="sr-only">Search the collection</span><input id="collection-search" type="search" placeholder="Search deity, domain, symbol…"></label><label><span class="sr-only">Filter by tradition</span><select id="collection-pantheon"><option value="">All traditions</option>${pantheons.map((p) => `<option>${esc(p)}</option>`).join("")}</select></label><label><span class="sr-only">Sort collection</span><select id="collection-sort"><option value="tradition">Tradition order</option><option value="name">Name A–Z</option><option value="era">Earliest attestation</option></select></label></div><div class="collection-summary"><strong id="collection-count"></strong><span>Figures outside the Indo-European family are comparative outgroups and are labelled by tradition.</span></div><div id="collection-grid" class="collection-grid"></div><section class="collection-patterns"><div class="section-heading"><span>Patterns</span><small>Start an exploration from an archetype.</small></div><div class="archetype-collection-grid">${ARCHETYPES.map((a) => `<button data-collection-archetype="${a.id}"><span aria-hidden="true">◇</span><strong>${esc(a.name)}</strong><small>${esc(a.short)}</small></button>`).join("")}</div></section></section>`;
+    pantheons = [...new Set(DEITIES.map((d) => d.pantheon))].sort(),
+    domainCounts = DEITIES.flatMap((d) => d.domains || []).reduce((counts, domain) => {
+      counts.set(domain, (counts.get(domain) || 0) + 1);
+      return counts;
+    }, new Map()),
+    domains = [...domainCounts].filter(([, count]) => count >= 2).map(([domain]) => domain).sort();
+  collectionLimit = 18;
+  view.innerHTML = `<section class="page-shell collection-page"><header class="page-intro"><span class="eyebrow">Research collection · ${DEITIES.length} figures</span><h1>Find an object, then follow its evidence.</h1><p>The collection is the catalogue behind the atlas: search names and pronunciations, narrow by tradition, role or period, and see how thoroughly each entry is sourced before opening it.</p></header><section class="collection-exhibitions"><div class="section-heading"><span>Curator’s routes</span><small>Prefer an argument to an open search? Enter a compact exhibition.</small></div><div>${STORIES.slice(0, 3).map((story) => `<a href="#story/${story.id}"><span>${story.path.length} objects</span><strong>${esc(story.title)}</strong><small>${esc(story.kind)} →</small></a>`).join("")}</div></section><div class="collection-toolbar"><label class="collection-search-label"><span>Search</span><input id="collection-search" type="search" placeholder="Name, native form, role, symbol…"></label><label><span>Tradition</span><select id="collection-pantheon"><option value="">All traditions</option>${pantheons.map((p) => `<option>${esc(p)}</option>`).join("")}</select></label><label><span>Role</span><select id="collection-domain"><option value="">All roles</option>${domains.map((domain) => `<option>${esc(domain)}</option>`).join("")}</select></label><label><span>Period</span><select id="collection-period"><option value="">All periods</option><option value="early">Before 1000 BCE</option><option value="classical">1000 BCE–1 BCE</option><option value="late">1–600 CE</option><option value="medieval">After 600 CE</option></select></label><label><span>Order</span><select id="collection-sort"><option value="tradition">Tradition</option><option value="name">Name A–Z</option><option value="era">Earliest attestation</option><option value="sources">Source depth</option></select></label><button class="text-button collection-clear">Clear filters</button></div><div class="collection-summary"><strong id="collection-count"></strong><span id="collection-note">Figure-specific references are distinguished from broader tradition overviews.</span></div><div id="collection-grid" class="collection-grid"></div><div class="collection-more"></div><section class="collection-patterns"><div class="section-heading"><span>Patterns</span><small>Start an open investigation from an archetype.</small></div><div class="archetype-collection-grid">${ARCHETYPES.map((a) => `<button data-collection-archetype="${a.id}"><span aria-hidden="true">◇</span><strong>${esc(a.name)}</strong><small>${esc(a.short)}</small></button>`).join("")}</div></section></section>`;
   const search = view.querySelector("#collection-search"),
     pantheon = view.querySelector("#collection-pantheon"),
+    domain = view.querySelector("#collection-domain"),
+    period = view.querySelector("#collection-period"),
     sort = view.querySelector("#collection-sort"),
-    draw = () => renderCollectionGrid(search.value, pantheon.value, sort.value);
-  search.addEventListener("input", draw);
-  pantheon.addEventListener("change", draw);
-  sort.addEventListener("change", draw);
+    draw = ({ reset = true } = {}) => {
+      if (reset) collectionLimit = 18;
+      renderCollectionGrid({ query: search.value, pantheon: pantheon.value, domain: domain.value, period: period.value, sort: sort.value });
+    };
+  search.addEventListener("input", () => draw());
+  [pantheon, domain, period, sort].forEach((control) => control.addEventListener("change", () => draw()));
+  view.querySelector(".collection-clear").addEventListener("click", () => {
+    search.value = "";
+    [pantheon, domain, period].forEach((control) => { control.value = ""; });
+    sort.value = "tradition";
+    draw();
+  });
   draw();
   view.querySelectorAll("[data-collection-archetype]").forEach((btn) =>
     btn.addEventListener("click", () => {
@@ -521,41 +526,62 @@ function renderCollection() {
     }),
   );
 }
-function renderCollectionGrid(query = "", pantheon = "", sort = "tradition") {
+function collectionPeriod(era) {
+  if (era < -1000) return "early";
+  if (era < 1) return "classical";
+  if (era <= 600) return "late";
+  return "medieval";
+}
+function renderCollectionGrid({ query = "", pantheon = "", domain = "", period = "", sort = "tradition" } = {}) {
   const root = document.querySelector("#collection-grid");
   if (!root) return;
   const q = query.trim().toLowerCase(),
-    rows = DEITIES.filter((d) => !pantheon || d.pantheon === pantheon).filter(
-      (d) =>
+    rows = DEITIES.filter((d) => !pantheon || d.pantheon === pantheon)
+      .filter((d) => !domain || d.domains?.includes(domain))
+      .filter((d) => !period || collectionPeriod(d.era) === period)
+      .filter((d) => {
+        const profile = deityProfile(d);
+        return (
         !q ||
         [
           d.id,
+          d.originalScript,
           d.epithet,
           d.pantheon,
+          profile?.pronunciation,
+          ...(profile?.aliases || []),
           ...(d.domains || []),
           ...(d.symbols || []),
         ]
           .join(" ")
           .toLowerCase()
-          .includes(q),
-    );
+          .includes(q)
+        );
+      });
   if (sort === "name") rows.sort((a, b) => a.id.localeCompare(b.id));
   if (sort === "era") rows.sort((a, b) => a.era - b.era);
+  if (sort === "sources") rows.sort((a, b) => getDeityRefs(b.id).length - getDeityRefs(a.id).length);
   const count = document.querySelector("#collection-count");
   if (count)
-    count.textContent = `${rows.length} ${rows.length === 1 ? "figure" : "figures"}`;
+    count.textContent = `${rows.length} ${rows.length === 1 ? "figure" : "figures"} found`;
+  const visibleRows = rows.slice(0, collectionLimit);
   root.innerHTML = rows.length
-    ? rows
+    ? visibleRows
         .map(
-          (deity) =>
-            `<article class="collection-card" style="--accent:${deityAccent(deity)}">${iconLabel(deity)}<span class="eyebrow">${esc(deity.pantheon)} · ${esc(eraLabel(deity.era))}</span><h3>${esc(deity.id)}</h3><p>${esc(deity.epithet)}</p><div class="chip-row">${(
+          (deity) => {
+            const profile = deityProfile(deity);
+            const references = getDeityRefs(deity.id);
+            const specific = references.filter((reference) => reference.scope !== "tradition").length;
+            const curated = DEITIES.filter((other) => other.id !== deity.id && relationBetween(deity, other)?.curated).length;
+            return `<article class="collection-card" style="--accent:${deityAccent(deity)}"><div class="collection-card-head">${iconLabel(deity)}<div><span class="eyebrow">${esc(deity.pantheon)} · ${esc(eraLabel(deity.era))}</span><h3>${esc(deity.id)}</h3><span class="collection-native">${esc(deity.originalScript || profile?.mark || "")} · ${esc(profile?.pronunciation || deity.id)}</span></div></div><p>${esc(deity.epithet)}</p><div class="chip-row">${(
               deity.domains || []
             )
               .slice(0, 3)
               .map((d) => `<span>${esc(d)}</span>`)
               .join(
                 "",
-              )}</div><div class="card-actions"><button class="quiet-button" data-collection-dossier="${esc(deity.id)}">Dossier</button><button class="text-button" data-collection-reveal="${esc(deity.id)}">Reveal in graph</button></div></article>`,
+              )}</div><div class="collection-evidence"><span><strong>${references.length}</strong> sources</span><span><strong>${specific}</strong> figure-specific</span><span><strong>${curated}</strong> curated threads</span></div><div class="card-actions"><button class="quiet-button" data-collection-dossier="${esc(deity.id)}">Open dossier</button><button class="text-button" data-collection-reveal="${esc(deity.id)}">Add to graph</button></div></article>`;
+          },
         )
         .join("")
     : '<div class="empty-inline"><strong>No figures match.</strong><span>Try a broader search or another tradition.</span></div>';
@@ -572,6 +598,14 @@ function renderCollectionGrid(query = "", pantheon = "", sort = "tradition") {
       go("#discover");
     }),
   );
+  const more = document.querySelector(".collection-more");
+  if (more) {
+    more.innerHTML = rows.length > collectionLimit ? `<button class="quiet-button">Show ${Math.min(18, rows.length - collectionLimit)} more</button><span>${visibleRows.length} of ${rows.length} shown</span>` : rows.length ? `<span>All ${rows.length} figures shown</span>` : "";
+    more.querySelector("button")?.addEventListener("click", () => {
+      collectionLimit += 18;
+      renderCollectionGrid({ query, pantheon, domain, period, sort });
+    });
+  }
 }
 
 function openGuessClue(clue) {

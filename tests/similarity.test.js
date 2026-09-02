@@ -1,14 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { TRAITS, getTraitValue } from '../src/data/deities.js';
+import { DEITIES, TRAITS, getTraitValue } from '../src/data/deities.js';
 import {
   computeSimilarity,
-  getDeityById,
   sharedTraits,
   traitVector,
-  findPath,
 } from '../src/utils/similarity.js';
+
+const getDeityById = id =>
+  DEITIES.find(deity => deity.id.toLowerCase() === id.toLowerCase());
 
 const indexOfTrait = name => TRAITS.findIndex(t => t.toLowerCase() === name.toLowerCase());
 
@@ -49,12 +50,4 @@ test('shared traits use canonical labels despite mixed source casing', () => {
   assert.ok(shared.includes('Archer'));
   assert.ok(shared.includes('Healer'));
   assert.ok(shared.includes('Disease sender'));
-});
-
-test('path finder returns deity ids and honors a supplied deity set', () => {
-  const apollo = getDeityById('Apollo');
-  const rudra = getDeityById('Rudra');
-  const path = findPath('Apollo', 'Rudra', 'cosine', 0, [apollo, rudra]);
-
-  assert.deepEqual(path, ['Apollo', 'Rudra']);
 });

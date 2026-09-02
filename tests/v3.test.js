@@ -88,10 +88,10 @@ test("guided stories reveal into the same journey state", () => {
   assert.equal(state.activeStory.index, 1);
 });
 
-test("guided tours carry a thesis and change-over-time notes at every stop", () => {
+test("exhibitions carry a thesis, conclusion and change-over-time notes", () => {
   const deityIds = new Set(DEITIES.map((deity) => deity.id));
   assert.ok(STORIES.length >= 6);
-  assert.ok(STORIES.every((story) => story.thesis && story.kind));
+  assert.ok(STORIES.every((story) => story.thesis && story.conclusion && story.question && story.kind));
   assert.ok(STORIES.every((story) => story.stops.length === story.path.length));
   assert.ok(STORIES.flatMap((story) => story.path).every((id) => deityIds.has(id)));
   assert.ok(

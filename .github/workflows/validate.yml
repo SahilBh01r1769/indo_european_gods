@@ -36,7 +36,6 @@ jobs:
           node --check src/v3/state.js
           node --check src/v3/graph-runtime.js
           node --check src/v3/graph-stable.js
-          node --check src/v3/graph.js
           node --check src/v3/app.js
 
       - name: Install browser for interaction tests
