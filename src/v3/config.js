@@ -1,9 +1,3 @@
-export const DESIGN = {
-  appName: "Mythos",
-  tagline:
-    "Follow the hidden threads between gods, stories and recurring ideas.",
-};
-
 export const START_DEITIES = [
   "Thor",
   "Apollo",
@@ -85,6 +79,8 @@ export const STORIES = [
     kind: "Inherited ancestry · branching journey",
     deck: "Follow an ancient daylight-sky name as daughter languages reshape both its sound and its god.",
     thesis: "This is branching inheritance, not a claim that one historical god literally became the next.",
+    conclusion: "A name can survive while divine function changes radically. Linguistic kinship maps a family tree; it does not make these gods interchangeable.",
+    question: "Which matters more for identity: an inherited name, or the roles a culture gives it?",
     path: ["Dyaus", "Zeus", "Jupiter", "Tyr"],
     stops: [
       { era: "2nd millennium BCE", place: "Vedic South Asia", body: "Dyaus Pitṛ preserves the old daylight-sky father with unusual clarity, although he is already less central than Indra.", retained: "The inherited sky-name and paternal frame", changed: "A receding ritual role" },
@@ -99,6 +95,8 @@ export const STORIES = [
     kind: "Documented adaptation",
     deck: "Watch Iranian Mithra enter the Roman world—and emerge as the recognisable but profoundly altered Mithras.",
     thesis: "The names are historically connected; the Roman cult was not a simple copy of Iranian worship.",
+    conclusion: "Mithras is best understood as a Roman transformation built from connected material, not Iranian religion transplanted unchanged.",
+    question: "How much continuity is enough before adaptation becomes a new religious figure?",
     path: ["Mithra", "Mithras"],
     stops: [
       { era: "1st millennium BCE", place: "Iranian world", body: "Mithra guards covenant, truth and social order in Iranian tradition, with strong associations of light and watchfulness.", retained: "Name, light and binding agreements", changed: "The starting ritual world is Iranian" },
@@ -111,6 +109,8 @@ export const STORIES = [
     kind: "Cultural contact and fusion",
     deck: "Enter Hellenistic Egypt, where translation between pantheons produces a durable composite tradition.",
     thesis: "This tour follows interpretatio and syncretism: contact and identification, not common ancestry.",
+    conclusion: "Hermes and Thoth became mutually legible through contact, producing a composite authority whose afterlife exceeded either original cult.",
+    question: "When cultures translate gods into one another, what is clarified—and what is erased?",
     path: ["Thoth", "Hermes", "Mercury"],
     stops: [
       { era: "Pharaonic Egypt", place: "Nile valley", body: "Thoth is a god of writing, reckoning, ritual knowledge and lunar order—the divine expert who makes knowledge operative.", retained: "Writing, wisdom and mediation", changed: "The tour begins in Egyptian temple religion" },
@@ -124,6 +124,8 @@ export const STORIES = [
     kind: "Roman identification",
     deck: "A guided case study in how Rome adopts, identifies and reshapes a foreign divine figure.",
     thesis: "Diana was not simply renamed Artemis; Roman identification layered Greek stories onto an existing Italic goddess.",
+    conclusion: "The pairing created a recognisable Greco-Roman figure while Diana retained places, rites and constituencies that were not Artemis in disguise.",
+    question: "Does a shared mythology overwrite local worship, or merely add another interpretive layer?",
     path: ["Artemis", "Diana", "Apollo"],
     stops: [
       { era: "Archaic Greece", place: "Greek world", body: "Artemis governs wild places, young life, the hunt and dangerous transitions, while remaining Apollo’s divine twin.", retained: "Hunt, bow, wilderness and lunar associations", changed: "A specifically Greek family and mythic biography" },
@@ -137,6 +139,8 @@ export const STORIES = [
     kind: "Adoption with reinterpretation",
     deck: "Trace the strong identification of Hephaestus and Vulcan, then test where a shared fire motif stops being history.",
     thesis: "The first transition is historical identification; the final comparison is thematic and deliberately marked as such.",
+    conclusion: "Hephaestus and Vulcan form an adoption history; Brigid is a valuable comparison precisely because her shared fire does not continue that chain.",
+    question: "Can a control case make a historical argument more persuasive than another apparent match?",
     path: ["Hephaestus", "Vulcan", "Brigid"],
     stops: [
       { era: "Archaic Greece", place: "Aegean world", body: "Hephaestus is the master artificer whose forge creates divine armour, automata and objects of dangerous beauty.", retained: "Fire, metalwork and divine craft", changed: "The Greek artisan’s distinctive myths" },
@@ -150,6 +154,8 @@ export const STORIES = [
     kind: "Comparative control tour",
     deck: "Travel through a compelling storm-and-serpent pattern while learning why recurrence alone is not an evolution story.",
     thesis: "Similarity can guide comparison, but without linguistic or contact evidence it cannot prove that Thor became Indra or Perun.",
+    conclusion: "The thunderer pattern is analytically powerful when treated as a comparison. It becomes misleading when displayed as a single migration story.",
+    question: "What further evidence would be needed to turn a recurring pattern into a historical claim?",
     path: ["Indra", "Thor", "Perun", "Zeus"],
     stops: [
       { era: "2nd millennium BCE", place: "Vedic South Asia", body: "Indra kills Vṛtra and releases obstructed waters. The combat is richly attested in early Vedic poetry.", retained: "Storm power and monster combat", changed: "This is the oldest stop, not automatically the source of every later story" },

@@ -210,15 +210,6 @@ export function candidateConnections(id, discoveredIds = [], max = 4) {
     }));
 }
 
-export function allConnectionsFor(id) {
-  const deity = getDeity(id);
-  if (!deity) return [];
-  return DEITIES.filter((d) => d.id !== deity.id)
-    .map((d) => relationBetween(deity, d))
-    .filter(Boolean)
-    .sort((a, b) => relationPriority(a) - relationPriority(b));
-}
-
 export function archetypeById(id) {
   return ARCHETYPES.find((a) => a.id === id) || null;
 }

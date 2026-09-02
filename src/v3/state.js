@@ -171,10 +171,6 @@ export function getState() {
   return cloneState(state);
 }
 
-export function hasSavedJourney() {
-  return state.started && state.discoveredNodes.length > 0;
-}
-
 export function subscribe(listener) {
   listeners.add(listener);
   return () => listeners.delete(listener);
@@ -260,7 +256,7 @@ export function beginStory(id) {
 
 export function revealStoryNext() {
   const active = state.activeStory;
-  if (!active || active.paused) return null;
+  if (!active) return null;
   const story = getStory(active.id);
   if (!story) return null;
   const nextIndex = active.index + 1;
@@ -268,7 +264,7 @@ export function revealStoryNext() {
   const from = story.path[active.index];
   const target = story.path[nextIndex];
   revealDirect(from, target, { select: true, silent: true });
-  state.activeStory = { id: story.id, index: nextIndex, paused: false };
+  state.activeStory = { id: story.id, index: nextIndex };
   step("story-step", { story: story.id, index: nextIndex, target });
   publish();
   return target;
@@ -392,16 +388,6 @@ export function clearCompare() {
 export function leaveStory() {
   state.activeStory = null;
   publish();
-}
-
-export function toggleStoryPause() {
-  if (!state.activeStory) return false;
-  state.activeStory = {
-    ...state.activeStory,
-    paused: !state.activeStory.paused,
-  };
-  publish();
-  return state.activeStory.paused;
 }
 
 export function clearJourney() {
