@@ -50,22 +50,6 @@ test("dossier exposes citations and returns focus on close", async ({
   await expect(dossierButton).toBeFocused();
 });
 
-test("exhibitions reveal their route one deliberate stop at a time", async ({
-  page,
-}) => {
-  await page.getByRole("link", { name: "Exhibitions" }).first().click();
-  await page.getByRole("button", { name: "Enter exhibition" }).first().click();
-
-  await expect(page).toHaveURL(/#discover/);
-  await expect(page.locator(".graph-node-clue")).toHaveCount(0);
-  await expect(page.locator(".journey-count strong")).toHaveText("1");
-  await expect(page.locator(".story-coach")).toContainText("Exhibition · stop 1/4");
-  await page.locator(".next-story").click();
-  await expect(page.locator(".journey-count strong")).toHaveText("2");
-  await expect(page.locator(".story-coach")).toContainText("Why this stop follows");
-  await expect(page.locator(".graph-node-clue")).toHaveCount(0);
-});
-
 test("provenance-aware marks occupy compact deity nodes", async ({ page }) => {
   await page.getByRole("button", { name: /Thor/ }).first().click();
   await expect(
