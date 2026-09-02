@@ -92,7 +92,9 @@ test("provenance-aware marks occupy compact deity nodes", async ({ page }) => {
   ).toHaveText("ᚦ");
   await page.getByRole("button", { name: "Open dossier" }).click();
   await expect(page.getByText(/associated historical attribute/i)).toBeVisible();
-  await expect(page.getByText(/approximate scholarly guide/i)).toBeVisible();
+  await expect(
+    page.getByRole("dialog").getByText(/approximate scholarly guide/i),
+  ).toBeVisible();
 });
 
 test("geography renders a visible fixed map and methodology is legible", async ({
