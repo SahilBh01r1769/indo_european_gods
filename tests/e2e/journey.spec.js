@@ -163,7 +163,7 @@ test("mobile navigation keeps every primary view reachable", async ({
   await mobileNav.getByRole("link", { name: "Collection" }).click();
   await expect(
     page.getByRole("heading", {
-      name: "Browse the figures behind the threads.",
+      name: "Find an object, then follow its evidence.",
     }),
   ).toBeVisible();
   await expect(page.getByText("67 figures")).toBeVisible();
