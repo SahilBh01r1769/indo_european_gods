@@ -411,8 +411,8 @@ export class MythGraph extends RuntimeGraph {
         selectedNode.fy = null;
       }
 
-      if (state.activeStory && compactLayout) {
-        const storyLayouts = {
+      if (state.activeStory) {
+        const mobileStoryLayouts = {
           1: [[0.5, 0.48]],
           2: [
             [0.28, 0.48],
@@ -430,6 +430,13 @@ export class MythGraph extends RuntimeGraph {
             [0.72, 0.68],
           ],
         };
+        const desktopStoryLayouts = {
+          1: [[0.5, 0.48]],
+          2: [[0.25, 0.48], [0.75, 0.48]],
+          3: [[0.22, 0.3], [0.78, 0.3], [0.5, 0.72]],
+          4: [[0.2, 0.29], [0.8, 0.29], [0.2, 0.7], [0.8, 0.7]],
+        };
+        const storyLayouts = compactLayout ? mobileStoryLayouts : desktopStoryLayouts;
         const positions = storyLayouts[Math.min(deityNodes.length, 4)];
         if (positions) {
           deityNodes.forEach((node, index) => {
