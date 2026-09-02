@@ -60,11 +60,13 @@ test("exhibitions reveal their route one deliberate stop at a time", async ({
   await expect(page.locator(".graph-node-clue")).toHaveCount(0);
   while (await page.locator(".next-story").count()) {
     await page.locator(".next-story").click();
+    await page.waitForTimeout(300);
   }
   await expect(page.locator(".journey-count strong")).toHaveText("4");
   await expect(page.locator(".story-complete")).toBeVisible();
   await expect(page.locator(".story-conclusion")).toContainText("Curator’s conclusion");
   await expect(page.locator(".graph-node-clue")).toHaveCount(0);
+  await page.waitForTimeout(900);
 
   const overlappingPairs = await page
     .locator(".graph-node-deity")
