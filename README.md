@@ -1,107 +1,131 @@
 # Mythos — Interactive Comparative Mythology
 
-[Mythos](https://sahilbh01r1769.github.io/indo_european_gods/) is a zero-build digital humanities project for exploring connections among mythological figures. A visitor starts with one figure or recurring pattern, follows a limited set of clues, and builds a personal network instead of receiving an undifferentiated wall of matches.
+[Live site](https://sahilbh01r1769.github.io/indo_european_gods/)
 
-The interface distinguishes historical and linguistic evidence from structural comparison, cross-cultural resemblance, speculation, and similarity produced only by the site's hand-curated trait model.
+Mythos is a browser-based project for exploring similarities and documented connections between mythological figures from different traditions.
 
-## The experience
+The main goal is to make those comparisons easier to explore without treating every resemblance as evidence of a shared origin. The site separates linguistic inheritance, historical contact, structural similarity, broad cross-cultural parallels, speculative links and similarities produced only by its own trait model.
 
-### Home and Discover
+## What you can do
 
-- The home page explains the premise and shows the visual grammar before asking for a commitment.
-- Discover begins with a deity or archetype and presents one progressive, guessable lead at a time.
-- Every reveal selects the new figure, explains the relationship, and remains in the visitor's journey.
-- Network, chronological, and fixed Old World atlas views show the same discoveries from different angles. The atlas uses Natural Earth coastline data beneath approximate cultural-region overlays.
-- Journeys support clear, undo, redo and recent-journey restoration, persist locally, and can be shared through a compact URL snapshot.
-- Curated relationships and model-only echoes use visibly different line treatments and labels.
+- start from a deity or recurring archetype and follow related figures
+- explore the same journey as a network, timeline or map
+- search and filter the full collection
+- open individual deity and relationship details
+- compare two or three figures side by side
+- follow short curated stories about inheritance, reinterpretation and recurring mythic patterns
+- undo/redo an exploration path and restore recent journeys from local storage
+- share a journey through a URL snapshot
 
-### Stories, Collection, and comparison
+The application is written in plain HTML, CSS and JavaScript. D3 is included locally for the graph and visualization work, so the site does not depend on a JavaScript framework or CDN at runtime.
 
-- Six paced transformation tours show what a divine identity retains and changes through inherited ancestry, cultural contact and reinterpretation; a control tour demonstrates the limits of resemblance.
-- The collection supports search, tradition filtering, sorting, result counts, and cited dossiers.
-- Deity dossiers combine native names, approximate historical-language pronunciation guides, aliases, memory hooks, periods, regions, provenance-labelled marks and scoped sources.
-- Relationship dossiers explain what supports a connection, how cautiously to read it, and where the compared figures differ.
-- Two or three figures can be compared without losing the graph. Qualitative evidence appears before the trait-overlap score.
+## Evidence categories
 
-## Evidence vocabulary
+Connections in the interface are labelled by type instead of being shown as one undifferentiated similarity score.
 
-| Type                        | Meaning in Mythos                                                                 |
-| --------------------------- | --------------------------------------------------------------------------------- |
-| Linguistic inheritance      | A relationship grounded in historical linguistics or inherited naming             |
-| Historical contact / fusion | Documented contact, identification, transmission, or reinterpretation             |
-| Structural comparison       | A strong likeness in role, narrative, or ritual structure without a descent claim |
-| Cross-cultural parallel     | A useful resemblance that is not evidence of shared origin                        |
-| Speculative curiosity       | A deliberately tentative connection with limited support                          |
-| Model-only thematic echo    | Similarity produced by manually assigned trait weights, not historical evidence   |
+| Type | How it is used |
+| --- | --- |
+| Linguistic inheritance | Connections supported by historical linguistics or inherited names |
+| Historical contact / fusion | Documented identification, transmission, adoption or syncretism |
+| Structural comparison | Similarity in role, story or ritual structure without a direct descent claim |
+| Cross-cultural parallel | A useful resemblance between otherwise separate traditions |
+| Speculative curiosity | A deliberately tentative comparison |
+| Model-only thematic echo | Similarity produced from the site's manually assigned trait weights |
 
-Egyptian and Mesopotamian figures are comparative outgroups. Their presence does not imply that those traditions are Indo-European. The geography view shows approximate cultural regions, not historical borders. Its coastline asset is generated from Natural Earth 1:110m public-domain land data.
+The trait scores are an exploration tool. They are not scholarly measurements or confidence values.
 
-## Visual direction
+Egyptian and Mesopotamian figures are included as comparative outgroups; their presence does not mean those traditions are Indo-European. The map also shows approximate cultural regions rather than exact historical borders.
 
-The interface uses an editorial-atlas system: warm paper, ink, restrained mineral pigments, fine cartographic rules, and serif display typography. Colour is semantic—traditions and evidence types carry it—rather than decorative. Components use squared editorial geometry, modest motion, and ordinary language instead of glass panels, oversized pills, gradients, or promotional copy associated with generic generated interfaces.
-
-The UI includes keyboard-operable graph nodes, visible focus states, a skip link, dialog focus trapping and restoration, reduced-motion support, and a persistent mobile navigation bar.
-
-## Data and architecture
-
-The dataset currently contains 67 figures, 16 canonical trait dimensions, 51 curated relationships, 17 bibliography records, and 9 represented traditions. Trait weights are editorial heuristics for exploration; they are not scholarly measurements or confidence values.
+## Project structure
 
 ```text
 index.html
-vendor/d3.min.js             # pinned D3 7.9 runtime; no CDN dependency
+vendor/d3.min.js
 
 src/
   data/
-    deities.js               # figures, traditions, symbols, eras, traits
-    cognates.js              # curated relationship records and source notes
-    citations.js             # bibliography and per-figure citations
+    deities.js       deity records and traits
+    cognates.js      curated relationship records
+    citations.js     bibliography and per-figure references
   utils/
-    similarity.js            # canonical trait calculations
+    similarity.js    trait-similarity calculations
   v3/
-    config.js                # starts, archetypes, stories, evidence vocabulary
-    model.js                 # search, candidates, relations, comparison
-    metadata.js              # marks, aliases, regions, memory hooks, guesses
-    state.js                 # validated persistence and URL snapshots
-    graph-runtime.js         # shared SVG, time, and geography rendering
-    graph-stable.js          # stable interactive network layout
-    app.js                   # routes, views, overlays, and interaction wiring
+    config.js        archetypes, stories and evidence labels
+    model.js         search, comparisons and relationship logic
+    metadata.js      aliases, regions and supporting metadata
+    state.js         local persistence and shareable URL state
+    graph-runtime.js shared visualization helpers
+    graph-stable.js  network layout
+    app.js           application views and interactions
 
+styles/
 tests/
-  similarity.test.js
-  v3.test.js
-  e2e/journey.spec.js
+scripts/
+assets/
 ```
 
-The application is framework-free and deploys directly from `master` on GitHub Pages.
+The current interface and data are driven mainly by the files under `src/v3/` and `src/data/`.
 
-`assets/old-world-map.svg` is a checked-in build artifact. Regenerate it after installing dependencies with `node scripts/build-old-world-map.mjs`.
+## Running locally
 
-## Run and validate
+Install the development dependencies:
 
 ```bash
 npm install
+```
+
+Start a local server:
+
+```bash
 npm run serve
 ```
 
-Open `http://127.0.0.1:4173`.
+Then open:
 
-Run data and unit validation:
+```text
+http://127.0.0.1:4173
+```
+
+The `serve` script uses Python's built-in HTTP server, so Python 3 also needs to be available locally.
+
+## Validation and tests
+
+Run the data checks and unit tests together:
 
 ```bash
 npm run check
 ```
 
-Run the Chromium interaction suite after installing the browser once:
+The repository also includes a Playwright interaction test:
 
 ```bash
 npx playwright install chromium
 npm run test:e2e
 ```
 
-GitHub Actions runs both suites for changes to `master` and pull requests.
+The test setup covers the similarity logic, data/config validation and an end-to-end exploration flow.
 
-## Interpretation
+## Map asset
 
-Bibliographic material and per-figure references live in `src/data/citations.js`. Relationship notes in `src/data/cognates.js` are editorial summaries, not substitutes for the cited works. Entries without linked references are identified as awaiting source review in the interface.
+`assets/old-world-map.svg` is generated from Natural Earth / world-atlas data and checked into the repository so the site can use it directly.
 
-Mythos is an exploratory project. Its purpose is to make comparisons inspectable while keeping resemblance, historical contact, linguistic inheritance, and algorithmic similarity visibly separate.
+If the source data or map generation code changes, rebuild it with:
+
+```bash
+node scripts/build-old-world-map.mjs
+```
+
+## About the data
+
+The project mixes two kinds of information:
+
+1. curated historical/mythological relationships with evidence labels and references
+2. manually assigned thematic traits used to surface additional similarities
+
+Those are intentionally kept separate in the interface. A high trait overlap should not be read as proof that two figures share a historical origin.
+
+Bibliographic entries are stored in `src/data/citations.js`, while the relationship notes and their evidence types are in `src/data/cognates.js`. Some interpretations are necessarily simplified for an interactive project, so the cited material should be treated as the stronger source when checking a claim in detail.
+
+## Why I built it
+
+I wanted a way to explore comparative mythology as a network rather than as a long list of isolated entries. The interesting part of the project is not just finding that two gods look similar, but keeping track of *why* they are being compared and how strong that connection actually is.
