@@ -30,17 +30,9 @@ Some connections are curated from historical, linguistic or comparative sources.
 
 The interface keeps those apart instead of presenting every connection as equally strong.
 
-Curated links are labelled broadly as:
+Curated links are labelled broadly as linguistic inheritance, historical contact or fusion, structural comparison, cross-cultural parallel, or speculative comparison. Connections produced only by the trait model are shown separately.
 
-- linguistic inheritance;
-- historical contact or fusion;
-- structural comparison;
-- cross-cultural parallel;
-- speculative comparison.
-
-Connections produced only by the trait model are shown separately. The similarity scores are an exploration tool, not scholarly measurements or probabilities.
-
-Egyptian and Mesopotamian figures are included as comparative outgroups; their presence does not mean those traditions are Indo-European. Geographic regions in the map are also approximate rather than exact historical borders.
+The similarity scores are an exploration tool, not scholarly measurements or probabilities. Egyptian and Mesopotamian figures are included as comparative outgroups; their presence does not mean those traditions are Indo-European. Geographic regions in the map are also approximate rather than exact historical borders.
 
 ## Implementation
 
@@ -89,7 +81,7 @@ npm run test:e2e
 
 The collection mixes curated historical/mythological relationships with manually assigned thematic traits. Those are intentionally separate in the code and interface.
 
-Bibliographic entries are stored in `src/data/citations.js`, while relationship notes and evidence types are in `src/data/cognates.js`. Some of the interpretations are simplified for an interactive project, so the cited sources should be treated as stronger evidence than the site's own similarity model.
+Bibliographic entries are stored in `src/data/citations.js`, while relationship notes and evidence types are in `src/data/cognates.js`. Some interpretations are simplified for an interactive project, so the cited sources should be treated as stronger evidence than the site's own similarity model.
 
 ## Why I built it
 
