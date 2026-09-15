@@ -2,81 +2,67 @@
 
 [Live site](https://sahilbh01r1769.github.io/indo_european_gods/)
 
-Mythos is a browser-based project for exploring similarities and documented connections between mythological figures from different traditions.
+Mythos is a browser project I built to explore similarities and documented links between mythological figures from different traditions.
 
-The main goal is to make those comparisons easier to explore without treating every resemblance as evidence of a shared origin. The site separates linguistic inheritance, historical contact, structural similarity, broad cross-cultural parallels, speculative links and similarities produced only by its own trait model.
+The main idea is to browse mythology as a network rather than a set of isolated articles. You can start from a deity or archetype, follow connections, switch between network, timeline and geographic views, and compare figures side by side.
 
-## What you can do
+I also wanted the site to make an important distinction: two gods looking similar does not automatically mean they share the same historical origin.
 
-- start from a deity or recurring archetype and follow related figures
-- explore the same journey as a network, timeline or map
-- search and filter the full collection
-- open individual deity and relationship details
-- compare two or three figures side by side
-- follow short curated stories about inheritance, reinterpretation and recurring mythic patterns
-- undo/redo an exploration path and restore recent journeys from local storage
-- share a journey through a URL snapshot
+## Exploring the site
 
-The application is written in plain HTML, CSS and JavaScript. D3 is included locally for the graph and visualization work, so the site does not depend on a JavaScript framework or CDN at runtime.
+The application lets you:
 
-## Evidence categories
+- follow connections between deities across traditions;
+- search the collection by deity, archetype or story;
+- view a journey as a network, timeline or map;
+- compare up to three figures;
+- follow a few guided stories through related figures;
+- undo/redo an exploration and restore recent journeys;
+- share the current journey through the URL.
 
-Connections in the interface are labelled by type instead of being shown as one undifferentiated similarity score.
+Journey state is stored locally in the browser, so an exploration can be continued after leaving the page.
 
-| Type | How it is used |
-| --- | --- |
-| Linguistic inheritance | Connections supported by historical linguistics or inherited names |
-| Historical contact / fusion | Documented identification, transmission, adoption or syncretism |
-| Structural comparison | Similarity in role, story or ritual structure without a direct descent claim |
-| Cross-cultural parallel | A useful resemblance between otherwise separate traditions |
-| Speculative curiosity | A deliberately tentative comparison |
-| Model-only thematic echo | Similarity produced from the site's manually assigned trait weights |
+## Connections and similarity
 
-The trait scores are an exploration tool. They are not scholarly measurements or confidence values.
+Mythos uses two different kinds of relationships.
 
-Egyptian and Mesopotamian figures are included as comparative outgroups; their presence does not mean those traditions are Indo-European. The map also shows approximate cultural regions rather than exact historical borders.
+Some connections are curated from historical, linguistic or comparative sources. Others are suggestions produced by a simple trait-similarity model built from manually assigned attributes such as storm, war, healing, wilderness or the underworld.
 
-## Project structure
+The interface keeps those apart instead of presenting every connection as equally strong.
+
+Curated links are labelled broadly as:
+
+- linguistic inheritance;
+- historical contact or fusion;
+- structural comparison;
+- cross-cultural parallel;
+- speculative comparison.
+
+Connections produced only by the trait model are shown separately. The similarity scores are an exploration tool, not scholarly measurements or probabilities.
+
+Egyptian and Mesopotamian figures are included as comparative outgroups; their presence does not mean those traditions are Indo-European. Geographic regions in the map are also approximate rather than exact historical borders.
+
+## Implementation
+
+The project is written in plain HTML, CSS and JavaScript. D3 is included locally for the graph work, and the map uses a generated Old World SVG based on public geographic data.
+
+The current application code is mainly under:
 
 ```text
-index.html
-vendor/d3.min.js
-
-src/
-  data/
-    deities.js       deity records and traits
-    cognates.js      curated relationship records
-    citations.js     bibliography and per-figure references
-  utils/
-    similarity.js    trait-similarity calculations
-  v3/
-    config.js        archetypes, stories and evidence labels
-    model.js         search, comparisons and relationship logic
-    metadata.js      aliases, regions and supporting metadata
-    state.js         local persistence and shareable URL state
-    graph-runtime.js shared visualization helpers
-    graph-stable.js  network layout
-    app.js           application views and interactions
-
-styles/
-tests/
-scripts/
-assets/
+src/data/      deity records, relationships and citations
+src/utils/     similarity calculations
+src/v3/        application, state, search, stories and graph logic
+styles/        interface styling
+assets/        generated map asset
+tests/         data, logic and browser tests
 ```
 
-The current interface and data are driven mainly by the files under `src/v3/` and `src/data/`.
+The state code handles journey persistence, undo/redo, comparisons and shareable URL snapshots. The model layer combines the curated relationships with the trait-similarity system used to suggest additional connections.
 
 ## Running locally
 
-Install the development dependencies:
-
 ```bash
 npm install
-```
-
-Start a local server:
-
-```bash
 npm run serve
 ```
 
@@ -86,46 +72,25 @@ Then open:
 http://127.0.0.1:4173
 ```
 
-The `serve` script uses Python's built-in HTTP server, so Python 3 also needs to be available locally.
-
-## Validation and tests
-
-Run the data checks and unit tests together:
+Run the data checks and unit tests with:
 
 ```bash
 npm run check
 ```
 
-The repository also includes a Playwright interaction test:
+There is also a Playwright interaction test:
 
 ```bash
 npx playwright install chromium
 npm run test:e2e
 ```
 
-The test setup covers the similarity logic, data/config validation and an end-to-end exploration flow.
-
-## Map asset
-
-`assets/old-world-map.svg` is generated from Natural Earth / world-atlas data and checked into the repository so the site can use it directly.
-
-If the source data or map generation code changes, rebuild it with:
-
-```bash
-node scripts/build-old-world-map.mjs
-```
-
 ## About the data
 
-The project mixes two kinds of information:
+The collection mixes curated historical/mythological relationships with manually assigned thematic traits. Those are intentionally separate in the code and interface.
 
-1. curated historical/mythological relationships with evidence labels and references
-2. manually assigned thematic traits used to surface additional similarities
-
-Those are intentionally kept separate in the interface. A high trait overlap should not be read as proof that two figures share a historical origin.
-
-Bibliographic entries are stored in `src/data/citations.js`, while the relationship notes and their evidence types are in `src/data/cognates.js`. Some interpretations are necessarily simplified for an interactive project, so the cited material should be treated as the stronger source when checking a claim in detail.
+Bibliographic entries are stored in `src/data/citations.js`, while relationship notes and evidence types are in `src/data/cognates.js`. Some of the interpretations are simplified for an interactive project, so the cited sources should be treated as stronger evidence than the site's own similarity model.
 
 ## Why I built it
 
-I wanted a way to explore comparative mythology as a network rather than as a long list of isolated entries. The interesting part of the project is not just finding that two gods look similar, but keeping track of *why* they are being compared and how strong that connection actually is.
+I am interested in how similar mythic roles and stories appear across different traditions, but long lists of names make those relationships difficult to keep track of. Building the project as a network made it easier to explore those ideas visually while still showing whether a connection comes from a source or only from the site's own comparison system.
