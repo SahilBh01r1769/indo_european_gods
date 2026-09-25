@@ -73,7 +73,7 @@ export class MythGraph extends RuntimeGraph {
         : null);
     const clues = state.activeStory
       ? []
-      : availableClues(state.selectedNode).slice(0, 1);
+      : availableClues(state.selectedNode).slice(0, 3);
     const compactLayout = width < 520;
     const previousPositions = new Map(this.networkPositions);
     const deityNodes = discovered.map((deity) => ({

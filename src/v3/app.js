@@ -16,6 +16,8 @@ import {
   getStory,
   searchMythos,
   relationBetween,
+  relationshipPassesEvidence,
+  EVIDENCE_LEVELS,
 } from "./model.js";
 import {
   getState,
@@ -30,6 +32,7 @@ import {
   selectNode,
   selectEdge,
   setMode,
+  setEvidenceLevel,
   setEra,
   toggleCompare,
   clearCompare,
@@ -214,7 +217,7 @@ function renderDiscover() {
   const view = document.querySelector("#view"),
     state = getState();
   if (!state.started) return renderLanding(view);
-  view.innerHTML = `<section class="discover-shell"><aside class="journey-panel" aria-label="Your journey"></aside><section class="graph-column"><div class="graph-heading-row"><div><span class="eyebrow">Your mythology journey</span><h1>Follow the thread</h1></div><div class="graph-heading-actions"><button class="quiet-button journey-toggle" aria-expanded="false">Journey</button><button class="quiet-button fit-graph">Fit view</button></div></div>${evidenceLegend({ compact: true })}<div id="graph-stage" class="graph-stage"></div><div class="modebar"></div></section><aside class="context-panel" aria-label="Selected mythology context"></aside></section>`;
+  view.innerHTML = `<section class="discover-shell"><aside class="journey-panel" aria-label="Your journey"></aside><section class="graph-column"><div class="graph-heading-row"><div><span class="eyebrow">Your mythology journey</span><h1>Follow the thread</h1></div><div class="graph-heading-actions"><button class="quiet-button journey-toggle" aria-expanded="false">Journey</button><button class="quiet-button fit-graph">Fit view</button></div></div>${evidenceLegend({ compact: true })}<div class="evidence-lens" aria-label="Evidence lens"></div><div id="graph-stage" class="graph-stage"></div><div class="modebar"></div></section><aside class="context-panel" aria-label="Selected mythology context"></aside></section>`;
   graph = new MythGraph(document.querySelector("#graph-stage"), {
     onNode: (id) => selectNode(id),
     onEdge: (id) => {
@@ -270,6 +273,10 @@ function renderLanding(view, { home = false } = {}) {
   const state = getState();
 
   view.innerHTML = `<section class="landing ${home ? "home-landing" : "discover-landing"}"><div class="landing-hero"><div class="hero-copy"><span class="eyebrow">Interactive comparative mythology</span><h1>${home ? "Follow the evidence. Find the pattern." : STARTING_COPY.heading}</h1><p>${home ? "Build a path through gods, names and recurring stories. Mythos keeps historical evidence distinct from resemblance, so every connection can be examined—not merely admired." : STARTING_COPY.lead}</p><div class="hero-actions">${state.started ? '<a class="primary-button resume-journey" href="#discover">Resume your journey</a>' : '<button class="primary-button surprise-start">Surprise me</button>'}<a class="quiet-link" href="#stories">Take a guided story</a></div><div class="hero-proof"><span>67 sourced figures</span><span>9 traditions</span><span>6 evidence levels</span></div></div><div class="hero-map" aria-label="Three examples of evidence-aware mythological relationships"><header class="preview-heading"><span class="eyebrow">A line is a claim</span><strong>Three relationships. Three different meanings.</strong></header><div class="preview-thread-list">${previewThreads.map((thread) => `<article class="preview-thread"><div class="preview-person">${iconLabel(thread.left)}<span><strong>${esc(thread.left.id)}</strong><small>${esc(thread.left.pantheon)}</small></span></div><div class="preview-relation"><i class="legend-line edge-kind-${thread.kind}" aria-hidden="true"></i><span>${esc(thread.label)}</span></div><div class="preview-person right">${iconLabel(thread.right)}<span><strong>${esc(thread.right.id)}</strong><small>${esc(thread.right.pantheon)}</small></span></div></article>`).join("")}</div><p class="preview-footnote">Names, historical contact and narrative resemblance remain visibly distinct.</p></div></div><section class="start-section"><div class="section-heading"><span>Begin with a deity</span><small>Four traditions, four different ways into the atlas.</small></div><div class="deity-start-grid">${visibleDeities.map((deity) => `<button class="start-deity-card" data-start-deity="${esc(deity.id)}" style="--accent:${deityAccent(deity)}">${iconLabel(deity)}<span class="card-tradition">${esc(deity.pantheon)}</span><strong>${esc(deity.id)}</strong><span>${esc(deity.domains?.slice(0, 3).join(" · ") || deity.pantheon)}</span></button>`).join("")}</div>${home ? '<a class="section-link" href="#discover">See all starting figures →</a>' : ""}</section><section class="start-section archetype-start-section"><div class="section-heading"><span>Or follow a recurring pattern</span><small>Begin with an idea and uncover the figures inside it.</small></div><div class="archetype-start-grid">${visibleArchetypes.map((a, i) => `<button class="start-archetype-card" data-start-archetype="${a.id}"><span class="pattern-number">0${i + 1}</span><span class="pattern-mark" aria-hidden="true">◇</span><strong>${esc(a.name)}</strong><span>${esc(a.short)}</span><small>Explore pattern →</small></button>`).join("")}</div>${home ? '<a class="section-link" href="#discover">Browse all patterns →</a>' : ""}</section></section>`;
+  if (!home) {
+    view.querySelector(".hero-map")?.remove();
+    view.querySelector(".landing-hero")?.classList.add("discover-intro");
+  }
   view.querySelectorAll("[data-start-deity]").forEach((btn) =>
     btn.addEventListener("click", () => {
       startWithDeity(btn.dataset.startDeity);
@@ -297,10 +304,33 @@ function updateDiscover(state) {
   )
     return;
   renderJourneyPanel(state);
+  renderEvidenceLens(state);
   renderContextPanel(state);
   renderModebar(state);
   graph?.render(state);
   scheduleStoryAdvance(state);
+}
+
+function renderEvidenceLens(state) {
+  const root = document.querySelector(".evidence-lens");
+  if (!root) return;
+  const visibleEdges = state.discoveredEdges.filter((edge) =>
+    relationshipPassesEvidence(edge, state.evidenceLevel),
+  ).length;
+  const visibleLeads = state.activeStory
+    ? 0
+    : availableClues(state.selectedNode).slice(0, 3).length;
+  root.innerHTML = `<div><span class="panel-kicker">Evidence lens</span><strong>${visibleEdges + visibleLeads} visible ${visibleEdges + visibleLeads === 1 ? "claim" : "claims"}</strong></div><div class="evidence-lens-options" role="group" aria-label="Filter relationships by evidence strength">${Object.entries(EVIDENCE_LEVELS)
+    .map(
+      ([level, meta]) =>
+        `<button data-evidence-level="${level}" class="${state.evidenceLevel === level ? "active" : ""}" aria-pressed="${state.evidenceLevel === level}">${esc(meta.label)}</button>`,
+    )
+    .join("")}</div>`;
+  root.querySelectorAll("[data-evidence-level]").forEach((button) =>
+    button.addEventListener("click", () =>
+      setEvidenceLevel(button.dataset.evidenceLevel),
+    ),
+  );
 }
 
 function scheduleStoryAdvance(state) {
@@ -618,12 +648,24 @@ function openGuessClue(clue) {
 function openRelationship(edge) {
   if (!edge) return;
   const source = getDeity(edge.source), target = getDeity(edge.target);
-  const references = [...getDeityRefs(edge.source), ...getDeityRefs(edge.target)]
+  const contextualReferences = [...getDeityRefs(edge.source), ...getDeityRefs(edge.target)]
     .filter((reference, index, all) => all.findIndex((item) => item.bib.id === reference.bib.id) === index)
-    .slice(0, 5);
-  const similarities = edge.shared?.length ? edge.shared : ["No strong shared trait is asserted"];
+    .filter(
+      (reference) =>
+        !(edge.claimRefs || []).some((claim) => claim.bib.id === reference.bib.id),
+    )
+    .slice(0, 3);
+  const claimReferences = edge.claimRefs || [];
+  const similarities = edge.shared?.length
+    ? edge.shared
+    : ["No strong model-trait overlap is asserted"];
+  const reviewLabel = {
+    "source-mapped": "Source mapped; page-level claim review pending",
+    preliminary: "Preliminary editorial comparison",
+    "model-only": "Model-only suggestion",
+  }[edge.reviewStatus] || "Review status not assigned";
   openOverlay(
-    `<div class="relationship-overlay overlay-card"><button class="overlay-close" aria-label="Close">×</button><span class="eyebrow">Relationship dossier</span><div class="relationship-title"><div>${iconLabel(source)}<strong>${esc(source?.id)}</strong></div><span>↔</span><div>${iconLabel(target)}<strong>${esc(target?.id)}</strong></div></div><span class="evidence-badge evidence-${edge.kind}">${esc(edge.label)}</span><h2>${esc(edge.short)}</h2><p class="relationship-summary">${esc(edge.note || edge.description)}</p><div class="relationship-grid"><section><span class="panel-kicker">What supports the comparison</span><ul>${similarities.map((trait) => `<li>${esc(trait)}</li>`).join("")}</ul>${edge.sourceText ? `<p><strong>Curated note:</strong> ${esc(edge.sourceText)}</p>` : ""}</section><section><span class="panel-kicker">How cautiously to read it</span><p>${esc(edge.description)}</p><p><strong>${edge.curated ? "Curated relationship" : "Model-only suggestion"}.</strong> ${esc(edge.confidence || "Evidence level not assigned")}.</p></section></div><div class="difference-note"><strong>Similarity is not identity.</strong><p>${esc(source?.id)} and ${esc(target?.id)} belong to different cultural settings. Shared roles or stories do not by themselves establish descent or contact.</p></div>${references.length ? `<section class="dossier-sources"><span class="panel-kicker">Sources around these figures</span><ol>${references.map((reference) => `<li><span class="source-scope">${reference.scope === "tradition" ? "Tradition overview" : "Figure-specific"}</span><cite>${esc(reference.bib.author)} (${esc(reference.bib.year)}), <em>${esc(reference.bib.title)}</em></cite><span>${esc(reference.pages)} — ${esc(reference.note)}</span></li>`).join("")}</ol></section>` : ""}</div>`,
+    `<div class="relationship-overlay overlay-card"><button class="overlay-close" aria-label="Close">×</button><span class="eyebrow">Relationship dossier</span><div class="relationship-title"><div>${iconLabel(source)}<strong>${esc(source?.id)}</strong></div><span>↔</span><div>${iconLabel(target)}<strong>${esc(target?.id)}</strong></div></div><span class="evidence-badge evidence-${edge.kind}">${esc(edge.label)}</span><h2>${esc(edge.short)}</h2><p class="relationship-summary">${esc(edge.note || edge.description)}</p><div class="claim-status"><span class="panel-kicker">Editorial status</span><strong>${esc(reviewLabel)}</strong></div><div class="relationship-grid"><section><span class="panel-kicker">Evidence attached to this claim</span>${claimReferences.length ? `<ol class="claim-source-list">${claimReferences.map((reference) => `<li><cite>${esc(reference.bib.author)} (${esc(reference.bib.year)}), <em>${esc(reference.bib.title)}</em></cite></li>`).join("")}</ol>` : `<p>${edge.curated ? "The existing source note has not yet been mapped to a bibliography entry." : "No historical source is asserted for this model-only suggestion."}</p>`}${edge.sourceText ? `<p><strong>Recorded source note:</strong> ${esc(edge.sourceText)}</p>` : ""}</section><section><span class="panel-kicker">How cautiously to read it</span><p>${esc(edge.description)}</p><p><strong>${edge.curated ? "Curated relationship" : "Model-only suggestion"}.</strong> Confidence label: ${esc(edge.confidence || "not assigned")}.</p></section></div><section class="trait-overlap-note"><span class="panel-kicker">Model trait overlap</span><ul>${similarities.map((trait) => `<li>${esc(trait)}</li>`).join("")}</ul><p>These manually weighted traits help exploration. They do not independently support ancestry, contact or historical transmission.</p></section><div class="difference-note"><strong>Similarity is not identity.</strong><p>${esc(source?.id)} and ${esc(target?.id)} belong to different cultural settings. Shared roles or stories do not by themselves establish descent or contact.</p></div>${contextualReferences.length ? `<section class="dossier-sources contextual-sources"><span class="panel-kicker">Additional reading around the figures</span><ol>${contextualReferences.map((reference) => `<li><span class="source-scope">${reference.scope === "tradition" ? "Tradition overview" : "Figure-specific"}</span><cite>${esc(reference.bib.author)} (${esc(reference.bib.year)}), <em>${esc(reference.bib.title)}</em></cite><span>${esc(reference.pages)} — ${esc(reference.note)}</span></li>`).join("")}</ol></section>` : ""}</div>`,
   );
 }
 

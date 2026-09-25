@@ -1,5 +1,11 @@
 import { TRADITION_POSITIONS } from "./config.js";
-import { deityAccent, deityGlyph, eraLabel, getDeity } from "./model.js";
+import {
+  deityAccent,
+  deityGlyph,
+  eraLabel,
+  getDeity,
+  relationshipPassesEvidence,
+} from "./model.js";
 import { availableClues } from "./state.js";
 
 const edgeClass = (kind) => `edge-kind-${kind || "model"}`;
@@ -83,6 +89,9 @@ export class MythGraph {
 
     const discovered = state.discoveredNodes.map(getDeity).filter(Boolean);
     const edges = state.discoveredEdges
+      .filter((edge) =>
+        relationshipPassesEvidence(edge, state.evidenceLevel),
+      )
       .map((edge) => ({
         ...edge,
         sourceDeity: getDeity(edge.source),
@@ -404,290 +413,355 @@ export class MythGraph {
       .filter((edge) => edge.s && edge.t);
 
     const edgeSelection = this.edgeLayer
-      .selectAll("line.graph-edge")
-      .data(links, (edge) => edge.id);
-    edgeSelection.exit().remove();
-    edgeSelection
-      .enter()
-      .append("line")
-      .merge(edgeSelection)
-      .attr("class", (edge) => `graph-edge ${edgeClass(edge.kind)}`)
-      .classed("edge-selected", (edge) => edge.id === state.selectedEdge)
-      .attr("x1", (edge) => edge.s.x)
-      .attr("y1", (edge) => edge.s.y)
-      .attr("x2", (edge) => edge.t.x)
-      .attr("y2", (edge) => edge.t.y)
-      .on("click", (_, edge) => this.handlers.onEdge?.(edge.id));
+      .selectAll("line.graph-e…11980 tokens truncated…ldPublish = true } = {}) {
+  state = blank();
+  recentJourneys = [];
+  undoStack = [];
+  redoStack = [];
+  savedFreeJourney = null;
+  if (typeof localStorage !== "undefined") localStorage.removeItem(STORAGE_KEY);
+  if (typeof localStorage !== "undefined") localStorage.removeItem(LEGACY_STORAGE_KEY);
+  if (shouldPublish) publish();
+}
 
-    const edgeHits = this.edgeLayer.selectAll("line.graph-edge-hit").data(links, (edge) => edge.id);
-    edgeHits.exit().remove();
-    edgeHits.enter().append("line").attr("class", "graph-edge-hit")
-      .attr("tabindex", 0).attr("role", "button").merge(edgeHits)
-      .attr("x1", (edge) => edge.s.x).attr("y1", (edge) => edge.s.y)
-      .attr("x2", (edge) => edge.t.x).attr("y2", (edge) => edge.t.y)
-      .attr("aria-label", (edge) => `Inspect relationship between ${edge.source} and ${edge.target}`)
-      .on("click", (_, edge) => this.handlers.onEdge?.(edge.id))
-      .on("keydown", (event, edge) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          this.handlers.onEdge?.(edge.id);
-        }
-      });
+export function startWithDeity(id) {
+  const deity = getDeity(id);
+  if (!deity) return false;
+  archiveCurrent();
+  undoStack = [];
+  redoStack = [];
+  state = {
+    ...blank(),
+    started: true,
+    startType: "deity",
+    startId: deity.id,
+    discoveredNodes: [deity.id],
+    selectedNode: deity.id,
+  };
+  step("start-deity", { id: deity.id });
+  publish();
+  return true;
+}
 
-    const nodeSelection = this.nodeLayer
-      .selectAll("g.graph-node")
-      .data(nodes, (node) => node.id);
-    nodeSelection.exit().remove();
+export function startWithArchetype(id) {
+  const archetype = archetypeById(id);
+  if (!archetype) return false;
+  const seeds = archetype.seeds.filter(getDeity).slice(0, 2);
+  const relation =
+    seeds.length > 1 ? relationBetween(seeds[0], seeds[1]) : null;
+  const edges = relation?.curated || relation?.score >= 0.34 ? [relation] : [];
+  archiveCurrent();
+  undoStack = [];
+  redoStack = [];
+  state = {
+    ...blank(),
+    started: true,
+    startType: "archetype",
+    startId: archetype.id,
+    archetypeStart: archetype.id,
+    discoveredNodes: seeds,
+    discoveredEdges: edges,
+    selectedNode: seeds[0] || null,
+  };
+  step("start-archetype", { id: archetype.id });
+  publish();
+  return true;
+}
 
-    const entered = nodeSelection
-      .enter()
-      .append("g")
-      .attr("tabindex", 0)
-      .attr("role", "button")
-      .on("click", (_, node) => this.handlers.onNode?.(node.id))
-      .on("keydown", (event, node) => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        this.handlers.onNode?.(node.id);
-      });
+export function beginStory(id) {
+  const story = getStory(id);
+  if (!story) return false;
+  const first = story.path[0];
+  if (state.started && !state.activeStory && state.discoveredNodes.length)
+    savedFreeJourney = snapshot();
+  archiveCurrent();
+  undoStack = [];
+  redoStack = [];
+  state = {
+    ...blank(),
+    started: true,
+    startType: "story",
+    startId: story.id,
+    discoveredNodes: [first],
+    selectedNode: first,
+    activeStory: { id: story.id, index: 0 },
+  };
+  step("start-story", { id: story.id });
+  publish();
+  return true;
+}
 
-    entered.append("circle").attr("class", "node-halo");
-    entered.append("circle").attr("class", "node-disc");
-    entered
-      .append("text")
-      .attr("class", "node-glyph")
-      .attr("text-anchor", "middle")
-      .attr("dy", ".36em");
-    entered
-      .append("text")
-      .attr("class", "node-name")
-      .attr("text-anchor", "middle");
-    entered
-      .append("text")
-      .attr("class", "node-meta")
-      .attr("text-anchor", "middle");
+export function revealStoryNext() {
+  const active = state.activeStory;
+  if (!active || active.paused) return null;
+  const story = getStory(active.id);
+  if (!story) return null;
+  const nextIndex = active.index + 1;
+  if (nextIndex >= story.path.length) return null;
+  const from = story.path[active.index];
+  const target = story.path[nextIndex];
+  revealDirect(from, target, { select: true, silent: true });
+  state.activeStory = { id: story.id, index: nextIndex, paused: false };
+  step("story-step", { story: story.id, index: nextIndex, target });
+  publish();
+  return target;
+}
 
-    const merged = entered
-      .merge(nodeSelection)
-      .on(".drag", null)
-      .attr("class", "graph-node graph-node-deity")
-      .attr("transform", (node) => `translate(${node.x},${node.y})`)
-      .classed("is-selected", (node) => node.id === state.selectedNode)
-      .classed("is-future", (node) => dimFuture && node.deity.era > state.era)
-      .attr("aria-label", (node) => `${node.deity.id}, ${node.deity.pantheon}`);
+export function availableClues(id = state.selectedNode) {
+  if (!id) return [];
+  return candidateConnections(
+    id,
+    state.discoveredNodes,
+    4,
+    state.evidenceLevel,
+  ).filter(
+    (clue) =>
+      !state.discoveredEdges.some((edge) => edge.id === clue.relation.id),
+  );
+}
 
-    merged
-      .select(".node-halo")
-      .attr("r", (node) => (node.id === state.selectedNode ? 31 : 27))
-      .style("stroke", (node) => deityAccent(node.deity));
-    merged
-      .select(".node-disc")
-      .attr("r", 20)
-      .style(
-        "fill",
-        (node) => `color-mix(in srgb, ${deityAccent(node.deity)} 12%, #fffaf0)`,
-      )
-      .style("stroke", (node) => deityAccent(node.deity));
-    merged
-      .select(".node-glyph")
-      .style("fill", (node) => deityAccent(node.deity))
-      .style("font-size", (node) => {
-        const length = [...deityGlyph(node.deity)].length;
-        if (length > 3) return "11px";
-        if (length > 1) return "15px";
-        return "19px";
-      })
-      .text((node) => deityGlyph(node.deity));
-    merged
-      .select(".node-name")
-      .attr("y", 42)
-      .text((node) => node.deity.id);
-    merged
-      .select(".node-meta")
-      .attr("y", 56)
-      .text((node) => node.deity.pantheon);
+export function revealClue(clue, { selectTarget = true } = {}) {
+  if (!clue?.from || !clue?.target) return null;
+  checkpoint();
+  return revealDirect(clue.from, clue.target, { select: selectTarget });
+}
+
+export function revealDirect(
+  from,
+  target,
+  { select = true, silent = false } = {},
+) {
+  const a = getDeity(from);
+  const b = getDeity(target);
+  if (!a || !b) return null;
+  const relation = relationBetween(a, b);
+  if (!relation) return null;
+
+  if (!state.discoveredNodes.includes(a.id)) state.discoveredNodes.push(a.id);
+  const newlyDiscovered = !state.discoveredNodes.includes(b.id);
+  if (newlyDiscovered) state.discoveredNodes.push(b.id);
+  if (!state.discoveredEdges.some((edge) => edge.id === relation.id)) {
+    state.discoveredEdges.push(relation);
   }
+  if (select) state.selectedNode = b.id;
+  state.selectedEdge = relation.id;
+  state.lastReveal = {
+    from: a.id,
+    target: b.id,
+    edgeId: relation.id,
+    at: Date.now(),
+  };
+  step("reveal", { from: a.id, target: b.id, kind: relation.kind });
+  if (!silent) publish();
+  return { deity: b, relation, newlyDiscovered };
+}
 
-  renderTime(discovered, edges, state, width, height) {
-    this.clearDecoration();
-    const margin = { left: 86, right: 50, top: 72, bottom: 72 };
-    const minEra = Math.min(-2200, ...discovered.map((deity) => deity.era));
-    const maxEra = 1400;
-    const x = d3
-      .scaleLinear()
-      .domain([minEra, maxEra])
-      .range([margin.left, width - margin.right]);
-    const pantheons = [...new Set(discovered.map((deity) => deity.pantheon))];
-    const y = d3
-      .scalePoint()
-      .domain(pantheons)
-      .range([margin.top + 32, height - margin.bottom - 20])
-      .padding(0.45);
+export function addToJourney(id, from = state.selectedNode) {
+  const deity = getDeity(id);
+  if (!deity) return false;
+  if (!state.started) return startWithDeity(deity.id);
 
-    const axis = d3
-      .axisBottom(x)
-      .ticks(Math.min(7, Math.floor(width / 130)))
-      .tickFormat((value) =>
-        value < 0 ? `${Math.abs(value)} BCE` : `${value} CE`,
-      );
+  checkpoint();
+  const relation =
+    from && from !== deity.id ? relationBetween(from, deity.id) : null;
+  if (relation && (relation.curated || relation.score >= 0.34)) {
+    revealDirect(from, deity.id, { select: true });
+  } else {
+    if (!state.discoveredNodes.includes(deity.id))
+      state.discoveredNodes.push(deity.id);
+    state.selectedNode = deity.id;
+    state.selectedEdge = null;
+    state.lastReveal = null;
+    step("add-node", { id: deity.id });
+    publish();
+  }
+  return true;
+}
 
-    this.decor
-      .append("g")
-      .attr("class", "time-axis")
-      .attr("transform", `translate(0,${height - margin.bottom})`)
-      .call(axis);
+export function selectNode(id) {
+  if (!state.discoveredNodes.includes(id)) return false;
+  state.selectedNode = id;
+  state.selectedEdge = null;
+  state.lastReveal = null;
+  publish();
+  return true;
+}
 
-    this.decor
-      .append("line")
-      .attr("class", "time-cursor")
-      .attr("x1", x(state.era))
-      .attr("x2", x(state.era))
-      .attr("y1", margin.top - 24)
-      .attr("y2", height - margin.bottom);
+export function selectEdge(id) {
+  const edge = state.discoveredEdges.find((item) => item.id === id);
+  if (!edge) return false;
+  state.selectedEdge = id;
+  state.lastReveal = null;
+  publish();
+  return true;
+}
 
-    this.decor
-      .append("text")
-      .attr("class", "time-cursor-label")
-      .attr("x", x(state.era))
-      .attr("y", margin.top - 34)
-      .attr("text-anchor", "middle")
-      .text(`Horizon ${eraLabel(state.era)}`);
+export function setMode(mode) {
+  if (!["network", "time", "geography"].includes(mode)) return;
+  state.mode = mode;
+  publish();
+}
 
-    pantheons.forEach((pantheon) => {
-      this.decor
-        .append("text")
-        .attr("class", "time-row-label")
-        .attr("x", margin.left - 16)
-        .attr("y", y(pantheon) + 4)
-        .attr("text-anchor", "end")
-        .text(pantheon);
+export function setEvidenceLevel(level) {
+  if (!EVIDENCE_LEVELS[level] || state.evidenceLevel === level) return false;
+  state.evidenceLevel = level;
+  state.selectedEdge = null;
+  state.lastReveal = null;
+  step("set-evidence-level", { level });
+  publish();
+  return true;
+}
+
+export function setEra(era) {
+  const value = Number(era);
+  if (!Number.isFinite(value)) return;
+  state.era = value;
+  publish();
+}
+
+export function toggleCompare(id) {
+  const deity = getDeity(id);
+  if (!deity) return;
+  if (state.compare.includes(deity.id)) {
+    state.compare = state.compare.filter((item) => item !== deity.id);
+  } else if (state.compare.length < 3) {
+    state.compare = [...state.compare, deity.id];
+  } else {
+    state.compare = [...state.compare.slice(1), deity.id];
+  }
+  publish();
+}
+
+export function clearCompare() {
+  state.compare = [];
+  publish();
+}
+
+export function leaveStory() {
+  state.activeStory = null;
+  publish();
+}
+
+export function toggleStoryPause() {
+  if (!state.activeStory) return false;
+  state.activeStory = {
+    ...state.activeStory,
+    paused: !state.activeStory.paused,
+  };
+  publish();
+  return state.activeStory.paused;
+}
+
+export function clearJourney() {
+  archiveCurrent();
+  checkpoint();
+  const mode = state.mode;
+  const evidenceLevel = state.evidenceLevel;
+  state = { ...blank(), started: true, mode, evidenceLevel };
+  step("clear-journey");
+  publish();
+}
+
+export function undoJourney() {
+  const previous = undoStack.pop();
+  if (!previous) return false;
+  redoStack = [...redoStack, snapshot()].slice(-24);
+  state = normalize(previous);
+  publish();
+  return true;
+}
+
+export function redoJourney() {
+  const next = redoStack.pop();
+  if (!next) return false;
+  undoStack = [...undoStack, snapshot()].slice(-24);
+  state = normalize(next);
+  publish();
+  return true;
+}
+
+export function restorePreviousJourney() {
+  const previous = recentJourneys.pop();
+  if (!previous) return false;
+  checkpoint();
+  state = normalize(previous);
+  state.activeStory = null;
+  publish();
+  return true;
+}
+
+export function restoreFreeJourney() {
+  if (!savedFreeJourney) return false;
+  archiveCurrent();
+  checkpoint();
+  state = normalize(savedFreeJourney);
+  state.activeStory = null;
+  savedFreeJourney = null;
+  publish();
+  return true;
+}
+
+export function journeyCapabilities() {
+  return {
+    canUndo: undoStack.length > 0,
+    canRedo: redoStack.length > 0,
+    canRestore: recentJourneys.length > 0,
+    canRestoreFree: Boolean(savedFreeJourney),
+    recentCount: recentJourneys.length,
+  };
+}
+
+function shareSnapshot() {
+  return {
+    v: STORAGE_VERSION,
+    s: [state.startType, state.startId],
+    n: state.discoveredNodes,
+    e: state.discoveredEdges.map(({ source, target }) => [source, target]),
+    i: state.selectedNode,
+    m: state.mode,
+    f: state.evidenceLevel,
+  };
+}
+
+export function encodeJourney() {
+  if (!state.started) return "";
+  const bytes = new TextEncoder().encode(JSON.stringify(shareSnapshot()));
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary)
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replace(/=+$/, "");
+}
+
+export function restoreJourney(encoded) {
+  if (!encoded || typeof atob === "undefined") return false;
+  try {
+    const normalized = encoded.replaceAll("-", "+").replaceAll("_", "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (character) =>
+      character.charCodeAt(0),
+    );
+    const candidate = JSON.parse(new TextDecoder().decode(bytes));
+    if (![1, STORAGE_VERSION].includes(candidate.v)) return false;
+    state = normalize({
+      started: true,
+      startType: candidate.s?.[0],
+      startId: candidate.s?.[1],
+      discoveredNodes: candidate.n,
+      discoveredEdges: (candidate.e || []).map(([source, target]) => ({
+        source,
+        target,
+      })),
+      selectedNode: candidate.i,
+      mode: candidate.m,
+      evidenceLevel: candidate.f,
     });
-
-    const timelineNodes = discovered.map((deity) => ({
-      id: deity.id,
-      deity,
-      x: x(deity.era),
-      y: y(deity.pantheon),
-      targetX: x(deity.era),
-      targetY: y(deity.pantheon),
-    }));
-    d3.forceSimulation(timelineNodes)
-      .force("x", d3.forceX((node) => node.targetX).strength(0.78))
-      .force("y", d3.forceY((node) => node.targetY).strength(0.2))
-      .force("collision", d3.forceCollide(55).iterations(5))
-      .stop()
-      .tick(180);
-    const timelinePositions = new Map(
-      timelineNodes.map((node) => [
-        node.id,
-        {
-          x: Math.max(margin.left, Math.min(width - margin.right, node.x)),
-          y: Math.max(
-            margin.top,
-            Math.min(height - margin.bottom - 28, node.y),
-          ),
-        },
-      ]),
-    );
-
-    this.renderStatic(
-      discovered,
-      edges,
-      state,
-      (deity) => timelinePositions.get(deity.id),
-      { dimFuture: true },
-    );
-  }
-
-  renderGeography(discovered, edges, state, width, height) {
-    this.clearDecoration();
-
-    this.decor
-      .append("rect")
-      .attr("class", "geo-field")
-      .attr("x", 28)
-      .attr("y", 28)
-      .attr("width", width - 56)
-      .attr("height", height - 56)
-      .attr("rx", 26);
-
-    this.decor
-      .append("image")
-      .attr("class", "geo-basemap")
-      .attr("href", "assets/old-world-map.svg")
-      .attr("x", 28)
-      .attr("y", 28)
-      .attr("width", width - 56)
-      .attr("height", height - 56)
-      .attr("preserveAspectRatio", "none");
-
-    [...new Set(discovered.map((deity) => deity.pantheon))].forEach(
-      (pantheon) => {
-        const position = TRADITION_POSITIONS[pantheon];
-        if (!position) return;
-        this.decor
-          .append("ellipse")
-          .attr("class", `geo-region geo-region-${pantheon.toLowerCase()}`)
-          .attr("cx", (width * position.x) / 100)
-          .attr("cy", (height * position.y) / 100)
-          .attr("rx", Math.max(42, Math.min(76, width * 0.065)))
-          .attr("ry", Math.max(27, Math.min(44, height * 0.065)));
-        this.decor
-          .append("text")
-          .attr("class", "geo-region-label")
-          .attr("x", (width * position.x) / 100)
-          .attr("y", (height * position.y) / 100 - 42)
-          .attr("text-anchor", "middle")
-          .text(position.label);
-      },
-    );
-
-    this.decor
-      .append("text")
-      .attr("class", "geo-caution")
-      .attr("x", width - 44)
-      .attr("y", height - 38)
-      .attr("text-anchor", "end")
-      .text("Approximate cultural regions · not historical borders");
-
-    const geographyNodes = discovered.map((deity) => {
-      const position = TRADITION_POSITIONS[deity.pantheon] || { x: 50, y: 50 };
-      const targetX = (width * position.x) / 100;
-      const targetY = (height * position.y) / 100;
-      return {
-        id: deity.id,
-        deity,
-        targetX,
-        targetY,
-        x: targetX + jitter(deity.id, 82),
-        y: targetY + jitter(`${deity.id}:y`, 74),
-      };
-    });
-    d3.forceSimulation(geographyNodes)
-      .force("x", d3.forceX((node) => node.targetX).strength(0.22))
-      .force("y", d3.forceY((node) => node.targetY).strength(0.22))
-      .force("collision", d3.forceCollide(56).iterations(5))
-      .stop()
-      .tick(180);
-    const geographyPositions = new Map(
-      geographyNodes.map((node) => [
-        node.id,
-        {
-          x: Math.max(62, Math.min(width - 62, node.x)),
-          y: Math.max(66, Math.min(height - 76, node.y)),
-        },
-      ]),
-    );
-
-    this.renderStatic(discovered, edges, state, (deity) =>
-      geographyPositions.get(deity.id),
-    );
-  }
-
-  fit() {
-    this.svg
-      .transition()
-      .duration(260)
-      .call(this.zoom.transform, d3.zoomIdentity);
+    step("restore-shared-journey");
+    publish();
+    return state.started;
+  } catch {
+    return false;
   }
 }

@@ -13,6 +13,7 @@ I also wanted the site to make an important distinction: two gods looking simila
 The application lets you:
 
 - follow connections between deities across traditions;
+- change the evidence lens between all connections, curated claims, and documented linguistic or historical links;
 - search the collection by deity, archetype or story;
 - view a journey as a network, timeline or map;
 - compare up to three figures;
@@ -31,6 +32,8 @@ Some connections are curated from historical, linguistic or comparative sources.
 The interface keeps those apart instead of presenting every connection as equally strong.
 
 Curated links are labelled broadly as linguistic inheritance, historical contact or fusion, structural comparison, cross-cultural parallel, or speculative comparison. Connections produced only by the trait model are shown separately.
+
+The evidence lens can remove the weaker categories from the current graph and its suggested leads. It does not change the stored journey, so the same exploration can be reconsidered under a stricter standard.
 
 The similarity scores are an exploration tool, not scholarly measurements or probabilities. Egyptian and Mesopotamian figures are included as comparative outgroups; their presence does not mean those traditions are Indo-European. Geographic regions in the map are also approximate rather than exact historical borders.
 
@@ -82,6 +85,16 @@ npm run test:e2e
 The collection mixes curated historical/mythological relationships with manually assigned thematic traits. Those are intentionally separate in the code and interface.
 
 Bibliographic entries are stored in `src/data/citations.js`, while relationship notes and evidence types are in `src/data/cognates.js`. Some interpretations are simplified for an interactive project, so the cited sources should be treated as stronger evidence than the site's own similarity model.
+
+Relationship dossiers now separate three things that are easy to confuse:
+
+- sources explicitly attached to the relationship claim;
+- wider reading associated with either figure;
+- overlap produced by the manually weighted trait model.
+
+The current source mapping identifies the works named by each curated relationship. Page-level claim review is still in progress, and editorial or proposed comparisons are marked as preliminary rather than presented as settled conclusions.
+
+`npm run validate:data` checks figure identifiers, relationship endpoints, evidence categories, duplicate relationships, bibliography references and relationship-to-source mappings. The current dataset contains 67 figures, 51 curated relationships and nine traditions.
 
 ## Why I built it
 

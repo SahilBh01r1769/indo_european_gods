@@ -1,6 +1,7 @@
 import {
   archetypeById,
   candidateConnections,
+  EVIDENCE_LEVELS,
   getDeity,
   getStory,
   relationBetween,
@@ -20,6 +21,7 @@ const blank = () => ({
   selectedNode: null,
   selectedEdge: null,
   mode: "network",
+  evidenceLevel: "all",
   era: 1400,
   compare: [],
   history: [],
@@ -77,6 +79,9 @@ function normalize(candidate) {
     mode: ["network", "time", "geography"].includes(candidate.mode)
       ? candidate.mode
       : "network",
+    evidenceLevel: EVIDENCE_LEVELS[candidate.evidenceLevel]
+      ? candidate.evidenceLevel
+      : "all",
     era: Number.isFinite(Number(candidate.era)) ? Number(candidate.era) : 1400,
     compare: validNodeIds(candidate.compare).slice(0, 3),
     history: Array.isArray(candidate.history)
@@ -276,7 +281,12 @@ export function revealStoryNext() {
 
 export function availableClues(id = state.selectedNode) {
   if (!id) return [];
-  return candidateConnections(id, state.discoveredNodes, 4).filter(
+  return candidateConnections(
+    id,
+    state.discoveredNodes,
+    4,
+    state.evidenceLevel,
+  ).filter(
     (clue) =>
       !state.discoveredEdges.some((edge) => edge.id === clue.relation.id),
   );
@@ -364,6 +374,16 @@ export function setMode(mode) {
   publish();
 }
 
+export function setEvidenceLevel(level) {
+  if (!EVIDENCE_LEVELS[level] || state.evidenceLevel === level) return false;
+  state.evidenceLevel = level;
+  state.selectedEdge = null;
+  state.lastReveal = null;
+  step("set-evidence-level", { level });
+  publish();
+  return true;
+}
+
 export function setEra(era) {
   const value = Number(era);
   if (!Number.isFinite(value)) return;
@@ -408,7 +428,8 @@ export function clearJourney() {
   archiveCurrent();
   checkpoint();
   const mode = state.mode;
-  state = { ...blank(), started: true, mode };
+  const evidenceLevel = state.evidenceLevel;
+  state = { ...blank(), started: true, mode, evidenceLevel };
   step("clear-journey");
   publish();
 }
@@ -470,6 +491,7 @@ function shareSnapshot() {
     e: state.discoveredEdges.map(({ source, target }) => [source, target]),
     i: state.selectedNode,
     m: state.mode,
+    f: state.evidenceLevel,
   };
 }
 
@@ -506,6 +528,7 @@ export function restoreJourney(encoded) {
       })),
       selectedNode: candidate.i,
       mode: candidate.m,
+      evidenceLevel: candidate.f,
     });
     step("restore-shared-journey");
     publish();

@@ -10,12 +10,14 @@ import {
   DEITY_CITATIONS,
   TRADITION_CITATIONS,
   getDeityRefs,
+  getRelationshipRefs,
 } from "../src/data/citations.js";
 import { RELATION_KIND_OVERRIDES } from "../src/v3/config.js";
 
 const knownTraits = new Set(TRAITS.map(normTrait));
 const ids = new Set();
 const errors = [];
+const relationshipKeys = new Set();
 
 for (const deity of DEITIES) {
   if (!deity.id || typeof deity.id !== "string") {
@@ -56,9 +58,18 @@ for (const pair of COGNATE_PAIRS) {
     );
   }
   const key = [pair.a, pair.b].sort().join("|");
+  if (relationshipKeys.has(key)) {
+    errors.push(`Duplicate relationship: ${pair.a} / ${pair.b}`);
+  }
+  relationshipKeys.add(key);
   if (!RELATION_KIND_OVERRIDES.has(key)) {
     errors.push(
       `Relationship is missing an explicit evidence type: ${pair.a} / ${pair.b}`,
+    );
+  }
+  if (!getRelationshipRefs(pair.source).length) {
+    errors.push(
+      `Relationship source is not mapped to the bibliography: ${pair.a} / ${pair.b} (${pair.source})`,
     );
   }
 }
@@ -106,5 +117,6 @@ if (errors.length) {
 console.log(
   `Validated ${DEITIES.length} deities, ${TRAITS.length} canonical traits, ` +
     `${COGNATE_PAIRS.length} curated relationships, ${BIBLIOGRAPHY.length} sources, ` +
-    `and ${Object.keys(PANTHEON_COLORS).length} traditions.`,
+    `${COGNATE_PAIRS.length} relationship-to-source mappings, and ` +
+    `${Object.keys(PANTHEON_COLORS).length} traditions.`,
 );

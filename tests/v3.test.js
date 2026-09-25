@@ -5,6 +5,8 @@ import {
   relationBetween,
   archetypeMembers,
   compareDeities,
+  EVIDENCE_LEVELS,
+  relationshipPassesEvidence,
 } from "../src/v3/model.js";
 import {
   startWithDeity,
@@ -17,6 +19,8 @@ import {
   restoreJourney,
   clearJourney,
   restorePreviousJourney,
+  availableClues,
+  setEvidenceLevel,
 } from "../src/v3/state.js";
 import { DEITIES } from "../src/data/deities.js";
 import { getDeityRefs } from "../src/data/citations.js";
@@ -34,6 +38,26 @@ test("relationship categories distinguish evidence types", () => {
   assert.equal(relationBetween("Zeus", "Dyaus").kind, "linguistic");
   assert.equal(relationBetween("Thor", "Indra").kind, "structural");
   assert.equal(relationBetween("Set", "Loki").kind, "speculative");
+});
+
+test("curated relationships expose sources attached to the claim", () => {
+  const relation = relationBetween("Zeus", "Jupiter");
+  assert.equal(relation.reviewStatus, "source-mapped");
+  assert.ok(relation.claimRefs.some((reference) => reference.ref === "mallory-adams-2006"));
+});
+
+test("evidence lens restricts leads to the selected evidence standard", () => {
+  resetJourney({ publish: false });
+  startWithDeity("Zeus");
+  setEvidenceLevel("documented");
+  const clues = availableClues("Zeus");
+  assert.ok(clues.length > 0);
+  assert.ok(
+    clues.every((clue) =>
+      relationshipPassesEvidence(clue.relation, "documented"),
+    ),
+  );
+  assert.deepEqual(EVIDENCE_LEVELS.documented.kinds, ["linguistic", "historical"]);
 });
 
 test("revealing a clue grows the persistent journey rather than replacing it", () => {
@@ -61,6 +85,7 @@ test("a shared journey round-trips without sharing transient history", () => {
     (c) => c.target === "Perun",
   );
   revealClue(clue);
+  setEvidenceLevel("curated");
   const encoded = encodeJourney();
 
   resetJourney({ publish: false });
@@ -68,6 +93,7 @@ test("a shared journey round-trips without sharing transient history", () => {
   const restored = getState();
   assert.deepEqual(restored.discoveredNodes, ["Thor", "Perun"]);
   assert.equal(restored.selectedNode, "Perun");
+  assert.equal(restored.evidenceLevel, "curated");
   assert.equal(restored.history.at(-1).type, "restore-shared-journey");
 });
 

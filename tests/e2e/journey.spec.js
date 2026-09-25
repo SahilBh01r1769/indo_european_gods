@@ -50,6 +50,40 @@ test("dossier exposes citations and returns focus on close", async ({
   await expect(dossierButton).toBeFocused();
 });
 
+test("evidence lens changes the visible graph claims", async ({ page }) => {
+  await page.getByRole("button", { name: /Thor/ }).first().click();
+  const lens = page.getByRole("group", {
+    name: "Filter relationships by evidence strength",
+  });
+  await expect(lens).toBeVisible();
+  await expect(page.locator(".graph-node-clue")).toHaveCount(3);
+  const documented = page.locator(
+    '.evidence-lens [data-evidence-level="documented"]',
+  );
+  await page.waitForTimeout(700);
+  await documented.evaluate((button) => button.click());
+  await expect(documented).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.locator(".evidence-lens")).toContainText("visible claims");
+});
+
+test("relationship dossier separates claim sources from model overlap", async ({
+  page,
+}) => {
+  await page.getByRole("link", { name: "Discover" }).first().click();
+  await page.getByRole("button", { name: /Zeus/ }).first().click();
+  await page.getByRole("button", { name: "Open dossier" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.locator('[data-open-relationship="Jupiter|Zeus"]').click();
+  await expect(dialog.getByText("Evidence attached to this claim")).toBeVisible();
+  await expect(dialog.getByText("Model trait overlap")).toBeVisible();
+  await expect(dialog.locator(".claim-source-list cite")).toContainText(
+    /Mallory.*Adams/,
+  );
+});
+
 test("guided stories reveal their route automatically without mystery nodes", async ({
   page,
 }) => {

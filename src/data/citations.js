@@ -144,6 +144,55 @@ export const BIBLIOGRAPHY = [
     publisher: "ABC-CLIO",
     note: "Reference overview of Egyptian deities, myths, and cultic contexts.",
   },
+  {
+    id: "fowden-1986",
+    author: "Fowden, G.",
+    year: 1986,
+    title: "The Egyptian Hermes",
+    publisher: "Cambridge University Press",
+    note: "Historical study of the formation of the Hermes-Thoth tradition.",
+  },
+  {
+    id: "rooth-1961",
+    author: "Rooth, A.B.",
+    year: 1961,
+    title: "Loki in Scandinavian Mythology",
+    publisher: "C.W.K. Gleerup",
+    note: "Comparative study of Loki's place in Scandinavian mythology.",
+  },
+  {
+    id: "dumezil-1973",
+    author: "Dumézil, G.",
+    year: 1973,
+    title: "Gods of the Ancient Northmen",
+    publisher: "University of California Press",
+    note: "Comparative interpretation of major figures in Norse religion.",
+  },
+  {
+    id: "plutarch-isis-osiris",
+    author: "Plutarch",
+    year: "c. 100 CE",
+    title: "On Isis and Osiris",
+    publisher: "Moralia",
+    note: "Primary ancient account of Egyptian religion interpreted in a Greco-Roman setting.",
+  },
+];
+
+const RELATIONSHIP_SOURCE_PATTERNS = [
+  [/Mallory\s*&\s*Adams,\s*2006/i, "mallory-adams-2006"],
+  [/West,\s*2007/i, "west-2007"],
+  [/Dumézil,\s*1958/i, "dumezil-1958"],
+  [/Dumézil,\s*1966/i, "dumezil-1966"],
+  [/Dumézil,\s*1973/i, "dumezil-1973"],
+  [/Watkins,\s*1995/i, "watkins-1995"],
+  [/Watkins,\s*2000/i, "watkins-2000"],
+  [/Lincoln,\s*1991/i, "lincoln-1991"],
+  [/Ivanov\s*&\s*Toporov,\s*1974/i, "ivanov-toporov-1974"],
+  [/MacKillop,\s*1998/i, "mackillop-1998"],
+  [/Beck,\s*2006/i, "beck-2006"],
+  [/Fowden,\s*1986/i, "fowden-1986"],
+  [/Rooth,\s*1961/i, "rooth-1961"],
+  [/Plutarch,\s*De Iside/i, "plutarch-isis-osiris"],
 ];
 
 export const TRADITION_CITATIONS = {
@@ -612,4 +661,17 @@ export function getDeityRefs(deityId) {
       bib: getBibEntry(r.ref),
     }))
     .filter((r) => r.bib);
+}
+
+// Resolve only the bibliography explicitly named by a relationship claim.
+// Page-level references remain deliberately separate so the UI never implies
+// that a broad figure bibliography directly supports a specific connection.
+export function getRelationshipRefs(sourceText = "") {
+  const seen = new Set();
+  return RELATIONSHIP_SOURCE_PATTERNS.flatMap(([pattern, ref]) => {
+    if (!pattern.test(sourceText) || seen.has(ref)) return [];
+    seen.add(ref);
+    const bib = getBibEntry(ref);
+    return bib ? [{ ref, bib, scope: "relationship" }] : [];
+  });
 }

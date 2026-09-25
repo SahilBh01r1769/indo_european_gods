@@ -3611,6 +3611,133 @@ body {
   font: 400 13px/1.55 var(--serif);
 }
 
+.discover-landing .landing-hero.discover-intro {
+  display: block;
+  max-width: 760px;
+  padding-bottom: 36px;
+}
+
+.discover-landing .discover-intro .hero-copy {
+  max-width: 720px;
+}
+
+.evidence-lens {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 0 22px 12px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: rgba(255, 250, 240, 0.72);
+}
+
+.evidence-lens > div:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 118px;
+}
+
+.evidence-lens > div:first-child strong {
+  font: 600 13px var(--sans);
+  color: var(--ink);
+}
+
+.evidence-lens-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.evidence-lens-options button {
+  padding: 7px 10px;
+  border: 1px solid var(--line-dark);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: 600 11px var(--sans);
+  cursor: pointer;
+}
+
+.evidence-lens-options button.active {
+  border-color: var(--sapphire);
+  background: var(--sapphire);
+  color: #fff;
+}
+
+.claim-status {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--brass);
+  background: #f4ecdf;
+}
+
+.claim-status strong {
+  color: var(--ink-soft);
+  font: 600 12px var(--sans);
+  text-align: right;
+}
+
+.claim-source-list {
+  margin: 12px 0;
+  padding-left: 20px;
+}
+
+.trait-overlap-note {
+  margin-top: 22px;
+  padding-top: 15px;
+  border-top: 1px solid var(--line);
+}
+
+.trait-overlap-note ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 12px 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.trait-overlap-note li {
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font: 500 11px var(--sans);
+}
+
+.trait-overlap-note p {
+  color: var(--ink-soft);
+  font: 400 13px/1.5 var(--serif);
+}
+
+@media (max-width: 720px) {
+  .evidence-lens {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-inline: 14px;
+  }
+
+  .evidence-lens-options {
+    justify-content: flex-start;
+  }
+
+  .claim-status {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .claim-status strong {
+    text-align: left;
+  }
+}
+
 .difference-note {
   margin: 22px 0;
   padding: 15px 17px;

@@ -6,6 +6,7 @@ import {
 } from "../data/deities.js";
 import { COGNATE_PAIRS, getCognate } from "../data/cognates.js";
 import { computeSimilarity, sharedTraits } from "../utils/similarity.js";
+import { getRelationshipRefs } from "../data/citations.js";
 import {
   ARCHETYPES,
   RELATION_KIND_OVERRIDES,
@@ -117,6 +118,13 @@ export function relationBetween(aId, bId) {
   const score = computeSimilarity(a, b, "overlap");
   const shared = bestSharedTraits(a, b);
   const meta = RELATION_META[kind] || RELATION_META.model;
+  const claimRefs = getRelationshipRefs(cognate?.source);
+  const reviewStatus = !cognate
+    ? "model-only"
+    : /editorial comparison/i.test(cognate.source || "") ||
+        cognate.confidence === "proposed"
+      ? "preliminary"
+      : "source-mapped";
 
   return {
     id: pairKey,
@@ -132,9 +140,47 @@ export function relationBetween(aId, bId) {
     clue: clueLabel(kind, shared, cognate, b),
     note: cognate?.note || null,
     sourceText: cognate?.source || null,
+    claimRefs,
+    reviewStatus,
     confidence: cognate?.confidence || "model-only",
     curated: Boolean(cognate),
   };
+}
+
+export const EVIDENCE_LEVELS = {
+  all: {
+    label: "All connections",
+    kinds: [
+      "linguistic",
+      "historical",
+      "structural",
+      "comparative",
+      "speculative",
+      "model",
+    ],
+  },
+  curated: {
+    label: "Curated claims",
+    kinds: [
+      "linguistic",
+      "historical",
+      "structural",
+      "comparative",
+      "speculative",
+    ],
+  },
+  documented: {
+    label: "Documented links",
+    kinds: ["linguistic", "historical"],
+  },
+};
+
+export function evidenceKinds(level = "all") {
+  return EVIDENCE_LEVELS[level]?.kinds || EVIDENCE_LEVELS.all.kinds;
+}
+
+export function relationshipPassesEvidence(relation, level = "all") {
+  return Boolean(relation && evidenceKinds(level).includes(relation.kind));
 }
 
 const curatedAdjacency = new Map();
@@ -157,7 +203,12 @@ function relationPriority(r) {
   return (order[r.kind] ?? 6) * 100 - r.score * 10;
 }
 
-export function candidateConnections(id, discoveredIds = [], max = 4) {
+export function candidateConnections(
+  id,
+  discoveredIds = [],
+  max = 4,
+  evidenceLevel = "all",
+) {
   const deity = getDeity(id);
   if (!deity) return [];
   const discovered = new Set(discoveredIds);
@@ -188,7 +239,7 @@ export function candidateConnections(id, discoveredIds = [], max = 4) {
 
   const ranked = [...candidates.values()].sort(
     (a, b) => relationPriority(a) - relationPriority(b),
-  );
+  ).filter((relation) => relationshipPassesEvidence(relation, evidenceLevel));
   const diverse = [], seen = new Set();
   for (const relation of ranked) {
     const signature = `${relation.kind}:${relation.clue}`;
