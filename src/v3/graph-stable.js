@@ -1,4 +1,4 @@
-import { MythGraph as RuntimeGraph } from "./graph-runtime.js";
+import { MythGraph as RuntimeGraph } from "./graph-runtime.js?v=20260925.1";
 import { deityAccent, deityGlyph, getDeity } from "./model.js";
 import { availableClues } from "./state.js";
 

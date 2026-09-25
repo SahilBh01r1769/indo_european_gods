@@ -47,7 +47,7 @@ import {
   encodeJourney,
   restoreJourney,
 } from "./state.js";
-import { MythGraph } from "./graph.js";
+import { MythGraph } from "./graph.js?v=20260925.1";
 import { getDeityRefs } from "../data/citations.js";
 import { clueHints, deityProfile, matchesDeityGuess } from "./metadata.js";
 
